@@ -25,3 +25,6 @@ AGENTS.md
 # 系统与编辑器杂项
 .DS_Store
 Thumbs.db
+
+# Claude Code 本地数据
+.claude/

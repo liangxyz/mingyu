@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(new URL('../src/pages/ResultPage.tsx', import.meta.url), 'utf8');
+const source = readFileSync(
+  new URL('../src/pages/ResultPage/components/ZiweiBoard.tsx', import.meta.url),
+  'utf8',
+);
 const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
 
 function getFirstRuleBlock(selector: string) {

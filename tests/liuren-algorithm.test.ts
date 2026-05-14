@@ -45,7 +45,9 @@ test('大六壬会输出完整的四课三传与天盘结构', () => {
   assert.equal(result.fourLessons.length, 4);
   assert.equal(result.threeTransmissions.length, 3);
   assert.match(result.dayNight || '', /昼占|夜占/);
-  assert.ok(result.noblemanBranch && DIZHI.includes(result.noblemanBranch as (typeof DIZHI)[number]));
+  assert.ok(
+    result.noblemanBranch && DIZHI.includes(result.noblemanBranch as (typeof DIZHI)[number]),
+  );
   assert.ok(result.xunKong?.length === 2);
   assert.match(result.transmissionRule || '', /贼克法|克法|比用法|涉害法|别责法|八专法/);
   assert.match(result.transmissionPattern || '', /伏吟|反吟|回环|递传/);

@@ -2,7 +2,31 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(new URL('../src/pages/ResultPage.tsx', import.meta.url), 'utf8');
+const indexSource = readFileSync(
+  new URL('../src/pages/ResultPage/index.tsx', import.meta.url),
+  'utf8',
+);
+const ziweiCalculationsSource = readFileSync(
+  new URL('../src/pages/ResultPage/hooks/useZiweiCalculations.ts', import.meta.url),
+  'utf8',
+);
+const ziweiBoardSource = readFileSync(
+  new URL('../src/pages/ResultPage/components/ZiweiBoard.tsx', import.meta.url),
+  'utf8',
+);
+const ziweiScopeModalSource = readFileSync(
+  new URL('../src/pages/ResultPage/components/ZiweiScopeModal.tsx', import.meta.url),
+  'utf8',
+);
+const createDisplayWorkerSource = readFileSync(
+  new URL('../src/pages/ResultPage/utils/createDisplayWorker.ts', import.meta.url),
+  'utf8',
+);
+const createPayloadWorkerSource = readFileSync(
+  new URL('../src/pages/ResultPage/utils/createPayloadWorker.ts', import.meta.url),
+  'utf8',
+);
+const source = `${indexSource}\n${ziweiCalculationsSource}\n${ziweiBoardSource}\n${ziweiScopeModalSource}\n${createDisplayWorkerSource}\n${createPayloadWorkerSource}`;
 
 test('结果页不应渲染开发参考说明文案', () => {
   assert.doesNotMatch(source, /参考 `bz` 项目的专业盘表结构，按年、月、日、时展开。/);
@@ -11,26 +35,46 @@ test('结果页不应渲染开发参考说明文案', () => {
 });
 
 test('AI 页预览使用延迟值，复制和分享始终使用最新提示词', () => {
-  assert.match(source, /const deferredBaziQuickQuestion = useDeferredValue\(effectiveBaziQuickQuestion\);/);
-  assert.match(source, /const deferredZiweiQuickQuestion = useDeferredValue\(effectiveZiweiQuickQuestion\);/);
+  assert.match(
+    source,
+    /const deferredBaziQuickQuestion = useDeferredValue\(effectiveBaziQuickQuestion\);/,
+  );
+  assert.match(
+    source,
+    /const deferredZiweiQuickQuestion = useDeferredValue\(effectiveZiweiQuickQuestion\);/,
+  );
   assert.match(source, /const latestActivePromptText =/);
   assert.match(source, /const previewActivePromptText =/);
-  assert.match(source, /await navigator\.clipboard\.writeText\(latestActivePromptText\);/);
-  assert.match(source, /const ok = await shareText\(latestActivePromptText\);/);
-  assert.match(source, /<div className="prompt-send-tip">\s*点击复制后，发送到你常用的在线 AI 软件继续提问。\s*<\/div>/);
+  assert.match(source, /usePromptCopyShare\(latestActivePromptText\)/);
+  assert.match(
+    source,
+    /<div className="prompt-send-tip">\s*点击复制后，发送到你常用的在线 AI 软件继续提问。\s*<\/div>/,
+  );
   assert.match(source, /<pre className="result-pre">\{previewActivePromptText\}<\/pre>/);
 });
 
 test('AI 场景下紫微提示词数据走 Worker，进入紫微页后才补主线程运行时', () => {
   assert.match(source, /const shouldLoadZiweiPromptPayload =/);
-  assert.match(source, /new Worker\(new URL\('\.\.\/workers\/ziwei-payload\.worker\.ts', import\.meta\.url\), \{/);
-  assert.match(source, /if \(!mountedTabs\.ziwei \|\| !primaryZiweiInput\) \{/);
-  assert.match(source, /const activeZiweiPayloadByScope = ziweiRuntime\?\.payloadByScope \?\? ziweiPayloadByScope;/);
+  assert.match(
+    source,
+    /new Worker\(\s*new URL\('(?:\.\.\/)+workers\/ziwei-payload\.worker\.ts', import\.meta\.url\),/,
+  );
+  assert.match(source, /if \(!isZiweiTabMounted \|\| !primaryZiweiInput\) \{/);
+  assert.match(
+    source,
+    /const activeZiweiPayloadByScope = ziweiRuntime\?\.payloadByScope \?\? ziweiPayloadByScope;/,
+  );
 });
 
 test('紫微页切换时限时会用 Worker 重算展示盘面，并显示轻量加载遮罩', () => {
-  assert.match(source, /new Worker\(new URL\('\.\.\/workers\/ziwei-display\.worker\.ts', import\.meta\.url\), \{/);
-  assert.match(source, /const \[isDisplayPayloadLoading, setIsDisplayPayloadLoading\] = useState\(false\);/);
+  assert.match(
+    source,
+    /new Worker\(\s*new URL\('(?:\.\.\/)+workers\/ziwei-display\.worker\.ts', import\.meta\.url\),/,
+  );
+  assert.match(
+    source,
+    /const \[isDisplayPayloadLoading, setIsDisplayPayloadLoading\] = useState\(false\);/,
+  );
   assert.match(source, /className="ziwei-board-loading-mask"/);
   assert.match(source, /<ZiweiBoardSkeleton/);
 });
@@ -39,8 +83,14 @@ test('紫微提示词年限选择改成八字同款草稿确认结构', () => {
   assert.match(source, /当前将写入：/);
   assert.match(source, /fortune-modal-quick-label">当前</);
   assert.match(source, /const normalizedSelectedScope: Exclude<ZiweiScopeMode, 'hourly'> =/);
-  assert.match(source, /const \[draftScope, setDraftScope\] = useState<Exclude<ZiweiScopeMode, 'hourly'>>/);
-  assert.match(source, /const \[draftDecadalIndex, setDraftDecadalIndex\] = useState\(initialDecadalIndex\);/);
+  assert.match(
+    source,
+    /const \[draftScope, setDraftScope\] =[\s\S]*?useState<Exclude<ZiweiScopeMode, 'hourly'>>/,
+  );
+  assert.match(
+    source,
+    /const \[draftDecadalIndex, setDraftDecadalIndex\] = useState\(initialDecadalIndex\);/,
+  );
   assert.match(source, /findZiweiDecadalIndexByDate\(/);
   assert.match(source, /仅使用本命信息，不附加任何大限流年流月流日。/);
   assert.match(source, /modal-actions modal-actions-split/);
@@ -53,14 +103,20 @@ test('紫微提示词年限选择改成八字同款草稿确认结构', () => {
   assert.match(source, /<h3>流日<\/h3>/);
   assert.doesNotMatch(source, /scope: 'hourly', label: '流时'/);
   assert.match(source, /modal-card bazi-fortune-modal/);
-  assert.match(source, /const ziweiScopeSummaryText =\s*promptState\.ziweiScope === 'origin'\s*\?\s*'仅使用本命信息'/);
+  assert.match(
+    source,
+    /const ziweiScopeSummaryText =\s*promptState\.ziweiScope === 'origin'\s*\?\s*'仅使用本命信息'/,
+  );
   assert.doesNotMatch(source, /<strong>紫微运限<\/strong>/);
 });
 
 test('紫微提示词支持指定具体年限日期，并用自定义 payload 生成提示词', () => {
   assert.match(source, /const shouldUseCustomZiweiPromptPayload =/);
   assert.match(source, /promptState\.ziweiScopeDate/);
-  assert.match(source, /new Worker\(new URL\('\.\.\/workers\/ziwei-display\.worker\.ts', import\.meta\.url\), \{/);
+  assert.match(
+    source,
+    /new Worker\(\s*new URL\('(?:\.\.\/)+workers\/ziwei-display\.worker\.ts', import\.meta\.url\),/,
+  );
   assert.match(source, /ziweiScopeDate: scope === 'origin' \? '' : dateStr/);
   assert.match(source, /formatZiweiPromptScopeSummary\(/);
 });

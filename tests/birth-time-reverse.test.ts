@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
   DEFAULT_REVERSE_BIRTH_TIME_FORM_DATA,
   UNKNOWN_TIME_INDEX,
@@ -9,7 +9,12 @@ import {
   buildThreePillarsProfile,
   buildUnknownTimeBaziPrompt,
 } from '../src/lib/birth-time-reverse';
-import { buildResultSearch, defaultInputState, defaultPromptState, parseInputState } from '../src/lib/query-state';
+import {
+  buildResultSearch,
+  defaultInputState,
+  defaultPromptState,
+  parseInputState,
+} from '../src/lib/query-state';
 
 test('未知时辰索引会被查询参数正确保留', () => {
   const inputState = parseInputState(new URLSearchParams('timeIndex=-1&partnerTimeIndex=-1'));
@@ -147,10 +152,16 @@ test('未知时辰基础提示词会明确只按三柱作保守判断', () => {
 });
 
 test('输入页与路由会暴露未知时辰和反推时辰入口', () => {
-  const inputPageSource = readFileSync(resolve('src/pages/InputPage.tsx'), 'utf8');
+  const inputPageSource =
+    readFileSync(resolve('src/pages/InputPage.tsx'), 'utf8') +
+    readFileSync(resolve('src/pages/InputPage.PersonForm.tsx'), 'utf8');
   const appSource = readFileSync(resolve('src/App.tsx'), 'utf8');
   const reversePageSource = readFileSync(resolve('src/pages/BirthTimeReversePage.tsx'), 'utf8');
-  const reverseLibSource = readFileSync(resolve('src/lib/birth-time-reverse.ts'), 'utf8');
+  const reverseLibDir = resolve('src/lib/birth-time-reverse');
+  const reverseLibSource = readdirSync(reverseLibDir)
+    .filter((name) => name.endsWith('.ts'))
+    .map((name) => readFileSync(join(reverseLibDir, name), 'utf8'))
+    .join('\n');
 
   assert.match(inputPageSource, /未知时辰/);
   assert.match(inputPageSource, /反推时辰/);

@@ -90,10 +90,12 @@ test('紫微提示词指定年限日期会写入并从地址栏恢复', () => {
 });
 
 test('结果页解析只认当前页面使用的新版运势参数', () => {
-  const parsed = parsePromptState(new URLSearchParams({
-    baziYearMode: 'yearly',
-    baziSelectedYear: '2030',
-  }));
+  const parsed = parsePromptState(
+    new URLSearchParams({
+      baziYearMode: 'yearly',
+      baziSelectedYear: '2030',
+    }),
+  );
 
   assert.equal(parsed.baziFortuneScope, defaultPromptState.baziFortuneScope);
   assert.equal(parsed.baziFortuneYear, defaultPromptState.baziFortuneYear);

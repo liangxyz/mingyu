@@ -77,7 +77,10 @@ test('选择流年时会附带该流年下的全部流月', () => {
   assert.equal(context.monthBreakdown?.length, 12);
   assert.match(context.promptPayload.breakdownTitle ?? '', /流月/);
   assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /1月/);
-  assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /\d{4}-\d{2}-\d{2} 至 \d{4}-\d{2}-\d{2}/);
+  assert.match(
+    context.promptPayload.breakdownLines?.[0] ?? '',
+    /\d{4}-\d{2}-\d{2} 至 \d{4}-\d{2}-\d{2}/,
+  );
   assert.doesNotMatch(context.promptPayload.summaryLines.join('\n'), /童运/);
 });
 
@@ -133,10 +136,16 @@ test('选择流日时只保留该流日本身', () => {
   assert.equal(context.dayBreakdown?.length, 1);
   assert.equal(context.hourBreakdown?.length, 13);
   assert.match(context.promptPayload.summaryLines.join('\n'), /流日：2008-02-08/);
-  assert.match(context.promptPayload.summaryLines.join('\n'), /按子初换日：2008-02-07 23:00 至 2008-02-08 22:59/);
+  assert.match(
+    context.promptPayload.summaryLines.join('\n'),
+    /按子初换日：2008-02-07 23:00 至 2008-02-08 22:59/,
+  );
   assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /晚子时/);
   assert.match(context.promptPayload.breakdownLines?.[1] ?? '', /早子时/);
-  assert.doesNotMatch(context.promptPayload.breakdownLines?.join('\n') ?? '', /2008-02-08 23:00-23:59/);
+  assert.doesNotMatch(
+    context.promptPayload.breakdownLines?.join('\n') ?? '',
+    /2008-02-08 23:00-23:59/,
+  );
 });
 
 test('交运年份默认应归到后一步大运，而不是继续挂在童运或前一步运里', () => {

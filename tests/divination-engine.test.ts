@@ -6,7 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 import { generateDivinationSession } from '../src/lib/divination/engine';
 
-const source = readFileSync(new URL('../src/lib/divination/engine.ts', import.meta.url), 'utf8');
+const engineDir = fileURLToPath(new URL('../src/lib/divination/engine/', import.meta.url));
+const source = readdirSync(engineDir)
+  .filter((name) => name.endsWith('.ts'))
+  .map((name) => readFileSync(path.join(engineDir, name), 'utf8'))
+  .join('\n');
 const srcRoot = fileURLToPath(new URL('../src', import.meta.url));
 
 function collectSourceFiles(dir: string): string[] {
@@ -33,12 +37,12 @@ test('梅花数字起卦会在本地校验正整数输入', () => {
 });
 
 test('占卜引擎按卦种动态加载当前项目本地算法与工具模块', () => {
-  assert.match(source, /await import\('\.\/algorithms\/liuyao'\)/);
-  assert.match(source, /await import\('\.\/algorithms\/meihua'\)/);
-  assert.match(source, /await import\('\.\/algorithms\/qimen'\)/);
-  assert.match(source, /await import\('\.\/algorithms\/liuren'\)/);
-  assert.match(source, /await import\('\.\/algorithms\/ssgw'\)/);
-  assert.match(source, /await import\('\.\.\/\.\.\/utils\/tarot'\)/);
+  assert.match(source, /await import\('\.\.\/algorithms\/liuyao'\)/);
+  assert.match(source, /await import\('\.\.\/algorithms\/meihua'\)/);
+  assert.match(source, /await import\('\.\.\/algorithms\/qimen'\)/);
+  assert.match(source, /await import\('\.\.\/algorithms\/liuren'\)/);
+  assert.match(source, /await import\('\.\.\/algorithms\/ssgw'\)/);
+  assert.match(source, /await import\('\.\.\/\.\.\/\.\.\/utils\/tarot'\)/);
   assert.doesNotMatch(source, /sydf/);
 });
 

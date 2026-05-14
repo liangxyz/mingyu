@@ -9,12 +9,6 @@ test('桌面端运限选择器支持横向滚动，并默认一行显示12个', 
     css,
     /\.fortune-container\s*\{[^}]*overflow-x:\s*scroll;[^}]*overflow-y:\s*hidden;[^}]*scrollbar-width:\s*thin;[^}]*\}/s,
   );
-  assert.match(
-    css,
-    /\.fortune-item\s*\{[^}]*flex:\s*0 0 calc\(100% \/ 12\);[^}]*\}/s,
-  );
-  assert.match(
-    css,
-    /\.fortune-container::-webkit-scrollbar\s*\{[^}]*height:\s*8px;[^}]*\}/s,
-  );
+  assert.match(css, /\.fortune-item\s*\{[^}]*flex:\s*0 0 calc\(100% \/ 12\);[^}]*\}/s);
+  assert.match(css, /\.fortune-container::-webkit-scrollbar\s*\{[^}]*height:\s*8px;[^}]*\}/s);
 });

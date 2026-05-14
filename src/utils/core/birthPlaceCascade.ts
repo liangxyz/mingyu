@@ -1,4 +1,4 @@
-import rawBirthPlaceTree from '@/data/chinaBirthPlaceTree.json'
+import rawBirthPlaceTree from '@/data/chinaBirthPlaceTree.json';
 
 export interface BirthPlaceDistrictOption {
   id: string;
@@ -31,44 +31,48 @@ interface BirthPlaceCascadePath {
   district: BirthPlaceDistrictOption;
 }
 
-const birthPlaceTree = rawBirthPlaceTree as BirthPlaceProvinceOption[]
+const birthPlaceTree = rawBirthPlaceTree as BirthPlaceProvinceOption[];
 
-const districtPathById = new Map<string, BirthPlaceCascadePath>()
-const districtPathByDisplayName = new Map<string, BirthPlaceCascadePath>()
+const districtPathById = new Map<string, BirthPlaceCascadePath>();
+const districtPathByDisplayName = new Map<string, BirthPlaceCascadePath>();
 
 for (const province of birthPlaceTree) {
   for (const city of province.cities) {
     for (const district of city.districts) {
-      const path = { province, city, district }
-      districtPathById.set(district.id, path)
-      districtPathByDisplayName.set(district.displayName, path)
+      const path = { province, city, district };
+      districtPathById.set(district.id, path);
+      districtPathByDisplayName.set(district.displayName, path);
     }
   }
 }
 
 export function getBirthPlaceProvinceOptions(): BirthPlaceProvinceOption[] {
-  return birthPlaceTree
+  return birthPlaceTree;
 }
 
 export function getBirthPlaceCityOptions(provinceId: string): BirthPlaceCityOption[] {
-  return birthPlaceTree.find(province => province.id === provinceId)?.cities || []
+  return birthPlaceTree.find((province) => province.id === provinceId)?.cities || [];
 }
 
 export function getBirthPlaceDistrictOptions(cityId: string): BirthPlaceDistrictOption[] {
   for (const province of birthPlaceTree) {
-    const city = province.cities.find(item => item.id === cityId)
+    const city = province.cities.find((item) => item.id === cityId);
     if (city) {
-      return city.districts
+      return city.districts;
     }
   }
 
-  return []
+  return [];
 }
 
-export function findBirthPlaceCascadeByDistrictId(districtId: string): BirthPlaceCascadePath | null {
-  return districtPathById.get(districtId) || null
+export function findBirthPlaceCascadeByDistrictId(
+  districtId: string,
+): BirthPlaceCascadePath | null {
+  return districtPathById.get(districtId) || null;
 }
 
-export function findBirthPlaceCascadeByDisplayName(displayName: string): BirthPlaceCascadePath | null {
-  return districtPathByDisplayName.get(displayName) || null
+export function findBirthPlaceCascadeByDisplayName(
+  displayName: string,
+): BirthPlaceCascadePath | null {
+  return districtPathByDisplayName.get(displayName) || null;
 }

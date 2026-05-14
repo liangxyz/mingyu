@@ -1,6 +1,4 @@
-import {
-  calculateZiweiPayloadByScope,
-} from '@/lib/full-chart-engine';
+import { calculateZiweiPayloadByScope } from '@/lib/full-chart-engine';
 import type { ChartInput } from '@/types/chart';
 
 type ZiweiPayloadWorkerRequest = {

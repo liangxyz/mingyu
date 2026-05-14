@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageTopbar } from '@/components/PageTopbar';
+import { PrivacyHint } from '@/components/PrivacyHint';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { DIVINATION_METHOD_OPTIONS } from '@/lib/divination/config';
 import {
@@ -45,9 +46,21 @@ export function RecordsPage() {
         : 'personal';
   const [activeTab, setActiveTab] = useState<HistoryTab>(defaultTab);
 
-  const personalRecords = useMemo(() => loadPersonalHistory(), [refreshKey]);
-  const compatibilityRecords = useMemo(() => loadCompatibilityHistory(), [refreshKey]);
-  const divinationRecords = useMemo(() => loadDivinationHistory(), [refreshKey]);
+  const personalRecords = useMemo(
+    () => loadPersonalHistory(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refreshKey],
+  );
+  const compatibilityRecords = useMemo(
+    () => loadCompatibilityHistory(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refreshKey],
+  );
+  const divinationRecords = useMemo(
+    () => loadDivinationHistory(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refreshKey],
+  );
   const query = searchText.trim().toLowerCase();
 
   const filteredPersonal = useMemo(() => {
@@ -131,6 +144,7 @@ export function RecordsPage() {
   return (
     <div className="page-shell input-page-shell">
       <div className="bazi-view-container">
+        <PrivacyHint />
         <section className="history-page-section">
           <PageTopbar
             title="历史记录"
@@ -209,53 +223,54 @@ export function RecordsPage() {
                     </div>
                   ))}
                 </div>
-              <div className="records-summary">共 {filteredPersonal.length} 条记录</div>
+                <div className="records-summary">共 {filteredPersonal.length} 条记录</div>
               </>
             )
           ) : activeTab === 'compatibility' ? (
             filteredCompatibility.length === 0 ? (
-            <div className="records-empty-card">暂无匹配的合盘记录</div>
-          ) : (
-            <>
-              <div className="records-list">
-                {filteredCompatibility.map((record, index) => (
-                  <div
-                    key={record.id}
-                    className="record-item compatibility-item"
-                    onClick={() => handleOpenCompatibility(index)}
-                  >
-                    <div className="record-info">
-                      <div className="info-line-1">
-                        <span className="name">{record.name}</span>
-                        <span className="record-time">{formatUpdatedAt(record.updatedAt)}</span>
+              <div className="records-empty-card">暂无匹配的合盘记录</div>
+            ) : (
+              <>
+                <div className="records-list">
+                  {filteredCompatibility.map((record, index) => (
+                    <div
+                      key={record.id}
+                      className="record-item compatibility-item"
+                      onClick={() => handleOpenCompatibility(index)}
+                    >
+                      <div className="record-info">
+                        <div className="info-line-1">
+                          <span className="name">{record.name}</span>
+                          <span className="record-time">{formatUpdatedAt(record.updatedAt)}</span>
+                        </div>
+                        <div className="details-line">
+                          <span className="birthday">
+                            {record.input.year}-{record.input.month}-{record.input.day}
+                          </span>
+                          <span className="birthday">
+                            {record.input.partnerYear}-{record.input.partnerMonth}-
+                            {record.input.partnerDay}
+                          </span>
+                          <span className="record-tag">合盘</span>
+                        </div>
                       </div>
-                      <div className="details-line">
-                        <span className="birthday">
-                          {record.input.year}-{record.input.month}-{record.input.day}
-                        </span>
-                        <span className="birthday">
-                          {record.input.partnerYear}-{record.input.partnerMonth}-{record.input.partnerDay}
-                        </span>
-                        <span className="record-tag">合盘</span>
+                      <div className="history-actions">
+                        <button
+                          type="button"
+                          className="history-action-btn history-action-danger"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleDeleteCompatibility(record.id);
+                          }}
+                        >
+                          删除
+                        </button>
                       </div>
                     </div>
-                    <div className="history-actions">
-                      <button
-                        type="button"
-                        className="history-action-btn history-action-danger"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleDeleteCompatibility(record.id);
-                        }}
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="records-summary">共 {filteredCompatibility.length} 条记录</div>
-            </>
+                  ))}
+                </div>
+                <div className="records-summary">共 {filteredCompatibility.length} 条记录</div>
+              </>
             )
           ) : filteredDivination.length === 0 ? (
             <div className="records-empty-card">暂无匹配的占卜记录</div>

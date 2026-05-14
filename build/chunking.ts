@@ -24,26 +24,15 @@ export function getManualChunk(id: string) {
     return 'ziwei-core';
   }
 
-  if (
-    id.includes('src/lib/prompt-engine.ts') ||
-    id.includes('src/utils/ai')
-  ) {
+  if (id.includes('src/lib/prompt-engine.ts') || id.includes('src/utils/ai')) {
     return 'prompt-engine';
   }
 
-  if (
-    id.includes('src/components/BaziFortuneTools.tsx') ||
-    id.includes('src/utils/bazi/calendarTool.ts') ||
-    id.includes('src/utils/bazi/fortuneSelection.ts') ||
-    id.includes('src/utils/bazi/fortuneModalSelection.ts')
-  ) {
+  if (id.includes('src/components/BaziFortuneTools/')) {
     return 'bazi-fortune-ui';
   }
 
-  if (
-    id.includes('src/utils/bazi') ||
-    id.includes('src/utils/dateUtils.ts')
-  ) {
+  if (id.includes('src/utils/bazi') || id.includes('src/utils/dateUtils.ts')) {
     return 'bazi-engine';
   }
 

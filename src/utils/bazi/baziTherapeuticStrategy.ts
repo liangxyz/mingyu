@@ -2,9 +2,9 @@ import {
   type ClimateRule,
   CLIMATE_RULES,
   STRENGTH_HINT_RULES,
-  THERAPEUTIC_PRIORITY_RULES
-} from './baziTherapeuticRules'
-import { matchFirstRule, type HiddenStemSource, type VisibleStemSource } from './baziRuleMatcher'
+  THERAPEUTIC_PRIORITY_RULES,
+} from './baziTherapeuticRules';
+import { matchFirstRule, type HiddenStemSource, type VisibleStemSource } from './baziRuleMatcher';
 
 interface UsefulGodDecisionStateLike {
   favorableWuxing: string[];
@@ -26,10 +26,10 @@ function resolveTherapeuticHintRule(
   hiddenStems?: string[],
   hiddenStemSources?: HiddenStemSource[],
   formationWuxings?: string[],
-  wuxingCounts?: Record<string, number>
+  wuxingCounts?: Record<string, number>,
 ) {
   if (!monthBranch) {
-    return null
+    return null;
   }
 
   const climateRule = matchFirstRule(CLIMATE_RULES, {
@@ -44,15 +44,17 @@ function resolveTherapeuticHintRule(
     hiddenStems,
     hiddenStemSources,
     formationWuxings,
-    wuxingCounts
-  })
+    wuxingCounts,
+  });
   if (climateRule) {
-    return climateRule
+    return climateRule;
   }
 
-  return matchFirstRule(STRENGTH_HINT_RULES, {
-    strengthStatus
-  }) || null
+  return (
+    matchFirstRule(STRENGTH_HINT_RULES, {
+      strengthStatus,
+    }) || null
+  );
 }
 
 export function resolveTherapeuticHint(
@@ -68,9 +70,25 @@ export function resolveTherapeuticHint(
   hiddenStems?: string[],
   hiddenStemSources?: HiddenStemSource[],
   formationWuxings?: string[],
-  wuxingCounts?: Record<string, number>
+  wuxingCounts?: Record<string, number>,
 ): string {
-  return resolveTherapeuticHintRule(strengthStatus, dmWuxing, yearStem, dayMasterStem, monthBranch, hourBranch, currentJieqi, visibleStems, visibleStemSources, hiddenStems, hiddenStemSources, formationWuxings, wuxingCounts)?.hint || ''
+  return (
+    resolveTherapeuticHintRule(
+      strengthStatus,
+      dmWuxing,
+      yearStem,
+      dayMasterStem,
+      monthBranch,
+      hourBranch,
+      currentJieqi,
+      visibleStems,
+      visibleStemSources,
+      hiddenStems,
+      hiddenStemSources,
+      formationWuxings,
+      wuxingCounts,
+    )?.hint || ''
+  );
 }
 
 export function resolveTherapeuticHintRuleId(
@@ -86,13 +104,29 @@ export function resolveTherapeuticHintRuleId(
   hiddenStems?: string[],
   hiddenStemSources?: HiddenStemSource[],
   formationWuxings?: string[],
-  wuxingCounts?: Record<string, number>
+  wuxingCounts?: Record<string, number>,
 ): string {
-  return resolveTherapeuticHintRule(strengthStatus, dmWuxing, yearStem, dayMasterStem, monthBranch, hourBranch, currentJieqi, visibleStems, visibleStemSources, hiddenStems, hiddenStemSources, formationWuxings, wuxingCounts)?.id || ''
+  return (
+    resolveTherapeuticHintRule(
+      strengthStatus,
+      dmWuxing,
+      yearStem,
+      dayMasterStem,
+      monthBranch,
+      hourBranch,
+      currentJieqi,
+      visibleStems,
+      visibleStemSources,
+      hiddenStems,
+      hiddenStemSources,
+      formationWuxings,
+      wuxingCounts,
+    )?.id || ''
+  );
 }
 
 function normalizeWuxingOrder(order: string[]): string[] {
-  return [...new Set(order.filter(Boolean))]
+  return [...new Set(order.filter(Boolean))];
 }
 
 function matchClimateRule(
@@ -108,10 +142,10 @@ function matchClimateRule(
   hiddenStems?: string[],
   hiddenStemSources?: HiddenStemSource[],
   formationWuxings?: string[],
-  wuxingCounts?: Record<string, number>
+  wuxingCounts?: Record<string, number>,
 ): ClimateRule | undefined {
   if (!monthBranch || isPatternSpecial) {
-    return undefined
+    return undefined;
   }
 
   return matchFirstRule(CLIMATE_RULES, {
@@ -126,8 +160,8 @@ function matchClimateRule(
     hiddenStems,
     hiddenStemSources,
     formationWuxings,
-    wuxingCounts
-  })
+    wuxingCounts,
+  });
 }
 
 export function resolveTherapeuticPriorityWuxing(
@@ -136,28 +170,28 @@ export function resolveTherapeuticPriorityWuxing(
   dayMasterStem: string | undefined,
   monthBranch: string | undefined,
   isPatternSpecial: boolean,
-  wuxingSheng: Record<string, string>
+  wuxingSheng: Record<string, string>,
 ): string {
   if (!monthBranch || isPatternSpecial) {
-    return ''
+    return '';
   }
 
   const priorityRule = matchFirstRule(THERAPEUTIC_PRIORITY_RULES, {
     monthBranch,
     strengthStatus,
     dayMaster: dmWuxing,
-    dayStem: dayMasterStem
-  })
+    dayStem: dayMasterStem,
+  });
 
   if (!priorityRule) {
-    return ''
+    return '';
   }
 
   if (priorityRule.useGeneratedElement) {
-    return wuxingSheng[dmWuxing] || ''
+    return wuxingSheng[dmWuxing] || '';
   }
 
-  return ''
+  return '';
 }
 
 export function resolveClimateUsefulWuxing(
@@ -173,9 +207,25 @@ export function resolveClimateUsefulWuxing(
   hiddenStems?: string[],
   hiddenStemSources?: HiddenStemSource[],
   formationWuxings?: string[],
-  wuxingCounts?: Record<string, number>
+  wuxingCounts?: Record<string, number>,
 ): string {
-  return resolveClimateFavorableOrder(dmWuxing, yearStem, dayMasterStem, monthBranch, hourBranch, isPatternSpecial, currentJieqi, visibleStems, visibleStemSources, hiddenStems, hiddenStemSources, formationWuxings, wuxingCounts)[0] || ''
+  return (
+    resolveClimateFavorableOrder(
+      dmWuxing,
+      yearStem,
+      dayMasterStem,
+      monthBranch,
+      hourBranch,
+      isPatternSpecial,
+      currentJieqi,
+      visibleStems,
+      visibleStemSources,
+      hiddenStems,
+      hiddenStemSources,
+      formationWuxings,
+      wuxingCounts,
+    )[0] || ''
+  );
 }
 
 export function resolveClimateFavorableOrder(
@@ -191,26 +241,37 @@ export function resolveClimateFavorableOrder(
   hiddenStems?: string[],
   hiddenStemSources?: HiddenStemSource[],
   formationWuxings?: string[],
-  wuxingCounts?: Record<string, number>
+  wuxingCounts?: Record<string, number>,
 ): string[] {
-  const climateRule = matchClimateRule(dmWuxing, yearStem, dayMasterStem, monthBranch, hourBranch, isPatternSpecial, currentJieqi, visibleStems, visibleStemSources, hiddenStems, hiddenStemSources, formationWuxings, wuxingCounts)
+  const climateRule = matchClimateRule(
+    dmWuxing,
+    yearStem,
+    dayMasterStem,
+    monthBranch,
+    hourBranch,
+    isPatternSpecial,
+    currentJieqi,
+    visibleStems,
+    visibleStemSources,
+    hiddenStems,
+    hiddenStemSources,
+    formationWuxings,
+    wuxingCounts,
+  );
   if (!climateRule) {
-    return []
+    return [];
   }
 
-  return normalizeWuxingOrder([
-    ...(climateRule.favorableOrder || []),
-    climateRule.usefulWuxing
-  ])
+  return normalizeWuxingOrder([...(climateRule.favorableOrder || []), climateRule.usefulWuxing]);
 }
 
 export function applyClimateAdjustment<T extends UsefulGodDecisionStateLike>(
   state: T,
-  climateFavorableOrder: string[]
+  climateFavorableOrder: string[],
 ): { state: T; adjusted: boolean } {
-  const normalizedOrder = normalizeWuxingOrder(climateFavorableOrder)
+  const normalizedOrder = normalizeWuxingOrder(climateFavorableOrder);
   if (normalizedOrder.length === 0) {
-    return { state, adjusted: false }
+    return { state, adjusted: false };
   }
 
   return {
@@ -218,22 +279,22 @@ export function applyClimateAdjustment<T extends UsefulGodDecisionStateLike>(
       ...state,
       favorableWuxing: [
         ...normalizedOrder,
-        ...state.favorableWuxing.filter(wx => !normalizedOrder.includes(wx))
+        ...state.favorableWuxing.filter((wx) => !normalizedOrder.includes(wx)),
       ],
-      unfavorableWuxing: state.unfavorableWuxing.filter(wx => !normalizedOrder.includes(wx)),
+      unfavorableWuxing: state.unfavorableWuxing.filter((wx) => !normalizedOrder.includes(wx)),
       trace: [...state.trace, `调候优先:${normalizedOrder.join(' -> ')}`],
-      primaryReason: '调候'
+      primaryReason: '调候',
     } as T,
-    adjusted: true
-  }
+    adjusted: true,
+  };
 }
 
 export function applyTherapeuticPriority<T extends UsefulGodDecisionStateLike>(
   state: T,
-  therapeuticWuxing: string
+  therapeuticWuxing: string,
 ): { state: T; adjusted: boolean } {
   if (!therapeuticWuxing || !state.favorableWuxing.includes(therapeuticWuxing)) {
-    return { state, adjusted: false }
+    return { state, adjusted: false };
   }
 
   return {
@@ -241,11 +302,11 @@ export function applyTherapeuticPriority<T extends UsefulGodDecisionStateLike>(
       ...state,
       favorableWuxing: [
         therapeuticWuxing,
-        ...state.favorableWuxing.filter(wx => wx !== therapeuticWuxing)
+        ...state.favorableWuxing.filter((wx) => wx !== therapeuticWuxing),
       ],
       trace: [...state.trace, `病药优先:${therapeuticWuxing}`],
-      primaryReason: '病药'
+      primaryReason: '病药',
     } as T,
-    adjusted: true
-  }
+    adjusted: true,
+  };
 }

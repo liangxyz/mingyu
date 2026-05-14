@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const InputPage = lazy(async () => {
   const module = await import('./pages/InputPage');
@@ -44,14 +45,16 @@ export default function App() {
         </div>
       }
     >
-      <Routes>
-        <Route path="/" element={<InputPage />} />
-        <Route path="/birth-time-reverse" element={<BirthTimeReversePage />} />
-        <Route path="/tutorial" element={<TutorialPage />} />
-        <Route path="/records" element={<RecordsPage />} />
-        <Route path="/result" element={<ResultPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<InputPage />} />
+          <Route path="/birth-time-reverse" element={<BirthTimeReversePage />} />
+          <Route path="/tutorial" element={<TutorialPage />} />
+          <Route path="/records" element={<RecordsPage />} />
+          <Route path="/result" element={<ResultPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ErrorBoundary>
     </Suspense>
   );
 }

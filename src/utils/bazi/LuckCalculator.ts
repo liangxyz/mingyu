@@ -1,12 +1,12 @@
-import { SolarTime, ChildLimit } from 'tyme4ts'
-import { BASIC_MAPPINGS } from './baziDefinitions'
-import { getTenGod, getTenGodForBranch } from './baziUtils'
-import type { LuckInfo, LuckCycle, LiunianInfo, SolarDateTimeInfo, XiaoyunInfo } from './baziTypes'
-import { formatSolarDateTime, shiftSolarDateTimeYears, toSolarDateTimeInfo } from './luckTiming'
+import { SolarTime, ChildLimit } from 'tyme4ts';
+import { BASIC_MAPPINGS } from './baziDefinitions';
+import { getTenGod, getTenGodForBranch } from './baziUtils';
+import type { LuckInfo, LuckCycle, LiunianInfo, SolarDateTimeInfo, XiaoyunInfo } from './baziTypes';
+import { formatSolarDateTime, shiftSolarDateTimeYears, toSolarDateTimeInfo } from './luckTiming';
 
-type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>
-type LuckGender = Parameters<typeof ChildLimit.fromSolarTime>[1]
-type FortuneInstance = ReturnType<ReturnType<typeof ChildLimit.fromSolarTime>['getStartFortune']>
+type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>;
+type LuckGender = Parameters<typeof ChildLimit.fromSolarTime>[1];
+type FortuneInstance = ReturnType<ReturnType<typeof ChildLimit.fromSolarTime>['getStartFortune']>;
 
 /**
  * 专注于大运、小运、流年等运势计算的工具类
@@ -18,38 +18,48 @@ export class LuckCalculator {
   /**
    * 主计算函数：计算大运、小运和所有关联的流年信息
    */
-  public calculateLuckInfo(solarTime: SolarTimeInstance, gender: LuckGender, dayMaster: string): LuckInfo {
+  public calculateLuckInfo(
+    solarTime: SolarTimeInstance,
+    gender: LuckGender,
+    dayMaster: string,
+  ): LuckInfo {
     try {
       // 1. 计算童限 (起运前)
-      const childLimit = ChildLimit.fromSolarTime(solarTime, gender)
-      const startAge = childLimit.getYearCount() // 起运岁数
-      const startMonth = childLimit.getMonthCount()
-      const startDay = childLimit.getDayCount()
-      const startHour = childLimit.getHourCount()
-      const startMinute = childLimit.getMinuteCount()
+      const childLimit = ChildLimit.fromSolarTime(solarTime, gender);
+      const startAge = childLimit.getYearCount(); // 起运岁数
+      const startMonth = childLimit.getMonthCount();
+      const startDay = childLimit.getDayCount();
+      const startHour = childLimit.getHourCount();
+      const startMinute = childLimit.getMinuteCount();
 
       // 精确的起运时间 (公历)
-      const limitSolarTime = childLimit.getEndTime()
-      const birthSolarTime = toSolarDateTimeInfo(solarTime)
-      const firstCycleStartTime = toSolarDateTimeInfo(limitSolarTime)
+      const limitSolarTime = childLimit.getEndTime();
+      const birthSolarTime = toSolarDateTimeInfo(solarTime);
+      const firstCycleStartTime = toSolarDateTimeInfo(limitSolarTime);
 
-      const startInfoText = this.getStartInfoText(startAge, startMonth, startDay, startHour, startMinute)
-      const startFortune = childLimit.getStartFortune()
+      const startInfoText = this.getStartInfoText(
+        startAge,
+        startMonth,
+        startDay,
+        startHour,
+        startMinute,
+      );
+      const startFortune = childLimit.getStartFortune();
 
       // 2. 获取大运列表 (DecadeFortune)
       // tyme4ts 的 ChildLimit 提供了获取第一步大运的方法 getStartDecadeFortune()
       // 后续大运可以通过 next() 方法获取
-      const decadeFortunes: Array<ReturnType<typeof childLimit.getStartDecadeFortune>> = []
-      let currentDecade = childLimit.getStartDecadeFortune()
+      const decadeFortunes: Array<ReturnType<typeof childLimit.getStartDecadeFortune>> = [];
+      let currentDecade = childLimit.getStartDecadeFortune();
 
       // 获取 12 步大运
       for (let i = 0; i < 12; i++) {
-        decadeFortunes.push(currentDecade)
-        currentDecade = currentDecade.next(1)
+        decadeFortunes.push(currentDecade);
+        currentDecade = currentDecade.next(1);
       }
 
-      const cycles: LuckCycle[] = []
-      const birthYear = solarTime.getYear()
+      const cycles: LuckCycle[] = [];
+      const birthYear = solarTime.getYear();
 
       // 3. 处理起运前的童限年份
       if (startAge >= 1 || this.shouldIncludeBoundaryYear(firstCycleStartTime)) {
@@ -58,8 +68,8 @@ export class LuckCalculator {
           birthYear,
           dayMaster,
           firstCycleStartTime,
-          startFortune
-        )
+          startFortune,
+        );
 
         if (preDayunYears.length > 0) {
           cycles.push({
@@ -70,8 +80,8 @@ export class LuckCalculator {
             type: '小运',
             startSolarTime: birthSolarTime,
             endSolarTime: firstCycleStartTime,
-            years: preDayunYears
-          })
+            years: preDayunYears,
+          });
         }
       }
 
@@ -79,12 +89,12 @@ export class LuckCalculator {
       decadeFortunes.forEach((df, index) => {
         // 大运起始年份需要根据推算：出生年 + 起运岁数 + 10 * index
         // 注意：DecadeFortune.getStartAge() 返回的是岁数
-        const startAgeDaYun = df.getStartAge()
-        const cycleStartTime = shiftSolarDateTimeYears(firstCycleStartTime, index * 10)
-        const cycleEndTime = shiftSolarDateTimeYears(firstCycleStartTime, (index + 1) * 10)
-        const startYear = cycleStartTime.year
+        const startAgeDaYun = df.getStartAge();
+        const cycleStartTime = shiftSolarDateTimeYears(firstCycleStartTime, index * 10);
+        const cycleEndTime = shiftSolarDateTimeYears(firstCycleStartTime, (index + 1) * 10);
+        const startYear = cycleStartTime.year;
 
-        const ganZhi = df.getName()
+        const ganZhi = df.getName();
 
         cycles.push({
           age: startAgeDaYun,
@@ -94,33 +104,33 @@ export class LuckCalculator {
           type: '大运',
           startSolarTime: cycleStartTime,
           endSolarTime: cycleEndTime,
-          years: [] // 稍后填充
-        })
-      })
+          years: [], // 稍后填充
+        });
+      });
 
       // 5. 填充大运流年
-      cycles.forEach(cycle => {
+      cycles.forEach((cycle) => {
         if (!cycle.isXiaoyun) {
           cycle.years = this.calculateLiunianForCycle(
             cycle.year, // 大运开始年份
             birthYear,
             dayMaster,
             cycle.endSolarTime,
-            startFortune
-          )
+            startFortune,
+          );
         }
-      })
-      this.attachResolvedYears(cycles)
+      });
+      this.attachResolvedYears(cycles);
 
-      const handoverInfoText = this.getHandoverInfo(firstCycleStartTime)
+      const handoverInfoText = this.getHandoverInfo(firstCycleStartTime);
 
       return {
         startInfo: startInfoText,
         handoverInfo: handoverInfoText,
-        cycles
-      }
+        cycles,
+      };
     } catch {
-      return { startInfo: '计算失败', handoverInfo: '计算失败', cycles: [] }
+      return { startInfo: '计算失败', handoverInfo: '计算失败', cycles: [] };
     }
   }
 
@@ -132,20 +142,18 @@ export class LuckCalculator {
     birthYear: number,
     dayMaster: string,
     cycleEndTime?: SolarDateTimeInfo,
-    startFortune?: FortuneInstance
+    startFortune?: FortuneInstance,
   ): LiunianInfo[] {
-    const liunianList: LiunianInfo[] = []
-    const yearCount = cycleEndTime
-      ? this.getCycleCalendarYearCount(startYear, cycleEndTime)
-      : 10
+    const liunianList: LiunianInfo[] = [];
+    const yearCount = cycleEndTime ? this.getCycleCalendarYearCount(startYear, cycleEndTime) : 10;
 
     for (let i = 0; i < yearCount; i++) {
-      const currentYear = startYear + i
-      const age = currentYear - birthYear + 1
-      const liunian = this.calculateLiunian(currentYear, dayMaster)
+      const currentYear = startYear + i;
+      const age = currentYear - birthYear + 1;
+      const liunian = this.calculateLiunian(currentYear, dayMaster);
       const xiaoyun = startFortune
         ? this.getXiaoyunForAge(startFortune, age, dayMaster)
-        : undefined
+        : undefined;
 
       liunianList.push({
         year: currentYear,
@@ -153,32 +161,37 @@ export class LuckCalculator {
         ganZhi: liunian.ganZhi,
         tenGod: liunian.tenGod,
         tenGodZhi: liunian.tenGodZhi,
-        xiaoyun
-      })
+        xiaoyun,
+      });
     }
-    return liunianList
+    return liunianList;
   }
 
-  private getXiaoyunForAge(startFortune: FortuneInstance, age: number, dayMaster: string): XiaoyunInfo {
-    const fortune = startFortune.next(age - startFortune.getAge())
-    const ganZhi = fortune.getName()
+  private getXiaoyunForAge(
+    startFortune: FortuneInstance,
+    age: number,
+    dayMaster: string,
+  ): XiaoyunInfo {
+    const fortune = startFortune.next(age - startFortune.getAge());
+    const ganZhi = fortune.getName();
 
     return {
       ganZhi,
       tenGod: getTenGod(ganZhi[0], dayMaster),
-      tenGodZhi: getTenGodForBranch(ganZhi[1], dayMaster)
-    }
+      tenGodZhi: getTenGodForBranch(ganZhi[1], dayMaster),
+    };
   }
 
   private attachResolvedYears(cycles: LuckCycle[]) {
     cycles.forEach((cycle, index) => {
-      const nextCycle = cycles[index + 1]
-      const nextStartYear = nextCycle?.year
+      const nextCycle = cycles[index + 1];
+      const nextStartYear = nextCycle?.year;
 
-      cycle.resolvedYears = typeof nextStartYear === 'number'
-        ? cycle.years.filter(item => item.year < nextStartYear)
-        : [...cycle.years]
-    })
+      cycle.resolvedYears =
+        typeof nextStartYear === 'number'
+          ? cycle.years.filter((item) => item.year < nextStartYear)
+          : [...cycle.years];
+    });
   }
 
   /**
@@ -187,25 +200,25 @@ export class LuckCalculator {
   private calculateLiunian(year: number, dayMaster: string) {
     try {
       // 使用年中(6月)计算该年干支，避免年初年末边界问题
-      const solarTime = SolarTime.fromYmdHms(year, 6, 1, 0, 0, 0)
-      const yearPillar = solarTime.getLunarHour().getEightChar().getYear()
-      const gan = yearPillar.getHeavenStem().getName()
-      const zhi = yearPillar.getEarthBranch().getName()
+      const solarTime = SolarTime.fromYmdHms(year, 6, 1, 0, 0, 0);
+      const yearPillar = solarTime.getLunarHour().getEightChar().getYear();
+      const gan = yearPillar.getHeavenStem().getName();
+      const zhi = yearPillar.getEarthBranch().getName();
       return {
         ganZhi: `${gan}${zhi}`,
         tenGod: getTenGod(gan, dayMaster),
-        tenGodZhi: getTenGodForBranch(zhi, dayMaster)
-      }
-    } catch (error) {
-      const ganIndex = (year - 4) % 10
-      const zhiIndex = (year - 4) % 12
-      const gan = BASIC_MAPPINGS.HEAVENLY_STEMS[ganIndex]
-      const zhi = BASIC_MAPPINGS.EARTHLY_BRANCHES[zhiIndex]
+        tenGodZhi: getTenGodForBranch(zhi, dayMaster),
+      };
+    } catch (_error) {
+      const ganIndex = (year - 4) % 10;
+      const zhiIndex = (year - 4) % 12;
+      const gan = BASIC_MAPPINGS.HEAVENLY_STEMS[ganIndex];
+      const zhi = BASIC_MAPPINGS.EARTHLY_BRANCHES[zhiIndex];
       return {
         ganZhi: `${gan}${zhi}`,
         tenGod: getTenGod(gan, dayMaster),
-        tenGodZhi: getTenGodForBranch(zhi, dayMaster)
-      }
+        tenGodZhi: getTenGodForBranch(zhi, dayMaster),
+      };
     }
   }
 
@@ -214,34 +227,42 @@ export class LuckCalculator {
    * 根据起运月份推算交运时机
    */
   private getHandoverInfo(firstCycleStartTime: SolarDateTimeInfo): string {
-    return `首运于公历 ${formatSolarDateTime(firstCycleStartTime, true)} 交脱大运，此后每隔十年于该日前后换运`
+    return `首运于公历 ${formatSolarDateTime(firstCycleStartTime, true)} 交脱大运，此后每隔十年于该日前后换运`;
   }
 
   private shouldIncludeBoundaryYear(cycleEndTime: SolarDateTimeInfo): boolean {
-    return cycleEndTime.month !== 1 ||
+    return (
+      cycleEndTime.month !== 1 ||
       cycleEndTime.day !== 1 ||
       cycleEndTime.hour !== 0 ||
       cycleEndTime.minute !== 0 ||
       cycleEndTime.second !== 0
+    );
   }
 
   private getCycleCalendarYearCount(startYear: number, cycleEndTime: SolarDateTimeInfo): number {
-    const baseCount = cycleEndTime.year - startYear
-    return Math.max(baseCount + (this.shouldIncludeBoundaryYear(cycleEndTime) ? 1 : 0), 1)
+    const baseCount = cycleEndTime.year - startYear;
+    return Math.max(baseCount + (this.shouldIncludeBoundaryYear(cycleEndTime) ? 1 : 0), 1);
   }
 
-  private getStartInfoText(startAge: number, startMonth: number, startDay: number, startHour: number, startMinute: number): string {
-    const baseParts = [`出生后 ${startAge} 年 ${startMonth} 月 ${startDay} 天`]
+  private getStartInfoText(
+    startAge: number,
+    startMonth: number,
+    startDay: number,
+    startHour: number,
+    startMinute: number,
+  ): string {
+    const baseParts = [`出生后 ${startAge} 年 ${startMonth} 月 ${startDay} 天`];
 
     if (startHour > 0) {
-      baseParts.push(`${startHour} 小时`)
+      baseParts.push(`${startHour} 小时`);
     }
 
     if (startMinute > 0) {
-      baseParts.push(`${startMinute} 分`)
+      baseParts.push(`${startMinute} 分`);
     }
 
-    baseParts.push('起运')
-    return baseParts.join(' ')
+    baseParts.push('起运');
+    return baseParts.join(' ');
   }
 }

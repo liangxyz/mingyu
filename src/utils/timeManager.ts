@@ -50,7 +50,10 @@ export class TimeManager {
   /**
    * 在指定时区偏移下提取年月日时分（不改变原始时间戳）
    */
-  private static getDatePartsInOffset(date: Date, offsetMinutes: number): {
+  private static getDatePartsInOffset(
+    date: Date,
+    offsetMinutes: number,
+  ): {
     year: number;
     month: number;
     day: number;
@@ -77,7 +80,7 @@ export class TimeManager {
     const timeInfo = this.getTimeInfo(targetTime);
     const ganzhi = this.getGanZhi(targetTime);
     const timestamp = targetTime.getTime();
-    
+
     return { timeInfo, ganzhi, timestamp };
   }
 
@@ -94,7 +97,7 @@ export class TimeManager {
     const c = 1013904223;
     const m = 2147483647;
     const result = (a * seed + c) % m;
-    return (result % range + range) % range;
+    return ((result % range) + range) % range;
   }
 
   /**
@@ -109,8 +112,8 @@ export class TimeManager {
       // 按三钱法逐币起爻，保持时间起卦的确定性。
       yaos.push(
         this.generateYaoByCoinMethod((coinIndex) =>
-          this.getSeededRandom(timestamp + i * 1000 + coinIndex * 97, 2)
-        )
+          this.getSeededRandom(timestamp + i * 1000 + coinIndex * 97, 2),
+        ),
       );
     }
     return yaos;
@@ -146,7 +149,14 @@ export class TimeManager {
   private static getGanZhi(date: Date): GanZhiInfo {
     const offsetMinutes = this.getTimezoneOffsetMinutes(date);
     const parts = this.getDatePartsInOffset(date, offsetMinutes);
-    const solarTime = SolarTime.fromYmdHms(parts.year, parts.month, parts.day, parts.hour, parts.minute, 0);
+    const solarTime = SolarTime.fromYmdHms(
+      parts.year,
+      parts.month,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      0,
+    );
     const lunarHour = solarTime.getLunarHour();
     const lunarDay = lunarHour.getLunarDay();
 
@@ -164,7 +174,14 @@ export class TimeManager {
   private static getTimeInfo(date: Date): TimeInfo {
     const offsetMinutes = this.getTimezoneOffsetMinutes(date);
     const parts = this.getDatePartsInOffset(date, offsetMinutes);
-    const solarTime = SolarTime.fromYmdHms(parts.year, parts.month, parts.day, parts.hour, parts.minute, 0);
+    const solarTime = SolarTime.fromYmdHms(
+      parts.year,
+      parts.month,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      0,
+    );
     const solarDay = solarTime.getSolarDay();
     const lunarHour = solarTime.getLunarHour();
     const lunarDay = lunarHour.getLunarDay();

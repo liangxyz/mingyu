@@ -34,9 +34,7 @@ function timeToIndex(hour: number) {
   return Math.floor((hour + 1) / 2);
 }
 
-export async function buildAstrolabeFromInput(
-  input: ChartInput,
-): Promise<FunctionalAstrolabe> {
+export async function buildAstrolabeFromInput(input: ChartInput): Promise<FunctionalAstrolabe> {
   const normalized = normalizeChartInput(input);
   const { astro } = await import('iztro');
 
@@ -90,4 +88,3 @@ export function shiftLocalDate(
 
   return formatLocalDate(date);
 }
-

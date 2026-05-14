@@ -1,5 +1,6 @@
 import type { QueryInputState } from '@/lib/query-state';
 import type { DivinationDraft, DivinationSession } from '@/lib/divination/engine';
+import { safeStorage } from '@/lib/safe-storage';
 
 const PERSONAL_HISTORY_STORAGE_KEY = 'prompt_studio_personal_history_v1';
 const COMPATIBILITY_HISTORY_STORAGE_KEY = 'prompt_studio_compatibility_history_v1';
@@ -37,40 +38,13 @@ export type DivinationHistoryRecord = {
   updatedAt: string;
 };
 
-function getStorage() {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  return window.localStorage;
-}
-
 function readRecords<T>(key: string): T[] {
-  const storage = getStorage();
-  if (!storage) {
-    return [];
-  }
-
-  try {
-    const raw = storage.getItem(key);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as T[]) : [];
-  } catch {
-    return [];
-  }
+  const parsed = safeStorage.getJSON<unknown>(key, null);
+  return Array.isArray(parsed) ? (parsed as T[]) : [];
 }
 
-function writeRecords<T>(key: string, records: T[]) {
-  const storage = getStorage();
-  if (!storage) {
-    return;
-  }
-
-  storage.setItem(key, JSON.stringify(records.slice(0, MAX_HISTORY_RECORDS)));
+function writeRecords<T>(key: string, records: T[]): boolean {
+  return safeStorage.setJSON(key, records.slice(0, MAX_HISTORY_RECORDS));
 }
 
 function normalizeText(value: string) {

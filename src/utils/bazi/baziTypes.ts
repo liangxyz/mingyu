@@ -3,8 +3,8 @@
  * @description Contains all shared type definitions and interfaces for the Bazi calculation engine.
  */
 
-export const WUXING = ['木', '火', '土', '金', '水'] as const
-export type Wuxing = typeof WUXING[number];
+export const WUXING = ['木', '火', '土', '金', '水'] as const;
+export type Wuxing = (typeof WUXING)[number];
 
 export type CommanderEntry = [string, number];
 
@@ -231,8 +231,8 @@ export interface BaziAnalysisResult {
   usefulGod: UsefulGodAnalysis; // 升级为完整对象
 }
 
-import { SolarTime } from 'tyme4ts'
-type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>
+import { SolarTime } from 'tyme4ts';
+type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>;
 
 interface NamedValue {
   getName(): string;

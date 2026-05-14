@@ -1,0 +1,42 @@
+import type { ClimateRule } from '../types';
+
+export const YI_SI_CLIMATE_RULES: ClimateRule[] = [
+  {
+    id: 'si-month-yi-bing-gui-first',
+    label: '乙日巳月先丙后癸规则',
+    description: '乙木生巳月，火旺木焚，传统多以丙火为先、癸水次之，先制火护木。',
+    priority: 121,
+    months: ['巳'],
+    dayMasters: ['木'],
+    dayStems: ['乙'],
+    usefulWuxing: '火',
+    favorableOrder: ['火', '水'],
+    hint: '乙木巳月，先丙后癸',
+  },
+  {
+    id: 'si-month-yi-bing-gui-geng-all',
+    label: '乙日巳月丙癸庚全透极品规则',
+    description: '乙木生巳月，丙癸庚三者全透，较合原文"乙木生巳月，三者全透，鼎甲可期"。',
+    priority: 126,
+    months: ['巳'],
+    dayMasters: ['木'],
+    dayStems: ['乙'],
+    requiredVisibleStems: ['丙', '癸', '庚'],
+    usefulWuxing: '火',
+    favorableOrder: ['火', '水', '金'],
+    traceHints: ['取用层次:丙癸庚三者全透', '成格层次:鼎甲可期'],
+    hint: '乙木巳月丙癸庚三者全透，鼎甲可期',
+  },
+  {
+    id: 'si-month-yi-bing-gui-second',
+    label: '乙日巳月丙火为先癸水为次规则',
+    description: '乙木生巳月，丙火司权制刃，传统以丙火为君、癸水为臣，较夏木泛化更细。',
+    priority: 120,
+    months: ['巳'],
+    dayMasters: ['木'],
+    dayStems: ['乙'],
+    usefulWuxing: '火',
+    favorableOrder: ['火', '水'],
+    hint: '乙木巳月，丙火为先，癸水为次',
+  },
+];

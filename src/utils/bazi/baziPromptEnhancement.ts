@@ -3,7 +3,7 @@
  * 整合病药法、通关法、经典格局、神煞详解、命局分析维度
  */
 
-import type { BaziChartResult } from './baziTypes'
+import type { BaziChartResult } from './baziTypes';
 import {
   identifyClassicPattern,
   getPeachBlossomDetail,
@@ -14,22 +14,22 @@ import {
   generateParentsAnalysisHints,
   generateSiblingsAnalysisHints,
   detectDiseaseMedicine,
-  detectTongguanNeed
-} from './baziEnhancement'
+  detectTongguanNeed,
+} from './baziEnhancement';
 
 /**
  * 分析维度配置
  */
 interface AnalysisDimensionConfig {
-  includeDiseaseMedicine: boolean     // 病药法分析
-  includeTongguan: boolean           // 通关法分析
-  includeClassicPattern: boolean     // 经典格局分析
-  includePeachBlossomDetail: boolean // 桃花详解
-  includeLifespan: boolean          // 寿元分析
-  includeFuxin: boolean             // 伏吟反吟
-  includeKongWang: boolean          // 空亡详解
-  includeXingChong: boolean          // 刑冲合会破
-  includePeriod: boolean            // 限运分析
+  includeDiseaseMedicine: boolean; // 病药法分析
+  includeTongguan: boolean; // 通关法分析
+  includeClassicPattern: boolean; // 经典格局分析
+  includePeachBlossomDetail: boolean; // 桃花详解
+  includeLifespan: boolean; // 寿元分析
+  includeFuxin: boolean; // 伏吟反吟
+  includeKongWang: boolean; // 空亡详解
+  includeXingChong: boolean; // 刑冲合会破
+  includePeriod: boolean; // 限运分析
 }
 
 /**
@@ -44,8 +44,8 @@ const DEFAULT_ANALYSIS_DIMENSIONS: AnalysisDimensionConfig = {
   includeFuxin: false,
   includeKongWang: false,
   includeXingChong: false,
-  includePeriod: false
-}
+  includePeriod: false,
+};
 
 /**
  * 场景对应的分析维度
@@ -60,7 +60,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: true,
     includeKongWang: true,
     includeXingChong: true,
-    includePeriod: false
+    includePeriod: false,
   },
   career: {
     includeDiseaseMedicine: true,
@@ -71,7 +71,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: false,
     includeKongWang: false,
     includeXingChong: true,
-    includePeriod: true
+    includePeriod: true,
   },
   health: {
     includeDiseaseMedicine: true,
@@ -82,7 +82,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: false,
     includeKongWang: false,
     includeXingChong: false,
-    includePeriod: false
+    includePeriod: false,
   },
   wealth: {
     includeDiseaseMedicine: true,
@@ -93,7 +93,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: false,
     includeKongWang: true,
     includeXingChong: true,
-    includePeriod: false
+    includePeriod: false,
   },
   study: {
     includeDiseaseMedicine: false,
@@ -104,7 +104,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: false,
     includeKongWang: false,
     includeXingChong: false,
-    includePeriod: true
+    includePeriod: true,
   },
   children: {
     includeDiseaseMedicine: true,
@@ -115,7 +115,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: true,
     includeKongWang: true,
     includeXingChong: true,
-    includePeriod: false
+    includePeriod: false,
   },
   parents: {
     includeDiseaseMedicine: true,
@@ -126,7 +126,7 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: false,
     includeKongWang: true,
     includeXingChong: true,
-    includePeriod: false
+    includePeriod: false,
   },
   general: {
     includeDiseaseMedicine: true,
@@ -137,65 +137,67 @@ const SCENE_ANALYSIS_DIMENSIONS: Record<string, AnalysisDimensionConfig> = {
     includeFuxin: false,
     includeKongWang: false,
     includeXingChong: false,
-    includePeriod: false
-  }
-}
+    includePeriod: false,
+  },
+};
 
 /**
  * 生成经典格局分析片段
  */
 function generateClassicPatternSection(chartResult: BaziChartResult): string {
-  if (!chartResult.pillars) return ''
+  if (!chartResult.pillars) return '';
 
-  const dayStem = chartResult.pillars.day.gan
-  const monthBranch = chartResult.pillars.month.zhi
+  const dayStem = chartResult.pillars.day.gan;
+  const monthBranch = chartResult.pillars.month.zhi;
 
   const classicPattern = identifyClassicPattern(
     dayStem,
     monthBranch,
     chartResult.pillars,
     chartResult.hiddenStems,
-    chartResult.analysis?.mingGe?.pattern
-  )
+    chartResult.analysis?.mingGe?.pattern,
+  );
 
-  if (!classicPattern) return ''
+  if (!classicPattern) return '';
 
-  return `【经典格局】${classicPattern.name}(${classicPattern.level}) | ${classicPattern.description} | 喜:${classicPattern.favorableWuxing.join('、')} 忌:${classicPattern.unfavorableWuxing.join('、')}`
+  return `【经典格局】${classicPattern.name}(${classicPattern.level}) | ${classicPattern.description} | 喜:${classicPattern.favorableWuxing.join('、')} 忌:${classicPattern.unfavorableWuxing.join('、')}`;
 }
 
 /**
  * 生成桃花详解片段
  */
 function generatePeachBlossomDetailSection(chartResult: BaziChartResult): string {
-  const taohuaShensha = chartResult.shensha?.global?.find(s => s.includes('桃花'))
-  if (!taohuaShensha) return ''
+  const taohuaShensha = chartResult.shensha?.global?.find((s) => s.includes('桃花'));
+  if (!taohuaShensha) return '';
 
-  const lines = [`【桃花详解】命带桃花：${taohuaShensha}`]
-  const pillarNames = ['year', 'month', 'day', 'hour'] as const
-  const pillarLabels = { year: '年柱', month: '月柱', day: '日柱', hour: '时柱' } as const
+  const lines = [`【桃花详解】命带桃花：${taohuaShensha}`];
+  const pillarNames = ['year', 'month', 'day', 'hour'] as const;
+  const pillarLabels = { year: '年柱', month: '月柱', day: '日柱', hour: '时柱' } as const;
   for (const pillar of pillarNames) {
-    const pillarTaohua = chartResult.shensha?.[pillar]?.find(s => s.includes('桃花'))
+    const pillarTaohua = chartResult.shensha?.[pillar]?.find((s) => s.includes('桃花'));
     if (pillarTaohua) {
-      const d = getPeachBlossomDetail(pillar)
-      lines.push(`${pillarLabels[pillar]}:${d.type} | ${d.description} | 利:${d.favorable} 忌:${d.unfavorable}`)
+      const d = getPeachBlossomDetail(pillar);
+      lines.push(
+        `${pillarLabels[pillar]}:${d.type} | ${d.description} | 利:${d.favorable} 忌:${d.unfavorable}`,
+      );
     }
   }
 
-  return lines.join('\n')
+  return lines.join('\n');
 }
 
 /**
  * 生成限运分析片段
  */
 function generatePeriodAnalysisSection(chartResult: BaziChartResult): string {
-  const { analysis } = chartResult
+  const { analysis } = chartResult;
   const period = generatePeriodAnalysis(
     analysis.mingGe,
     analysis.dayMasterStrength.status,
-    chartResult.pillars?.day.gan || ''
-  )
+    chartResult.pillars?.day.gan || '',
+  );
 
-  return `【限运分析】少年(1-16):${period.earlyStage.description}重点:${period.earlyStage.focus.join('、')}；青中年(17-45):${period.midStage.description}重点:${period.midStage.focus.join('、')}；中老年(46+):${period.lateStage.description}重点:${period.lateStage.focus.join('、')}`
+  return `【限运分析】少年(1-16):${period.earlyStage.description}重点:${period.earlyStage.focus.join('、')}；青中年(17-45):${period.midStage.description}重点:${period.midStage.focus.join('、')}；中老年(46+):${period.lateStage.description}重点:${period.lateStage.focus.join('、')}`;
 }
 
 /**
@@ -203,95 +205,99 @@ function generatePeriodAnalysisSection(chartResult: BaziChartResult): string {
  */
 export function generateEnhancedAnalysisSection(
   chartResult: BaziChartResult,
-  scene: string = 'general'
+  scene: string = 'general',
 ): string {
-  const config = SCENE_ANALYSIS_DIMENSIONS[scene] || DEFAULT_ANALYSIS_DIMENSIONS
-  const sections: string[] = []
+  const config = SCENE_ANALYSIS_DIMENSIONS[scene] || DEFAULT_ANALYSIS_DIMENSIONS;
+  const sections: string[] = [];
 
   // 病药法
   if (config.includeDiseaseMedicine) {
-    const wuxingCounts = chartResult.wuxingStrength?.percentages
+    const wuxingCounts = chartResult.wuxingStrength?.percentages;
     if (wuxingCounts && chartResult.analysis?.mingGe) {
       const dm = detectDiseaseMedicine(
         wuxingCounts,
         chartResult.analysis.mingGe,
-        chartResult.analysis.dayMasterStrength.status
-      )
+        chartResult.analysis.dayMasterStrength.status,
+      );
       if (dm.hasDisease) {
-        sections.push(`【病药法】病:${dm.disease} | 药:${dm.medicine}`)
+        sections.push(`【病药法】病:${dm.disease} | 药:${dm.medicine}`);
       }
     }
   }
 
   // 通关法
   if (config.includeTongguan) {
-    const wuxingCounts = chartResult.wuxingStrength?.percentages
-    const favorableWuxing = chartResult.analysis?.usefulGod?.favorableWuxing || []
-    const unfavorableWuxing = chartResult.analysis?.usefulGod?.unfavorableWuxing || []
+    const wuxingCounts = chartResult.wuxingStrength?.percentages;
+    const favorableWuxing = chartResult.analysis?.usefulGod?.favorableWuxing || [];
+    const unfavorableWuxing = chartResult.analysis?.usefulGod?.unfavorableWuxing || [];
     if (wuxingCounts && favorableWuxing.length > 0) {
-      const tg = detectTongguanNeed(wuxingCounts, favorableWuxing, unfavorableWuxing)
+      const tg = detectTongguanNeed(wuxingCounts, favorableWuxing, unfavorableWuxing);
       if (tg.need && tg.conflict && tg.tongguan) {
-        sections.push(`【通关法】${tg.conflict[0]}与${tg.conflict[1]}相战，以${tg.tongguan}通关调和`)
+        sections.push(
+          `【通关法】${tg.conflict[0]}与${tg.conflict[1]}相战，以${tg.tongguan}通关调和`,
+        );
       }
     }
   }
 
   // 经典格局
   if (config.includeClassicPattern) {
-    const classicSection = generateClassicPatternSection(chartResult)
-    if (classicSection) sections.push(classicSection)
+    const classicSection = generateClassicPatternSection(chartResult);
+    if (classicSection) sections.push(classicSection);
   }
 
   // 桃花详解
   if (config.includePeachBlossomDetail) {
-    const taohuaSection = generatePeachBlossomDetailSection(chartResult)
-    if (taohuaSection) sections.push(taohuaSection)
+    const taohuaSection = generatePeachBlossomDetailSection(chartResult);
+    if (taohuaSection) sections.push(taohuaSection);
   }
 
   // 伏吟反吟
   if (config.includeFuxin) {
-    sections.push(generateAnalysisDimensionHints('fuxin'))
+    sections.push(generateAnalysisDimensionHints('fuxin'));
   }
 
   // 空亡详解
   if (config.includeKongWang) {
-    sections.push(generateAnalysisDimensionHints('kongwang'))
+    sections.push(generateAnalysisDimensionHints('kongwang'));
   }
 
   // 刑冲合会破
   if (config.includeXingChong) {
-    sections.push(generateAnalysisDimensionHints('xingchong'))
+    sections.push(generateAnalysisDimensionHints('xingchong'));
   }
 
   // 限运分析
   if (config.includePeriod) {
-    const periodSection = generatePeriodAnalysisSection(chartResult)
-    if (periodSection) sections.push(periodSection)
+    const periodSection = generatePeriodAnalysisSection(chartResult);
+    if (periodSection) sections.push(periodSection);
   }
 
   // 寿元分析
   if (config.includeLifespan) {
-    sections.push(generateAnalysisDimensionHints('lifespan'))
+    sections.push(generateAnalysisDimensionHints('lifespan'));
   }
 
-  return sections.join('\n\n')
+  return sections.join('\n\n');
 }
 
 /**
  * 生成合盘分析增强片段
  */
-export function generateCompatibilityEnhancedSection(type: 'marriage' | 'children' | 'parents' | 'siblings'): string {
+export function generateCompatibilityEnhancedSection(
+  type: 'marriage' | 'children' | 'parents' | 'siblings',
+): string {
   switch (type) {
     case 'marriage':
-      return generateMarriageMatchHints()
+      return generateMarriageMatchHints();
     case 'children':
-      return generateChildrenFateHints()
+      return generateChildrenFateHints();
     case 'parents':
-      return generateParentsAnalysisHints()
+      return generateParentsAnalysisHints();
     case 'siblings':
-      return generateSiblingsAnalysisHints()
+      return generateSiblingsAnalysisHints();
     default:
-      return ''
+      return '';
   }
 }
 
@@ -299,16 +305,16 @@ export function generateCompatibilityEnhancedSection(type: 'marriage' | 'childre
  * 根据问题文本推断分析场景
  */
 export function detectQuestionScene(questionText: string): string {
-  const text = questionText.trim()
-  if (!text) return 'general'
+  const text = questionText.trim();
+  if (!text) return 'general';
 
-  if (/婚|恋|感情|配[偶偶]|伴侣|夫妻|姻缘/.test(text)) return 'marriage'
-  if (/事业|工作|职业|创业|升职|跳槽/.test(text)) return 'career'
-  if (/财|投资|理财|偏财|正财/.test(text)) return 'wealth'
-  if (/健康|身体|疾病|体质/.test(text)) return 'health'
-  if (/子女|孩子|宝宝|生育|亲子/.test(text)) return 'children'
-  if (/父母|爸妈|赡养/.test(text)) return 'parents'
-  if (/学业|考试|升学/.test(text)) return 'study'
+  if (/婚|恋|感情|配[偶偶]|伴侣|夫妻|姻缘/.test(text)) return 'marriage';
+  if (/事业|工作|职业|创业|升职|跳槽/.test(text)) return 'career';
+  if (/财|投资|理财|偏财|正财/.test(text)) return 'wealth';
+  if (/健康|身体|疾病|体质/.test(text)) return 'health';
+  if (/子女|孩子|宝宝|生育|亲子/.test(text)) return 'children';
+  if (/父母|爸妈|赡养/.test(text)) return 'parents';
+  if (/学业|考试|升学/.test(text)) return 'study';
 
-  return 'general'
+  return 'general';
 }

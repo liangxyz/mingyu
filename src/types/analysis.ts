@@ -1,10 +1,4 @@
-export type ScopeType =
-  | 'origin'
-  | 'decadal'
-  | 'yearly'
-  | 'monthly'
-  | 'daily'
-  | 'hourly';
+export type ScopeType = 'origin' | 'decadal' | 'yearly' | 'monthly' | 'daily' | 'hourly' | 'age';
 
 export type MutagenName = '禄' | '权' | '科' | '忌';
 
@@ -15,6 +9,23 @@ export type AnalysisPayloadV1 = {
   active_scope: ActiveScopeInfo;
   palaces: PalaceFact[];
   evidence_pool: EvidenceFact[];
+  patterns?: PatternFact[];
+};
+
+export type FourPillars = {
+  year_pillar: string;
+  month_pillar: string;
+  day_pillar: string;
+  hour_pillar: string;
+};
+
+export type HiddenPalaces = {
+  body_palace_index?: number;
+  body_palace_name?: string;
+  original_palace_index?: number;
+  original_palace_name?: string;
+  anhe_palace_index?: number;
+  anhe_palace_name?: string;
 };
 
 export type BasicInfo = {
@@ -31,6 +42,8 @@ export type BasicInfo = {
   body: string;
   soul_palace_branch: string;
   body_palace_branch: string;
+  four_pillars?: FourPillars;
+  hidden_palaces?: HiddenPalaces;
 };
 
 export type ActiveScopeInfo = {
@@ -48,6 +61,14 @@ export type ActiveScopeInfo = {
 export type ScopeMutagenItem = {
   mutagen: MutagenName;
   star: string;
+  palace_index?: number;
+  palace_name?: string;
+};
+
+export type MutagedPlaceItem = {
+  mutagen: MutagenName;
+  palace_index?: number;
+  palace_name?: string;
 };
 
 export type PalaceFact = {
@@ -75,13 +96,17 @@ export type PalaceFact = {
   opposite_palace_index: number;
   surrounded_palace_indexes: number[];
   summary_tags: string[];
+  mutaged_palaces?: MutagedPlaceItem[];
+  self_mutagens?: MutagenName[];
 };
 
 export type StarFact = {
   name: string;
   kind: string;
+  scope?: string;
   brightness?: string;
   birth_mutagen?: MutagenName;
+  horoscope_mutagen?: MutagenName;
   active_scope_mutagen?: MutagenName;
 };
 
@@ -96,5 +121,16 @@ export type EvidenceFact = {
   star_names: string[];
   mutagens: string[];
   description: string;
+  priority: number;
+};
+
+export type PatternFact = {
+  id: string;
+  name: string;
+  kind: 'auspicious' | 'inauspicious' | 'neutral';
+  description: string;
+  palace_indexes: number[];
+  palace_names: string[];
+  star_names: string[];
   priority: number;
 };

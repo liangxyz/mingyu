@@ -17,7 +17,7 @@ interface QimenPriorityPalace {
 export function createQimenQuestionHints(
   question: string | undefined,
   data: QimenData,
-  supplementaryInfo?: SupplementaryInfo
+  supplementaryInfo?: SupplementaryInfo,
 ): QimenQuestionHint[] {
   if (!question?.trim()) {
     return [];
@@ -49,8 +49,16 @@ export function createQimenQuestionHints(
   if (analysis.types.isRelationship) {
     const relationParts = [
       buildGodHint(data, '六合', '可参六合'),
-      buildStemHint(data, '乙', supplementaryInfo?.gender === '男' ? '男测可重点看乙奇' : '乙奇可参'),
-      buildStemHint(data, '庚', supplementaryInfo?.gender === '女' ? '女测可重点看庚金' : '庚金可参'),
+      buildStemHint(
+        data,
+        '乙',
+        supplementaryInfo?.gender === '男' ? '男测可重点看乙奇' : '乙奇可参',
+      ),
+      buildStemHint(
+        data,
+        '庚',
+        supplementaryInfo?.gender === '女' ? '女测可重点看庚金' : '庚金可参',
+      ),
     ];
     hints.push({
       label: '感情参考',
@@ -71,9 +79,7 @@ export function createQimenQuestionHints(
   if (analysis.types.isStudy) {
     hints.push({
       label: '学业参考',
-      ...joinParts([
-        buildStarHint(data, '天辅', '首看天辅'),
-      ]),
+      ...joinParts([buildStarHint(data, '天辅', '首看天辅')]),
     });
   }
 
@@ -83,7 +89,7 @@ export function createQimenQuestionHints(
 export function createQimenPriorityPalaces(
   question: string | undefined,
   data: QimenData,
-  supplementaryInfo?: SupplementaryInfo
+  supplementaryInfo?: SupplementaryInfo,
 ): QimenPriorityPalace[] {
   const palaceMap = new Map<number, QimenPriorityPalace>();
 
@@ -125,7 +131,9 @@ export function createQimenPriorityPalaces(
   });
 
   data.patternDetails?.forEach((detail) => {
-    const matchedPalaces = data.jiuGongGe.filter((gong) => detail.tag.includes(`（${gong.name}`) || detail.tag.includes(`落${gong.name}`));
+    const matchedPalaces = data.jiuGongGe.filter(
+      (gong) => detail.tag.includes(`（${gong.name}`) || detail.tag.includes(`落${gong.name}`),
+    );
     matchedPalaces.forEach((gong) => {
       const palace = ensurePalace(gong.gong);
       if (!palace) return;
@@ -160,30 +168,58 @@ function getInsightScore(level: '有利' | '风险' | '关注'): number {
   }
 }
 
-function joinParts(parts: Array<{ text: string; gong?: number } | null>): { value: string; gongs: number[] } {
-  const validParts = parts.filter((part): part is { text: string; gong?: number } => !!part && !!part.text);
+function joinParts(parts: Array<{ text: string; gong?: number } | null>): {
+  value: string;
+  gongs: number[];
+} {
+  const validParts = parts.filter(
+    (part): part is { text: string; gong?: number } => !!part && !!part.text,
+  );
   return {
-    value: validParts.length > 0 ? validParts.map((part) => part.text).join('；') : '未命中对应参考宫位',
-    gongs: Array.from(new Set(validParts.map((part) => part.gong).filter((gong): gong is number => typeof gong === 'number'))),
+    value:
+      validParts.length > 0 ? validParts.map((part) => part.text).join('；') : '未命中对应参考宫位',
+    gongs: Array.from(
+      new Set(
+        validParts
+          .map((part) => part.gong)
+          .filter((gong): gong is number => typeof gong === 'number'),
+      ),
+    ),
   };
 }
 
-function buildDoorHint(data: QimenData, door: string, label: string): { text: string; gong: number } | null {
+function buildDoorHint(
+  data: QimenData,
+  door: string,
+  label: string,
+): { text: string; gong: number } | null {
   const gong = data.jiuGongGe.find((item) => item.renPan.door === door);
   return gong ? { text: `${label}，当前落${gong.name}`, gong: gong.gong } : null;
 }
 
-function buildGodHint(data: QimenData, god: string, label: string): { text: string; gong: number } | null {
+function buildGodHint(
+  data: QimenData,
+  god: string,
+  label: string,
+): { text: string; gong: number } | null {
   const gong = data.jiuGongGe.find((item) => item.shenPan.god === god);
   return gong ? { text: `${label}，当前落${gong.name}`, gong: gong.gong } : null;
 }
 
-function buildStarHint(data: QimenData, star: string, label: string): { text: string; gong: number } | null {
+function buildStarHint(
+  data: QimenData,
+  star: string,
+  label: string,
+): { text: string; gong: number } | null {
   const gong = data.jiuGongGe.find((item) => item.tianPan.star === star);
   return gong ? { text: `${label}，当前落${gong.name}`, gong: gong.gong } : null;
 }
 
-function buildStemHint(data: QimenData, stem: string, label: string): { text: string; gong?: number } | null {
+function buildStemHint(
+  data: QimenData,
+  stem: string,
+  label: string,
+): { text: string; gong?: number } | null {
   const tianGong = data.jiuGongGe.find((item) => item.tianPan.stem === stem);
   const diGong = data.jiuGongGe.find((item) => item.diPan.stem === stem);
   const parts: string[] = [];
@@ -198,7 +234,5 @@ function buildStemHint(data: QimenData, stem: string, label: string): { text: st
     gongs.push(diGong.gong);
   }
 
-  return parts.length > 0
-    ? { text: `${label}，${parts.join('，')}`, gong: gongs[0] }
-    : null;
+  return parts.length > 0 ? { text: `${label}，${parts.join('，')}`, gong: gongs[0] } : null;
 }

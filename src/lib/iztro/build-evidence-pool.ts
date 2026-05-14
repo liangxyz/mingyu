@@ -1,9 +1,26 @@
 import type { IFunctionalAstrolabe } from 'iztro/lib/astro/FunctionalAstrolabe';
 import type { IFunctionalHoroscope } from 'iztro/lib/astro/FunctionalHoroscope';
 import type { IFunctionalPalace } from 'iztro/lib/astro/FunctionalPalace';
-import type { EvidenceFact, PalaceFact, ScopeType } from '../../types/analysis';
+import type { EvidenceFact, MutagenName, PalaceFact, ScopeType } from '../../types/analysis';
 
 type EvidenceDraft = Omit<EvidenceFact, 'id'>;
+
+const MUTAGEN_LIST: MutagenName[] = ['禄', '权', '科', '忌'];
+
+const KEY_PALACE_NAMES = new Set([
+  '命宫',
+  '财帛',
+  '官禄',
+  '夫妻',
+  '福德',
+  '迁移',
+  '子女',
+  '田宅',
+  '疾厄',
+  '兄弟',
+  '父母',
+  '仆役',
+]);
 
 function buildStableKey(parts: Array<string | number | undefined>) {
   return parts.filter(Boolean).join(':');
@@ -23,13 +40,12 @@ function mapScopeLabel(scope: ScopeType): string {
       return '流日';
     case 'hourly':
       return '流时';
+    case 'age':
+      return '小限';
   }
 }
 
-function resolveCurrentScopeLabel(
-  horoscope: IFunctionalHoroscope,
-  currentScope: ScopeType,
-) {
+function resolveCurrentScopeLabel(horoscope: IFunctionalHoroscope, currentScope: ScopeType) {
   switch (currentScope) {
     case 'decadal':
       return horoscope.decadal.name || '大限';
@@ -41,6 +57,8 @@ function resolveCurrentScopeLabel(
       return horoscope.daily.name || '流日';
     case 'hourly':
       return horoscope.hourly.name || '流时';
+    case 'age':
+      return '小限';
     case 'origin':
     default:
       return mapScopeLabel(currentScope);
@@ -62,9 +80,7 @@ function collectPalaceEvidence(params: {
 }): EvidenceDraft[] {
   const { astrolabe, currentScope, currentScopeLabel, palace, palaces } = params;
   const drafts: EvidenceDraft[] = [];
-  const palaceObj = astrolabe.palace(palace.name as never) as
-    | IFunctionalPalace
-    | undefined;
+  const palaceObj = astrolabe.palace(palace.name as never) as IFunctionalPalace | undefined;
 
   if (!palaceObj) return drafts;
 
@@ -110,12 +126,7 @@ function collectPalaceEvidence(params: {
 
   birthMutagenStars.forEach((star) => {
     drafts.push({
-      stable_key: buildStableKey([
-        'birth-mutagen',
-        palace.index,
-        star.name,
-        star.birth_mutagen,
-      ]),
+      stable_key: buildStableKey(['birth-mutagen', palace.index, star.name, star.birth_mutagen]),
       type: 'palace_birth_mutagen',
       title: `${palace.name}见生年化${star.birth_mutagen}`,
       scope: 'origin',
@@ -157,11 +168,7 @@ function collectPalaceEvidence(params: {
 
   if (palace.scope_hits.length > 0) {
     drafts.push({
-      stable_key: buildStableKey([
-        'scope-hit',
-        palace.index,
-        palace.scope_hits.join('|'),
-      ]),
+      stable_key: buildStableKey(['scope-hit', palace.index, palace.scope_hits.join('|')]),
       type: 'palace_scope_hit',
       title: `${palace.scope_hits.join('、')}位于${palace.name}`,
       scope: currentScope,
@@ -176,36 +183,62 @@ function collectPalaceEvidence(params: {
 
   const surrounded = astrolabe.surroundedPalaces(palace.name as never);
 
-  if (surrounded.haveMutagen('忌' as never)) {
+  MUTAGEN_LIST.forEach((mutagen) => {
+    if (!surrounded.haveMutagen(mutagen as never)) return;
+    const priority = mutagen === '忌' ? 90 : mutagen === '禄' ? 88 : 82;
     drafts.push({
-      stable_key: buildStableKey(['surrounded-mutagen-ji', palace.index]),
+      stable_key: buildStableKey(['surrounded-mutagen', mutagen, palace.index]),
       type: 'surrounded_mutagen',
-      title: `${palace.name}三方四正见化忌`,
+      title: `${palace.name}三方四正见化${mutagen}`,
       scope: 'origin',
       palace_indexes: palace.surrounded_palace_indexes,
-      palace_names: getPalaceNamesByIndexes(
-        palaces,
-        palace.surrounded_palace_indexes,
-      ),
+      palace_names: getPalaceNamesByIndexes(palaces, palace.surrounded_palace_indexes),
       star_names: [],
-      mutagens: ['忌'],
-      description: `${palace.name}及其三方四正宫位中可见化忌信息。`,
-      priority: 90,
+      mutagens: [mutagen],
+      description: `${palace.name}及其三方四正宫位中可见化${mutagen}信息。`,
+      priority,
     });
-  }
+  });
 
-  if (palaceObj.selfMutagedOneOf()) {
+  const selfMutagens = palace.self_mutagens ?? [];
+  selfMutagens.forEach((mutagen) => {
     drafts.push({
-      stable_key: buildStableKey(['self-mutaged', palace.index]),
+      stable_key: buildStableKey(['self-mutaged', palace.index, mutagen]),
       type: 'palace_self_mutaged',
-      title: `${palace.name}出现自化`,
+      title: `${palace.name}出现自化${mutagen}`,
       scope: 'origin',
       palace_indexes: [palace.index],
       palace_names: [palace.name],
       star_names: [],
-      mutagens: [],
-      description: `${palace.name}存在自化现象，解读时需要提高权重。`,
-      priority: 75,
+      mutagens: [mutagen],
+      description: `${palace.name}存在自化${mutagen}，会牵动该宫主题与对宫的能量流向。`,
+      priority: mutagen === '忌' ? 82 : 75,
+    });
+  });
+
+  if (KEY_PALACE_NAMES.has(palace.name) && palace.mutaged_palaces) {
+    palace.mutaged_palaces.forEach((target) => {
+      if (target.palace_index === undefined || !target.palace_name) return;
+      const isToSelf = target.palace_index === palace.index;
+      drafts.push({
+        stable_key: buildStableKey([
+          'mutaged-place',
+          palace.index,
+          target.mutagen,
+          target.palace_index,
+        ]),
+        type: 'palace_mutaged_place',
+        title: `${palace.name}化${target.mutagen}入${target.palace_name}`,
+        scope: 'origin',
+        palace_indexes: [palace.index, target.palace_index],
+        palace_names: [palace.name, target.palace_name],
+        star_names: [],
+        mutagens: [target.mutagen],
+        description: isToSelf
+          ? `${palace.name}化${target.mutagen}回照自身，主该宫主题被自化${target.mutagen}牵动。`
+          : `${palace.name}的化${target.mutagen}飞入${target.palace_name}，主该方向与该宫主题产生连动。`,
+        priority: target.mutagen === '忌' ? 86 : target.mutagen === '禄' ? 84 : 78,
+      });
     });
   }
 

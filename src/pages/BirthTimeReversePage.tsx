@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageTopbar } from '@/components/PageTopbar';
 import { type PersonRole } from '@/lib/input-labels';
-import {
-  buildInputSearch,
-  parseInputState,
-} from '@/lib/query-state';
+import { buildInputSearch, parseInputState } from '@/lib/query-state';
 import {
   DEFAULT_REVERSE_BIRTH_TIME_FORM_DATA,
   REVERSE_BIRTH_TIME_SELECT_FIELDS,
@@ -15,24 +12,13 @@ import {
   type ReverseBirthTimeFormData,
 } from '@/lib/birth-time-reverse';
 import { shouldShowPromptShareButton } from '@/lib/prompt-page-rules';
-
-async function shareText(text: string) {
-  if (navigator.share) {
-    await navigator.share({ text });
-    return true;
-  }
-
-  return false;
-}
+import { useViewportWidth } from '@/hooks/useViewportWidth';
+import { usePromptCopyShare } from '@/hooks/usePromptCopyShare';
 
 export function BirthTimeReversePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [copyState, setCopyState] = useState('复制');
-  const [shareState, setShareState] = useState('分享');
-  const [viewportWidth, setViewportWidth] = useState(
-    typeof window === 'undefined' ? 1280 : window.innerWidth,
-  );
+  const viewportWidth = useViewportWidth(1280);
   const [formData, setFormData] = useState<ReverseBirthTimeFormData>(
     DEFAULT_REVERSE_BIRTH_TIME_FORM_DATA,
   );
@@ -45,31 +31,32 @@ export function BirthTimeReversePage() {
     return `?mode=${mode}&${buildInputSearch(searchParams)}`;
   }, [inputState.analysisMode, searchParams]);
 
-  const targetInput = target === 'partner'
-    ? {
-        gender: inputState.partnerGender,
-        dateType: inputState.partnerDateType,
-        year: inputState.partnerYear,
-        month: inputState.partnerMonth,
-        day: inputState.partnerDay,
-        isLeapMonth: inputState.partnerIsLeapMonth,
-      }
-    : {
-        gender: inputState.gender,
-        dateType: inputState.dateType,
-        year: inputState.year,
-        month: inputState.month,
-        day: inputState.day,
-        isLeapMonth: inputState.isLeapMonth,
-      };
-
   const profile = useMemo(() => {
+    const targetInput =
+      target === 'partner'
+        ? {
+            gender: inputState.partnerGender,
+            dateType: inputState.partnerDateType,
+            year: inputState.partnerYear,
+            month: inputState.partnerMonth,
+            day: inputState.partnerDay,
+            isLeapMonth: inputState.partnerIsLeapMonth,
+          }
+        : {
+            gender: inputState.gender,
+            dateType: inputState.dateType,
+            year: inputState.year,
+            month: inputState.month,
+            day: inputState.day,
+            isLeapMonth: inputState.isLeapMonth,
+          };
+
     try {
       return buildThreePillarsProfile(targetInput);
     } catch {
       return null;
     }
-  }, [targetInput]);
+  }, [target, inputState]);
 
   const promptText = useMemo(() => {
     if (!profile || !isReverseAvailable) {
@@ -82,23 +69,7 @@ export function BirthTimeReversePage() {
     });
   }, [formData, isReverseAvailable, profile]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    function handleResize() {
-      setViewportWidth(window.innerWidth);
-    }
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    setCopyState('复制');
-    setShareState('分享');
-  }, [promptText]);
+  const { copyState, shareState, handleCopy, handleShare } = usePromptCopyShare(promptText);
 
   function updateFormData<K extends keyof ReverseBirthTimeFormData>(
     key: K,
@@ -110,34 +81,6 @@ export function BirthTimeReversePage() {
     }));
   }
 
-  async function handleCopy() {
-    if (!promptText) {
-      setCopyState('暂无内容');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(promptText);
-      setCopyState('已复制');
-    } catch {
-      setCopyState('复制失败');
-    }
-  }
-
-  async function handleShare() {
-    if (!promptText) {
-      setShareState('暂无内容');
-      return;
-    }
-
-    try {
-      const ok = await shareText(promptText);
-      setShareState(ok ? '已调起系统分享' : '当前设备不支持系统分享');
-    } catch {
-      setShareState('分享失败');
-    }
-  }
-
   const showShareButton = shouldShowPromptShareButton({
     viewportWidth,
     hasNavigatorShare: typeof navigator !== 'undefined' && typeof navigator.share === 'function',
@@ -145,11 +88,7 @@ export function BirthTimeReversePage() {
 
   return (
     <div className="page-shell">
-      <PageTopbar
-        title="反推时辰"
-        wide
-        onBack={() => navigate(`/${backSearch}`)}
-      />
+      <PageTopbar title="反推时辰" wide onBack={() => navigate(`/${backSearch}`)} />
 
       <div className="workspace-grid">
         <section className="panel input-panel">
@@ -165,9 +104,7 @@ export function BirthTimeReversePage() {
               <div className="field-header">
                 <span>当前对象</span>
               </div>
-              <div className="prompt-send-tip">
-                所有选项都可以留空，只填你确定的部分即可。
-              </div>
+              <div className="prompt-send-tip">所有选项都可以留空，只填你确定的部分即可。</div>
             </div>
 
             {REVERSE_BIRTH_TIME_SELECT_FIELDS.map((field) => (
@@ -236,7 +173,9 @@ export function BirthTimeReversePage() {
           {!isReverseAvailable ? (
             <div className="prompt-send-tip">反推时辰提示词仅支持个人模式使用。</div>
           ) : !profile ? (
-            <div className="prompt-send-tip">请先返回输入页，补完整的出生年月日后再生成反推时辰提示词。</div>
+            <div className="prompt-send-tip">
+              请先返回输入页，补完整的出生年月日后再生成反推时辰提示词。
+            </div>
           ) : (
             <>
               <div className="prompt-send-tip">

@@ -1,4 +1,8 @@
-import { buildAstrolabeFromInput, buildHoroscope, shiftLocalDate } from '@/lib/iztro/runtime-helpers';
+import {
+  buildAstrolabeFromInput,
+  buildHoroscope,
+  shiftLocalDate,
+} from '@/lib/iztro/runtime-helpers';
 import type { ChartInput } from '@/types/chart';
 
 type DecadalOptionInput = {
@@ -95,11 +99,12 @@ self.onmessage = async (event: MessageEvent<ZiweiFortuneOptionsRequest>) => {
     ) {
       const dateStr = shiftLocalDate(event.data.birthSolarDate, age - 1, 'year');
       const horoscope = buildHoroscope(astrolabe, dateStr, event.data.hourIndex);
+      const year = getDateParts(dateStr).year;
       yearOptions.push({
-        year: getDateParts(dateStr).year,
+        year,
         age,
         dateStr,
-        label: horoscope.yearly.name || `${getDateParts(dateStr).year}`,
+        label: `${year}年`,
         ganZhi: `${horoscope.yearly.heavenlyStem}${horoscope.yearly.earthlyBranch}`,
       });
     }
@@ -114,10 +119,11 @@ self.onmessage = async (event: MessageEvent<ZiweiFortuneOptionsRequest>) => {
           const { year } = getDateParts(effectiveYearDateStr);
           const dateStr = `${year}-${String(index + 1).padStart(2, '0')}-15`;
           const horoscope = buildHoroscope(astrolabe, dateStr, event.data.hourIndex);
+          const monthNumber = index + 1;
           return {
-            month: index + 1,
+            month: monthNumber,
             dateStr,
-            label: horoscope.monthly.name || `${index + 1}月`,
+            label: `${monthNumber}月`,
             ganZhi: `${horoscope.monthly.heavenlyStem}${horoscope.monthly.earthlyBranch}`,
           };
         })
@@ -129,17 +135,25 @@ self.onmessage = async (event: MessageEvent<ZiweiFortuneOptionsRequest>) => {
       '';
 
     const dayOptions: DayOption[] = effectiveMonthDateStr
-      ? Array.from({ length: getDaysInMonth(getDateParts(effectiveMonthDateStr).year, getDateParts(effectiveMonthDateStr).month) }, (_, index) => {
-          const { year, month } = getDateParts(effectiveMonthDateStr);
-          const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
-          const horoscope = buildHoroscope(astrolabe, dateStr, event.data.hourIndex);
-          return {
-            day: index + 1,
-            dateStr,
-            label: formatMonthDayLabel(dateStr),
-            ganZhi: `${horoscope.daily.heavenlyStem}${horoscope.daily.earthlyBranch}`,
-          };
-        })
+      ? Array.from(
+          {
+            length: getDaysInMonth(
+              getDateParts(effectiveMonthDateStr).year,
+              getDateParts(effectiveMonthDateStr).month,
+            ),
+          },
+          (_, index) => {
+            const { year, month } = getDateParts(effectiveMonthDateStr);
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
+            const horoscope = buildHoroscope(astrolabe, dateStr, event.data.hourIndex);
+            return {
+              day: index + 1,
+              dateStr,
+              label: formatMonthDayLabel(dateStr),
+              ganZhi: `${horoscope.daily.heavenlyStem}${horoscope.daily.earthlyBranch}`,
+            };
+          },
+        )
       : [];
 
     const response: ZiweiFortuneOptionsResponse = {

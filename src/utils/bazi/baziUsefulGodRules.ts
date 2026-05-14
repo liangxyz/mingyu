@@ -2,7 +2,7 @@ export type UsefulGodWuxingBundle =
   | 'resource_companion_output'
   | 'wealth_officer'
   | 'output_wealth_officer'
-  | 'resource_companion'
+  | 'resource_companion';
 
 export interface BaseUsefulGodRule {
   id: string;
@@ -27,7 +27,7 @@ export const BASE_USEFUL_GOD_RULES: BaseUsefulGodRule[] = [
     favorable: 'resource_companion_output',
     unfavorable: 'wealth_officer',
     trace: '专旺格顺势取用',
-    primaryReason: '顺势'
+    primaryReason: '顺势',
   },
   {
     id: 'follow-special-weak',
@@ -38,7 +38,7 @@ export const BASE_USEFUL_GOD_RULES: BaseUsefulGodRule[] = [
     favorable: 'output_wealth_officer',
     unfavorable: 'resource_companion',
     trace: '从格从势取用',
-    primaryReason: '从势'
+    primaryReason: '从势',
   },
   {
     id: 'balance-strong',
@@ -49,7 +49,7 @@ export const BASE_USEFUL_GOD_RULES: BaseUsefulGodRule[] = [
     favorable: 'output_wealth_officer',
     unfavorable: 'resource_companion',
     trace: '身强取泄耗克',
-    primaryReason: '扶抑'
+    primaryReason: '扶抑',
   },
   {
     id: 'balance-weak',
@@ -60,6 +60,6 @@ export const BASE_USEFUL_GOD_RULES: BaseUsefulGodRule[] = [
     favorable: 'resource_companion',
     unfavorable: 'output_wealth_officer',
     trace: '身弱取印比',
-    primaryReason: '扶抑'
-  }
-]
+    primaryReason: '扶抑',
+  },
+];

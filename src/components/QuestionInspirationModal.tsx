@@ -48,7 +48,10 @@ export function QuestionInspirationModal(props: QuestionInspirationModalProps) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card question-inspiration-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="modal-card question-inspiration-modal"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="birth-place-modal-head question-inspiration-modal-head">
           <h2>{title}</h2>
           <button
@@ -102,7 +105,9 @@ export function QuestionInspirationModal(props: QuestionInspirationModalProps) {
                         className="question-inspiration-item"
                         onClick={() => onSelect(item.question)}
                       >
-                        {item.tag ? <span className="question-inspiration-tag">{item.tag}</span> : null}
+                        {item.tag ? (
+                          <span className="question-inspiration-tag">{item.tag}</span>
+                        ) : null}
                         <span>{item.question}</span>
                       </button>
                     ))}
@@ -114,7 +119,6 @@ export function QuestionInspirationModal(props: QuestionInspirationModalProps) {
         ) : (
           <div className="question-inspiration-empty">{emptyText}</div>
         )}
-
       </div>
     </div>
   );

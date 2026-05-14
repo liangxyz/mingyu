@@ -1,7 +1,8 @@
-import { SolarTime, SolarTerm } from 'tyme4ts'
+import { SolarTime, SolarTerm } from 'tyme4ts';
+import { EARTHLY_BRANCHES, ZODIACS } from './baziMappingsData';
 
-type SolarTermInstance = ReturnType<typeof SolarTerm.fromIndex>
-type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>
+type SolarTermInstance = ReturnType<typeof SolarTerm.fromIndex>;
+type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>;
 
 export interface BaziMonthInfo {
   index: number;
@@ -54,11 +55,11 @@ interface DetailedBaziMonthDayInfo extends BaziMonthDayInfo {
 }
 
 function formatNumber(value: number): string {
-  return String(value).padStart(2, '0')
+  return String(value).padStart(2, '0');
 }
 
 function formatSolarDateKey(year: number, month: number, day: number): string {
-  return `${year}-${formatNumber(month)}-${formatNumber(day)}`
+  return `${year}-${formatNumber(month)}-${formatNumber(day)}`;
 }
 
 function formatSolarDayKey(solarDay: {
@@ -66,11 +67,18 @@ function formatSolarDayKey(solarDay: {
   getMonth(): number;
   getDay(): number;
 }): string {
-  return formatSolarDateKey(solarDay.getYear(), solarDay.getMonth(), solarDay.getDay())
+  return formatSolarDateKey(solarDay.getYear(), solarDay.getMonth(), solarDay.getDay());
 }
 
-function createLocalDate(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): Date {
-  return new Date(year, month - 1, day, hour, minute, second, 0)
+function createLocalDate(
+  year: number,
+  month: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  second = 0,
+): Date {
+  return new Date(year, month - 1, day, hour, minute, second, 0);
 }
 
 function toNativeDate(time: {
@@ -87,47 +95,47 @@ function toNativeDate(time: {
     time.getDay(),
     time.getHour(),
     time.getMinute(),
-    time.getSecond()
-  )
+    time.getSecond(),
+  );
 }
 
 function formatDateTime(date: Date): string {
-  return `${date.getFullYear()}-${formatNumber(date.getMonth() + 1)}-${formatNumber(date.getDate())} ${formatNumber(date.getHours())}:${formatNumber(date.getMinutes())}`
+  return `${date.getFullYear()}-${formatNumber(date.getMonth() + 1)}-${formatNumber(date.getDate())} ${formatNumber(date.getHours())}:${formatNumber(date.getMinutes())}`;
 }
 
 function formatHourMinute(date: Date): string {
-  return `${formatNumber(date.getHours())}:${formatNumber(date.getMinutes())}`
+  return `${formatNumber(date.getHours())}:${formatNumber(date.getMinutes())}`;
 }
 
 function startOfLocalDay(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
 }
 
 function addLocalDays(date: Date, days: number) {
-  const next = new Date(date.getTime())
-  next.setDate(next.getDate() + days)
-  return next
+  const next = new Date(date.getTime());
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 function maxDate(left: Date, right: Date) {
-  return left.getTime() >= right.getTime() ? left : right
+  return left.getTime() >= right.getTime() ? left : right;
 }
 
 function minDate(left: Date, right: Date) {
-  return left.getTime() <= right.getTime() ? left : right
+  return left.getTime() <= right.getTime() ? left : right;
 }
 
 function buildTermDateMap(years: number[]): Map<string, string> {
-  const map = new Map<string, string>()
+  const map = new Map<string, string>();
 
   years.forEach((year) => {
     for (let i = 0; i < 24; i++) {
-      const term = SolarTerm.fromIndex(year, i)
-      map.set(formatSolarDayKey(term.getJulianDay().getSolarDay()), term.getName())
+      const term = SolarTerm.fromIndex(year, i);
+      map.set(formatSolarDayKey(term.getJulianDay().getSolarDay()), term.getName());
     }
-  })
+  });
 
-  return map
+  return map;
 }
 
 function collectSolarTerms(years: number[]): Array<{
@@ -135,33 +143,33 @@ function collectSolarTerms(years: number[]): Array<{
   jd: number;
   date: string;
 }> {
-  const termMap = new Map<string, { name: string; jd: number; date: string }>()
+  const termMap = new Map<string, { name: string; jd: number; date: string }>();
 
   years.forEach((year) => {
     for (let i = 0; i < 24; i++) {
-      const term = SolarTerm.fromIndex(year, i)
-      const solarDay = term.getJulianDay().getSolarDay()
+      const term = SolarTerm.fromIndex(year, i);
+      const solarDay = term.getJulianDay().getSolarDay();
       const entry = {
         name: term.getName(),
         jd: term.getJulianDay().getDay(),
         date: formatSolarDayKey(solarDay),
-      }
+      };
 
-      termMap.set(`${entry.name}-${entry.date}`, entry)
+      termMap.set(`${entry.name}-${entry.date}`, entry);
     }
-  })
+  });
 
-  return Array.from(termMap.values()).sort((left, right) => left.jd - right.jd)
+  return Array.from(termMap.values()).sort((left, right) => left.jd - right.jd);
 }
 
 function buildBaziMonthInfoFromTerm(term: SolarTermInstance, index: number): DetailedBaziMonthInfo {
-  const nextTerm = term.next(2)
-  const startSolarTime = term.getJulianDay().getSolarTime() as SolarTimeInstance
-  const endSolarTime = nextTerm.getJulianDay().getSolarTime() as SolarTimeInstance
-  const startAt = toNativeDate(startSolarTime)
-  const endAt = toNativeDate(endSolarTime)
-  const monthColumn = startSolarTime.next(60).getLunarHour().getEightChar().getMonth()
-  const zhi = monthColumn.getEarthBranch().getName()
+  const nextTerm = term.next(2);
+  const startSolarTime = term.getJulianDay().getSolarTime() as SolarTimeInstance;
+  const endSolarTime = nextTerm.getJulianDay().getSolarTime() as SolarTimeInstance;
+  const startAt = toNativeDate(startSolarTime);
+  const endAt = toNativeDate(endSolarTime);
+  const monthColumn = startSolarTime.next(60).getLunarHour().getEightChar().getMonth();
+  const zhi = monthColumn.getEarthBranch().getName();
 
   return {
     index,
@@ -174,58 +182,64 @@ function buildBaziMonthInfoFromTerm(term: SolarTermInstance, index: number): Det
     startTermName: term.getName(),
     endTermName: nextTerm.getName(),
     startAt,
-    endAt
-  }
+    endAt,
+  };
 }
 
 function getYearMonthsGanZhiDetailed(year: number): DetailedBaziMonthInfo[] {
-  return Array.from({ length: 12 }, (_, offset) => (
-    buildBaziMonthInfoFromTerm(SolarTerm.fromIndex(year, 3 + offset * 2), offset + 1)
-  ))
+  return Array.from({ length: 12 }, (_, offset) =>
+    buildBaziMonthInfoFromTerm(SolarTerm.fromIndex(year, 3 + offset * 2), offset + 1),
+  );
 }
 
 function getMonthDaysInfoDetailed(year: number, month: number): DetailedBaziMonthDayInfo[] {
-  const monthInfo = getYearMonthsGanZhiDetailed(year)[month - 1]
+  const monthInfo = getYearMonthsGanZhiDetailed(year)[month - 1];
   if (!monthInfo) {
-    return []
+    return [];
   }
 
-  const termDateMap = buildTermDateMap([
-    year - 1,
-    year,
-    year + 1,
-    year + 2
-  ])
-  const firstDay = startOfLocalDay(monthInfo.startAt)
-  const lastDay = startOfLocalDay(monthInfo.endAt)
-  const lastDayInclusive = monthInfo.endAt.getHours() === 0 && monthInfo.endAt.getMinutes() === 0 && monthInfo.endAt.getSeconds() === 0
-    ? addLocalDays(lastDay, -1)
-    : lastDay
-  const list: DetailedBaziMonthDayInfo[] = []
+  const termDateMap = buildTermDateMap([year - 1, year, year + 1, year + 2]);
+  const firstDay = startOfLocalDay(monthInfo.startAt);
+  const lastDay = startOfLocalDay(monthInfo.endAt);
+  const lastDayInclusive =
+    monthInfo.endAt.getHours() === 0 &&
+    monthInfo.endAt.getMinutes() === 0 &&
+    monthInfo.endAt.getSeconds() === 0
+      ? addLocalDays(lastDay, -1)
+      : lastDay;
+  const list: DetailedBaziMonthDayInfo[] = [];
 
-  for (let cursor = new Date(firstDay.getTime()); cursor.getTime() <= lastDayInclusive.getTime(); cursor = addLocalDays(cursor, 1)) {
-    const nextDay = addLocalDays(cursor, 1)
-    const sliceStart = maxDate(cursor, monthInfo.startAt)
-    const sliceEnd = minDate(nextDay, monthInfo.endAt)
+  for (
+    let cursor = new Date(firstDay.getTime());
+    cursor.getTime() <= lastDayInclusive.getTime();
+    cursor = addLocalDays(cursor, 1)
+  ) {
+    const nextDay = addLocalDays(cursor, 1);
+    const sliceStart = maxDate(cursor, monthInfo.startAt);
+    const sliceEnd = minDate(nextDay, monthInfo.endAt);
 
     if (sliceStart.getTime() >= sliceEnd.getTime()) {
-      continue
+      continue;
     }
 
-    const currentYear = cursor.getFullYear()
-    const currentMonth = cursor.getMonth() + 1
-    const currentDay = cursor.getDate()
-    const solarTime = SolarTime.fromYmdHms(currentYear, currentMonth, currentDay, 12, 0, 0)
-    const lunarHour = solarTime.getLunarHour()
-    const lunarDay = lunarHour.getLunarDay()
-    const solarDate = formatSolarDateKey(currentYear, currentMonth, currentDay)
-    const boundaryNotes: string[] = []
+    const currentYear = cursor.getFullYear();
+    const currentMonth = cursor.getMonth() + 1;
+    const currentDay = cursor.getDate();
+    const solarTime = SolarTime.fromYmdHms(currentYear, currentMonth, currentDay, 12, 0, 0);
+    const lunarHour = solarTime.getLunarHour();
+    const lunarDay = lunarHour.getLunarDay();
+    const solarDate = formatSolarDateKey(currentYear, currentMonth, currentDay);
+    const boundaryNotes: string[] = [];
 
     if (cursor.getTime() === firstDay.getTime() && sliceStart.getTime() > cursor.getTime()) {
-      boundaryNotes.push(`${monthInfo.startTermName}于${formatHourMinute(monthInfo.startAt)}交节，本日自该刻起进入${monthInfo.month}`)
+      boundaryNotes.push(
+        `${monthInfo.startTermName}于${formatHourMinute(monthInfo.startAt)}交节，本日自该刻起进入${monthInfo.month}`,
+      );
     }
     if (cursor.getTime() === lastDay.getTime() && sliceEnd.getTime() < nextDay.getTime()) {
-      boundaryNotes.push(`${monthInfo.endTermName}于${formatHourMinute(monthInfo.endAt)}交节，本日到该刻前仍属${monthInfo.month}`)
+      boundaryNotes.push(
+        `${monthInfo.endTermName}于${formatHourMinute(monthInfo.endAt)}交节，本日到该刻前仍属${monthInfo.month}`,
+      );
     }
 
     list.push({
@@ -239,59 +253,59 @@ function getMonthDaysInfoDetailed(year: number, month: number): DetailedBaziMont
       endDateTime: formatDateTime(new Date(sliceEnd.getTime() - 1000)),
       boundaryNote: boundaryNotes.join('；'),
       startAt: sliceStart,
-      endAt: sliceEnd
-    })
+      endAt: sliceEnd,
+    });
   }
 
-  return list
+  return list;
 }
 
 export function getCalendarInfo(date: Date = new Date()): CalendarInfo {
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const hour = date.getHours()
-  const minute = date.getMinutes()
-  const second = date.getSeconds()
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const second = date.getSeconds();
 
-  const solarTime = SolarTime.fromYmdHms(year, month, day, hour, minute, second)
-  const lunarHour = solarTime.getLunarHour()
-  const lunarDay = lunarHour.getLunarDay()
-  const lunarMonth = lunarDay.getLunarMonth()
-  const lunarYear = lunarMonth.getLunarYear()
+  const solarTime = SolarTime.fromYmdHms(year, month, day, hour, minute, second);
+  const lunarHour = solarTime.getLunarHour();
+  const lunarDay = lunarHour.getLunarDay();
+  const lunarMonth = lunarDay.getLunarMonth();
+  const lunarYear = lunarMonth.getLunarYear();
 
-  const eightChar = lunarHour.getEightChar()
-  const yearPillar = eightChar.getYear().getName()
-  const monthPillar = eightChar.getMonth().getName()
-  const dayPillar = eightChar.getDay().getName()
-  const hourPillar = eightChar.getHour().getName()
+  const eightChar = lunarHour.getEightChar();
+  const yearPillar = eightChar.getYear().getName();
+  const monthPillar = eightChar.getMonth().getName();
+  const dayPillar = eightChar.getDay().getName();
+  const hourPillar = eightChar.getHour().getName();
 
-  let prevJieQiName = '未知'
-  let nextJieQiName = '未知'
-  let prevJieQiDate = ''
-  let nextJieQiDate = ''
+  let prevJieQiName = '未知';
+  let nextJieQiName = '未知';
+  let prevJieQiDate = '';
+  let nextJieQiDate = '';
 
-  const currentYear = year
-  const terms = collectSolarTerms([currentYear - 1, currentYear, currentYear + 1])
-  const currentJd = solarTime.getJulianDay().getDay()
-  let minDiffPrev = 999
-  let minDiffNext = 999
+  const currentYear = year;
+  const terms = collectSolarTerms([currentYear - 1, currentYear, currentYear + 1]);
+  const currentJd = solarTime.getJulianDay().getDay();
+  let minDiffPrev = 999;
+  let minDiffNext = 999;
 
   for (const term of terms) {
-    const termJd = term.jd
-    const diff = termJd - currentJd
+    const termJd = term.jd;
+    const diff = termJd - currentJd;
 
     if (diff <= 0) {
       if (Math.abs(diff) < minDiffPrev) {
-        minDiffPrev = Math.abs(diff)
-        prevJieQiName = term.name
-        prevJieQiDate = term.date
+        minDiffPrev = Math.abs(diff);
+        prevJieQiName = term.name;
+        prevJieQiDate = term.date;
       }
     } else {
       if (diff < minDiffNext) {
-        minDiffNext = diff
-        nextJieQiName = term.name
-        nextJieQiDate = term.date
+        minDiffNext = diff;
+        nextJieQiName = term.name;
+        nextJieQiDate = term.date;
       }
     }
   }
@@ -303,68 +317,80 @@ export function getCalendarInfo(date: Date = new Date()): CalendarInfo {
       year: yearPillar,
       month: monthPillar,
       day: dayPillar,
-      hour: hourPillar
+      hour: hourPillar,
     },
     jieQi: {
       prev: `${prevJieQiName} (${prevJieQiDate})`,
-      next: `${nextJieQiName} (${nextJieQiDate})`
+      next: `${nextJieQiName} (${nextJieQiDate})`,
     },
-    festival: ''
-  }
+    festival: '',
+  };
 }
 
 export function getCurrentTimeDescription(): string {
-  const info = getCalendarInfo()
+  const info = getCalendarInfo();
   return [
     '【当前时令】',
     `公历：${info.solarDate}`,
     `农历：${info.lunarDate}`,
     `四柱：${info.ganZhi.year}年 ${info.ganZhi.month}月 ${info.ganZhi.day}日 ${info.ganZhi.hour}时`,
-    `节气：${info.jieQi.prev} 至 ${info.jieQi.next}`
-  ].join('\n')
+    `节气：${info.jieQi.prev} 至 ${info.jieQi.next}`,
+  ].join('\n');
 }
 
 export function getYearMonthsGanZhi(year: number): BaziMonthInfo[] {
-  return getYearMonthsGanZhiDetailed(year).map(({ startAt, endAt, ...item }) => item)
+  return getYearMonthsGanZhiDetailed(year).map(
+    ({ startAt: _startAt, endAt: _endAt, ...item }) => item,
+  );
 }
 
-export function getBaziMonthIndexByDate(year: number, referenceDate: Date = new Date()): number | undefined {
-  return getYearMonthsGanZhiDetailed(year).find((item) => (
-    referenceDate.getTime() >= item.startAt.getTime() && referenceDate.getTime() < item.endAt.getTime()
-  ))?.index
+export function getBaziMonthIndexByDate(
+  year: number,
+  referenceDate: Date = new Date(),
+): number | undefined {
+  return getYearMonthsGanZhiDetailed(year).find(
+    (item) =>
+      referenceDate.getTime() >= item.startAt.getTime() &&
+      referenceDate.getTime() < item.endAt.getTime(),
+  )?.index;
 }
 
 export function getBaziDayIndexByDate(
   year: number,
   monthIndex: number,
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
 ): number | undefined {
-  return getMonthDaysInfoDetailed(year, monthIndex).find((item) => (
-    referenceDate.getTime() >= item.startAt.getTime() && referenceDate.getTime() < item.endAt.getTime()
-  ))?.day
+  return getMonthDaysInfoDetailed(year, monthIndex).find(
+    (item) =>
+      referenceDate.getTime() >= item.startAt.getTime() &&
+      referenceDate.getTime() < item.endAt.getTime(),
+  )?.day;
 }
 
-export function getYearInfo(year: number): { year: number; yearGanZhi: string; zodiac: string; months: BaziMonthInfo[] } {
-  const midYear = SolarTime.fromYmdHms(year, 6, 15, 12, 0, 0)
-  const eightChar = midYear.getLunarHour().getEightChar()
-  const yearGanZhi = eightChar.getYear().getName()
+export function getYearInfo(year: number): {
+  year: number;
+  yearGanZhi: string;
+  zodiac: string;
+  months: BaziMonthInfo[];
+} {
+  const midYear = SolarTime.fromYmdHms(year, 6, 15, 12, 0, 0);
+  const eightChar = midYear.getLunarHour().getEightChar();
+  const yearGanZhi = eightChar.getYear().getName();
 
-  const yearZhi = eightChar.getYear().getEarthBranch().getName()
-  const zodiacMap: Record<string, string> = {
-    '子': '鼠', '丑': '牛', '寅': '虎', '卯': '兔',
-    '辰': '龙', '巳': '蛇', '午': '马', '未': '羊',
-    '申': '猴', '酉': '鸡', '戌': '狗', '亥': '猪'
-  }
-  const zodiac = zodiacMap[yearZhi] || ''
+  const yearZhi = eightChar.getYear().getEarthBranch().getName();
+  const zodiacIndex = EARTHLY_BRANCHES.indexOf(yearZhi as (typeof EARTHLY_BRANCHES)[number]);
+  const zodiac = zodiacIndex >= 0 ? ZODIACS[zodiacIndex] : '';
 
   return {
     year,
     yearGanZhi,
     zodiac,
-    months: getYearMonthsGanZhi(year)
-  }
+    months: getYearMonthsGanZhi(year),
+  };
 }
 
 export function getMonthDaysInfo(year: number, month: number): BaziMonthDayInfo[] {
-  return getMonthDaysInfoDetailed(year, month).map(({ startAt, endAt, ...item }) => item)
+  return getMonthDaysInfoDetailed(year, month).map(
+    ({ startAt: _startAt, endAt: _endAt, ...item }) => item,
+  );
 }

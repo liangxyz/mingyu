@@ -169,7 +169,8 @@ export function parseInputState(params: URLSearchParams): QueryInputState {
         : 'single',
     name: getString(params, 'name', defaultInputState.name),
     gender: getString(params, 'gender', defaultInputState.gender) === 'female' ? 'female' : 'male',
-    dateType: getString(params, 'dateType', defaultInputState.dateType) === 'lunar' ? 'lunar' : 'solar',
+    dateType:
+      getString(params, 'dateType', defaultInputState.dateType) === 'lunar' ? 'lunar' : 'solar',
     year: getString(params, 'year', defaultInputState.year),
     month: getString(params, 'month', defaultInputState.month),
     day: getString(params, 'day', defaultInputState.day),
@@ -198,7 +199,11 @@ export function parseInputState(params: URLSearchParams): QueryInputState {
     partnerIsLeapMonth: getString(params, 'partnerIsLeapMonth', '0') === '1',
     partnerUseTrueSolarTime: getString(params, 'partnerUseTrueSolarTime', '0') === '1',
     partnerBirthHour: getString(params, 'partnerBirthHour', defaultInputState.partnerBirthHour),
-    partnerBirthMinute: getString(params, 'partnerBirthMinute', defaultInputState.partnerBirthMinute),
+    partnerBirthMinute: getString(
+      params,
+      'partnerBirthMinute',
+      defaultInputState.partnerBirthMinute,
+    ),
     partnerBirthPlace: getString(params, 'partnerBirthPlace', defaultInputState.partnerBirthPlace),
     partnerBirthLongitude: getString(
       params,
@@ -219,17 +224,14 @@ export function buildInputSearch(params: URLSearchParams) {
 
 export function parsePromptState(params: URLSearchParams): QueryPromptState {
   return {
-    tab: (getString(params, 'tab', defaultPromptState.tab) as ResultTabKey) || defaultPromptState.tab,
+    tab:
+      (getString(params, 'tab', defaultPromptState.tab) as ResultTabKey) || defaultPromptState.tab,
     promptSource:
       getString(params, 'promptSource', defaultPromptState.promptSource) === 'ziwei'
         ? 'ziwei'
         : 'bazi',
     baziPresetId: getString(params, 'baziPresetId', defaultPromptState.baziPresetId),
-    baziShortcutMode: getString(
-      params,
-      'baziShortcutMode',
-      defaultPromptState.baziShortcutMode,
-    ),
+    baziShortcutMode: getString(params, 'baziShortcutMode', defaultPromptState.baziShortcutMode),
     baziQuickQuestion: getString(params, 'baziQuickQuestion', defaultPromptState.baziQuickQuestion),
     baziFortuneScope: getString(
       params,
@@ -242,20 +244,16 @@ export function parsePromptState(params: URLSearchParams): QueryPromptState {
       defaultPromptState.baziFortuneCycleIndex,
     ),
     baziFortuneYear: getString(params, 'baziFortuneYear', defaultPromptState.baziFortuneYear),
-    baziFortuneMonth: getString(
-      params,
-      'baziFortuneMonth',
-      defaultPromptState.baziFortuneMonth,
-    ),
+    baziFortuneMonth: getString(params, 'baziFortuneMonth', defaultPromptState.baziFortuneMonth),
     baziFortuneDay: getString(params, 'baziFortuneDay', defaultPromptState.baziFortuneDay),
     ziweiTopic: getString(params, 'ziweiTopic', defaultPromptState.ziweiTopic),
-    ziweiShortcutMode: getString(
+    ziweiShortcutMode: getString(params, 'ziweiShortcutMode', defaultPromptState.ziweiShortcutMode),
+    ziweiQuickQuestion: getString(
       params,
-      'ziweiShortcutMode',
-      defaultPromptState.ziweiShortcutMode,
+      'ziweiQuickQuestion',
+      defaultPromptState.ziweiQuickQuestion,
     ),
-    ziweiQuickQuestion: getString(params, 'ziweiQuickQuestion', defaultPromptState.ziweiQuickQuestion),
-    ziweiScope: (getString(params, 'ziweiScope', defaultPromptState.ziweiScope) as ZiweiScopeMode),
+    ziweiScope: getString(params, 'ziweiScope', defaultPromptState.ziweiScope) as ZiweiScopeMode,
     ziweiScopeDate: getString(params, 'ziweiScopeDate', defaultPromptState.ziweiScopeDate),
   };
 }

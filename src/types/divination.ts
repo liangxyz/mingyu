@@ -364,7 +364,13 @@ export interface SsgwData {
   ganzhi: BaseGanZhi;
 }
 
-export type DivinationData = LiuyaoData | MeihuaData | QimenData | LiurenData | TarotData | SsgwData;
+export type DivinationData =
+  | LiuyaoData
+  | MeihuaData
+  | QimenData
+  | LiurenData
+  | TarotData
+  | SsgwData;
 
 export interface SupplementaryInfo {
   gender?: '男' | '女';

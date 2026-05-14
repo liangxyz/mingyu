@@ -64,15 +64,12 @@ export function findCurrentDecadalOption(
   nominalAge: number,
 ): DecadalTimelineOption | null {
   return (
-    options.find(
-      (option) => nominalAge >= option.startAge && nominalAge <= option.endAge,
-    ) ?? options[0] ?? null
+    options.find((option) => nominalAge >= option.startAge && nominalAge <= option.endAge) ??
+    options[0] ??
+    null
   );
 }
 
-export function formatDecadalAgeRange(option: {
-  startAge: number;
-  endAge: number;
-}) {
+export function formatDecadalAgeRange(option: { startAge: number; endAge: number }) {
   return `${option.startAge}-${option.endAge}`;
 }

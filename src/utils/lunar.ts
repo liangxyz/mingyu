@@ -57,61 +57,61 @@ export interface TimeInfo {
  * 农历工具类
  */
 export class LunarUtil {
-/**
- * 获取当前时间的完整信息
- */
-static getCurrentTimeInfo(): TimeInfo {
-  const now = new Date();
-  return this.getTimeInfo(now);
-}
-
-/**
- * 计算时辰的公共方法，避免代码重复
- */
-private static calculateHourIndex(currentHour: number): number {
-  // 时辰划分标准：
-  // 子时: 23:00-01:00 (23:00-24:00为夜子时，00:00-01:00为早子时)
-  // 丑时: 01:00-03:00
-  // 寅时: 03:00-05:00
-  // 卯时: 05:00-07:00
-  // 辰时: 07:00-09:00
-  // 巳时: 09:00-11:00
-  // 午时: 11:00-13:00
-  // 未时: 13:00-15:00
-  // 申时: 15:00-17:00
-  // 酉时: 17:00-19:00
-  // 戌时: 19:00-21:00
-  // 亥时: 21:00-23:00
-  
-  if (currentHour >= 23 || currentHour < 1) {
-    return 0; // 子时
-  } else if (currentHour >= 1 && currentHour < 3) {
-    return 1; // 丑时
-  } else if (currentHour >= 3 && currentHour < 5) {
-    return 2; // 寅时
-  } else if (currentHour >= 5 && currentHour < 7) {
-    return 3; // 卯时
-  } else if (currentHour >= 7 && currentHour < 9) {
-    return 4; // 辰时
-  } else if (currentHour >= 9 && currentHour < 11) {
-    return 5; // 巳时
-  } else if (currentHour >= 11 && currentHour < 13) {
-    return 6; // 午时
-  } else if (currentHour >= 13 && currentHour < 15) {
-    return 7; // 未时
-  } else if (currentHour >= 15 && currentHour < 17) {
-    return 8; // 申时
-  } else if (currentHour >= 17 && currentHour < 19) {
-    return 9; // 酉时
-  } else if (currentHour >= 19 && currentHour < 21) {
-    return 10; // 戌时
-  } else if (currentHour >= 21 && currentHour < 23) {
-    return 11; // 亥时
+  /**
+   * 获取当前时间的完整信息
+   */
+  static getCurrentTimeInfo(): TimeInfo {
+    const now = new Date();
+    return this.getTimeInfo(now);
   }
-  
-  // 默认返回子时（理论上不会执行到这里）
-  return 0;
-}
+
+  /**
+   * 计算时辰的公共方法，避免代码重复
+   */
+  private static calculateHourIndex(currentHour: number): number {
+    // 时辰划分标准：
+    // 子时: 23:00-01:00 (23:00-24:00为夜子时，00:00-01:00为早子时)
+    // 丑时: 01:00-03:00
+    // 寅时: 03:00-05:00
+    // 卯时: 05:00-07:00
+    // 辰时: 07:00-09:00
+    // 巳时: 09:00-11:00
+    // 午时: 11:00-13:00
+    // 未时: 13:00-15:00
+    // 申时: 15:00-17:00
+    // 酉时: 17:00-19:00
+    // 戌时: 19:00-21:00
+    // 亥时: 21:00-23:00
+
+    if (currentHour >= 23 || currentHour < 1) {
+      return 0; // 子时
+    } else if (currentHour >= 1 && currentHour < 3) {
+      return 1; // 丑时
+    } else if (currentHour >= 3 && currentHour < 5) {
+      return 2; // 寅时
+    } else if (currentHour >= 5 && currentHour < 7) {
+      return 3; // 卯时
+    } else if (currentHour >= 7 && currentHour < 9) {
+      return 4; // 辰时
+    } else if (currentHour >= 9 && currentHour < 11) {
+      return 5; // 巳时
+    } else if (currentHour >= 11 && currentHour < 13) {
+      return 6; // 午时
+    } else if (currentHour >= 13 && currentHour < 15) {
+      return 7; // 未时
+    } else if (currentHour >= 15 && currentHour < 17) {
+      return 8; // 申时
+    } else if (currentHour >= 17 && currentHour < 19) {
+      return 9; // 酉时
+    } else if (currentHour >= 19 && currentHour < 21) {
+      return 10; // 戌时
+    } else if (currentHour >= 21 && currentHour < 23) {
+      return 11; // 亥时
+    }
+
+    // 默认返回子时（理论上不会执行到这里）
+    return 0;
+  }
 
   /**
    * 获取指定时间的完整信息
@@ -126,7 +126,7 @@ private static calculateHourIndex(currentHour: number): number {
       const currentHour = date.getHours();
       const hours = lunar.getHours();
       const hourIndex = this.calculateHourIndex(currentHour);
-      
+
       // 从 tyme4ts 返回的时辰数组中获取对应索引的时辰
       const currentLunarHour = hours[hourIndex] || hours[0];
 
@@ -180,7 +180,7 @@ private static calculateHourIndex(currentHour: number): number {
       const solar = SolarDay.fromYmd(
         targetDate.getFullYear(),
         targetDate.getMonth() + 1,
-        targetDate.getDate()
+        targetDate.getDate(),
       );
       const lunar = solar.getLunarDay();
 
@@ -188,7 +188,7 @@ private static calculateHourIndex(currentHour: number): number {
       const currentHour = targetDate.getHours();
       const hours = lunar.getHours();
       const hourIndex = this.calculateHourIndex(currentHour);
-      
+
       // 从 tyme4ts 返回的时辰数组中获取对应索引的时辰
       const currentLunarHour = hours[hourIndex] || hours[0];
 
@@ -213,7 +213,7 @@ private static calculateHourIndex(currentHour: number): number {
       const solar = SolarDay.fromYmd(
         targetDate.getFullYear(),
         targetDate.getMonth() + 1,
-        targetDate.getDate()
+        targetDate.getDate(),
       );
       const lunar = solar.getLunarDay();
 
@@ -221,7 +221,7 @@ private static calculateHourIndex(currentHour: number): number {
       const currentHour = targetDate.getHours();
       const hours = lunar.getHours();
       const hourIndex = this.calculateHourIndex(currentHour);
-      
+
       // 从 tyme4ts 返回的时辰数组中获取对应索引的时辰
       const currentLunarHour = hours[hourIndex] || hours[0];
 
@@ -233,7 +233,7 @@ private static calculateHourIndex(currentHour: number): number {
         yearInChinese: lunar.toString().split('年')[0],
         monthInChinese: lunar.toString().split('年')[1].split('月')[0] + '月',
         dayInChinese: lunar.toString().split('月')[1],
-          hourInChinese: currentLunarHour.toString().slice(-2),
+        hourInChinese: currentLunarHour.toString().slice(-2),
         // 添加数字格式的月日
         monthNumber: lunar.getMonth(),
         dayNumber: lunar.getDay(),
@@ -372,6 +372,7 @@ private static calculateHourIndex(currentHour: number): number {
   ): { date: string; ganZhi: string; lunarDate: string }[] {
     const daysInMonth = new Date(year, month, 0).getDate();
     const result = [];
+    let firstError: unknown = null;
     for (let day = 1; day <= daysInMonth; day++) {
       try {
         const solar = SolarDay.fromYmd(year, month, day);
@@ -385,8 +386,12 @@ private static calculateHourIndex(currentHour: number): number {
           lunarDate: `${lunarMonth}${lunarDay}`,
         });
       } catch (error) {
+        if (!firstError) firstError = error;
         console.error(`Error calculating GanZhi for ${year}-${month}-${day}:`, error);
       }
+    }
+    if (result.length === 0 && firstError) {
+      throw firstError;
     }
     return result;
   }
@@ -396,6 +401,7 @@ private static calculateHourIndex(currentHour: number): number {
    */
   static getGanZhiForYear(year: number): { month: number; ganZhi: string }[] {
     const result = [];
+    let firstError: unknown = null;
     for (let month = 1; month <= 12; month++) {
       try {
         // 使用该月15号作为代表日来获取月干支
@@ -406,8 +412,12 @@ private static calculateHourIndex(currentHour: number): number {
           ganZhi: lunar.getMonthSixtyCycle().toString(),
         });
       } catch (error) {
+        if (!firstError) firstError = error;
         console.error(`Error calculating GanZhi for month ${year}-${month}:`, error);
       }
+    }
+    if (result.length === 0 && firstError) {
+      throw firstError;
     }
     return result;
   }

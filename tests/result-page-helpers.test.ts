@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildCombinedPromptText,
+  buildCompatibilityPromptWithUnknownTime,
   buildZiweiMonthAnchorDate,
+  resolveAstrolabeTopicByInspirationCategory,
+  resolveAstrolabeTopicByInspirationIntent,
   findZiweiDayOptionDate,
   findZiweiDecadalIndexByDate,
   findZiweiMonthOptionDate,
@@ -14,8 +17,16 @@ import {
   joinText,
   parseOptionalNumber,
   parseZiweiDateParts,
+  readPromptDraft,
+  resolveBaziPresetIdByInspirationCategory,
+  resolveBaziPresetIdByInspirationIntent,
+  resolveBaziQuestionSceneByInspirationIntent,
+  resolveBaziQuestionSceneByShortcutMode,
+  resolveZiweiTopicByInspirationCategory,
+  resolveZiweiTopicByInspirationIntent,
   resolveCompatType,
   splitGanZhi,
+  writePromptDraft,
 } from '../src/pages/ResultPage/ResultPage.helpers';
 
 test('parseZiweiDateParts 正确解析合法日期', () => {
@@ -133,6 +144,8 @@ test('parseOptionalNumber 解析可选数字', () => {
 
 test('resolveCompatType 解析合盘类型', () => {
   assert.equal(resolveCompatType('ai-compat-marriage'), 'marriage');
+  assert.equal(resolveCompatType('ai-compat-career'), 'career');
+  assert.equal(resolveCompatType('ai-compat-friendship'), 'friendship');
   assert.equal(resolveCompatType('ai-compat-children'), 'children');
   assert.equal(resolveCompatType('ai-compat-parents'), 'parents');
   assert.equal(resolveCompatType('ai-compat-siblings'), 'siblings');
@@ -141,4 +154,283 @@ test('resolveCompatType 解析合盘类型', () => {
 
 test('buildCombinedPromptText 拼接系统提示和用户提示', () => {
   assert.equal(buildCombinedPromptText('系统', '用户'), '系统\n\n用户');
+});
+
+test('问题灵感草稿应与自定义草稿分开存储，避免互相覆盖', () => {
+  const storage = new Map<string, string>();
+  const originalWindow = globalThis.window;
+
+  const localStorage = {
+    getItem(key: string) {
+      return storage.has(key) ? storage.get(key)! : null;
+    },
+    setItem(key: string, value: string) {
+      storage.set(key, value);
+    },
+    removeItem(key: string) {
+      storage.delete(key);
+    },
+  } as Storage;
+
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: { localStorage },
+  });
+
+  try {
+    writePromptDraft('result-prompt-draft:test', '我想自己提问');
+    writePromptDraft('result-prompt-draft:test', '我现在适合换工作吗？', 'inspiration');
+
+    assert.equal(readPromptDraft('result-prompt-draft:test'), '我想自己提问');
+    assert.equal(
+      readPromptDraft('result-prompt-draft:test', 'inspiration'),
+      '我现在适合换工作吗？',
+    );
+
+    writePromptDraft('result-prompt-draft:test', '', 'inspiration');
+    assert.equal(readPromptDraft('result-prompt-draft:test'), '我想自己提问');
+    assert.equal(readPromptDraft('result-prompt-draft:test', 'inspiration'), '');
+  } finally {
+    if (originalWindow === undefined) {
+      // @ts-expect-error Node 测试环境下允许删除临时挂载的 window
+      delete globalThis.window;
+    } else {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: originalWindow,
+      });
+    }
+  }
+});
+
+test('未知时辰合盘提示词应保持中性任务口径，不预设为婚恋问题', () => {
+  const prompt = buildCompatibilityPromptWithUnknownTime({
+    firstName: '第一人',
+    firstText: '甲方三柱资料',
+    secondName: '第二人',
+    secondText: '乙方三柱资料',
+    question: '',
+  });
+
+  assert.match(prompt, /【问题】\n请先从双方互动模式与现实建议开始分析。/);
+  assert.match(prompt, /【第一人排盘信息】\n姓名：第一人\n甲方三柱资料/);
+  assert.match(prompt, /【第二人排盘信息】\n姓名：第二人\n乙方三柱资料/);
+  assert.match(prompt, /先直接回答【问题】，并区分当前能确认的主线与因时辰未知而待确认的部分/);
+  assert.match(prompt, /凡是明显依赖时柱、子女宫或更细时限的判断，都要标记为待确认/);
+  assert.match(prompt, /资料里没有直接写出的额外盘面事实，不得自行补算、脑补或假定/);
+  assert.match(prompt, /先直接回答【问题】/);
+  assert.doesNotMatch(prompt, /关系主线/);
+  assert.doesNotMatch(prompt, /婚恋匹配角度/);
+});
+
+test('未知时辰合盘自定义问题不应额外拼接任务书', () => {
+  const prompt = buildCompatibilityPromptWithUnknownTime({
+    firstName: '第一人',
+    firstText: '甲方三柱资料',
+    secondName: '第二人',
+    secondText: '乙方三柱资料',
+    question: '我们现在更适合继续合作，还是先保持距离？',
+    isCustomQuestion: true,
+  });
+
+  assert.match(prompt, /【问题】\n我们现在更适合继续合作，还是先保持距离？/);
+  assert.match(prompt, /姓名：第一人/);
+  assert.match(prompt, /姓名：第二人/);
+  assert.doesNotMatch(prompt, /【任务】/);
+  assert.doesNotMatch(prompt, /【输出要求】/);
+});
+
+test('八字快捷按钮会同步到对应的问题类型选择', () => {
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('近期'), 'recent');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('事业'), 'career');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('换工作'), 'job-change');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('创业合作'), 'startup-partnership');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('投资合作'), 'investment-partnership');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('财运'), 'wealth');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('婚恋'), 'marriage');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('关系推进'), 'relationship-push');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('关系去留'), 'relationship-decision');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('复合判断'), 'reconciliation-decision');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('子女'), 'children');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('家庭'), 'family');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('搬家置业'), 'home-move');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('定居换城'), 'settle-relocate');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('人际'), 'social');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('情绪'), 'emotion');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('健康'), 'health');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('学业'), 'study');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('考证进修'), 'study-advance');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('考试上岸'), 'exam-landing');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('成长'), 'growth');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('天赋'), 'talent');
+});
+
+test('没有明确对应关系的快捷按钮会回到综合问题类型', () => {
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('综合'), 'general');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('自定义'), 'general');
+  assert.equal(resolveBaziQuestionSceneByShortcutMode('问题灵感'), 'general');
+});
+
+test('问题灵感细粒度意图会优先映射到更具体的专项框架', () => {
+  assert.equal(resolveBaziPresetIdByInspirationIntent('job-change'), 'ai-job-change');
+  assert.equal(resolveBaziQuestionSceneByInspirationIntent('job-change'), 'job-change');
+  assert.equal(resolveZiweiTopicByInspirationIntent('job-change'), 'job-change');
+  assert.equal(resolveAstrolabeTopicByInspirationIntent('job-change'), 'job-change');
+
+  assert.equal(
+    resolveBaziPresetIdByInspirationIntent('relationship-push'),
+    'ai-relationship-push',
+  );
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('relationship-push'),
+    'relationship-push',
+  );
+  assert.equal(resolveZiweiTopicByInspirationIntent('relationship-push'), 'relationship-push');
+  assert.equal(
+    resolveAstrolabeTopicByInspirationIntent('relationship-push'),
+    'relationship-push',
+  );
+
+  assert.equal(
+    resolveBaziPresetIdByInspirationIntent('startup-partnership'),
+    'ai-startup-partnership',
+  );
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('startup-partnership'),
+    'startup-partnership',
+  );
+  assert.equal(resolveZiweiTopicByInspirationIntent('startup-partnership'), 'startup-partnership');
+  assert.equal(
+    resolveAstrolabeTopicByInspirationIntent('startup-partnership'),
+    'startup-partnership',
+  );
+
+  assert.equal(
+    resolveBaziPresetIdByInspirationIntent('relationship-decision'),
+    'ai-relationship-decision',
+  );
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('relationship-decision'),
+    'relationship-decision',
+  );
+  assert.equal(
+    resolveZiweiTopicByInspirationIntent('relationship-decision'),
+    'relationship-decision',
+  );
+  assert.equal(
+    resolveAstrolabeTopicByInspirationIntent('relationship-decision'),
+    'relationship-decision',
+  );
+
+  assert.equal(resolveBaziPresetIdByInspirationIntent('home-move'), 'ai-home-move');
+  assert.equal(resolveBaziQuestionSceneByInspirationIntent('home-move'), 'home-move');
+  assert.equal(resolveZiweiTopicByInspirationIntent('home-move'), 'home-move');
+  assert.equal(resolveAstrolabeTopicByInspirationIntent('home-move'), 'home-move');
+
+  assert.equal(
+    resolveBaziPresetIdByInspirationIntent('investment-partnership'),
+    'ai-investment-partnership',
+  );
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('investment-partnership'),
+    'investment-partnership',
+  );
+  assert.equal(
+    resolveZiweiTopicByInspirationIntent('investment-partnership'),
+    'investment-partnership',
+  );
+  assert.equal(
+    resolveAstrolabeTopicByInspirationIntent('investment-partnership'),
+    'investment-partnership',
+  );
+
+  assert.equal(
+    resolveBaziPresetIdByInspirationIntent('reconciliation-decision'),
+    'ai-reconciliation-decision',
+  );
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('reconciliation-decision'),
+    'reconciliation-decision',
+  );
+  assert.equal(
+    resolveZiweiTopicByInspirationIntent('reconciliation-decision'),
+    'reconciliation-decision',
+  );
+  assert.equal(
+    resolveAstrolabeTopicByInspirationIntent('reconciliation-decision'),
+    'reconciliation-decision',
+  );
+
+  assert.equal(
+    resolveBaziPresetIdByInspirationIntent('settle-relocate'),
+    'ai-settle-relocate',
+  );
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('settle-relocate'),
+    'settle-relocate',
+  );
+  assert.equal(resolveZiweiTopicByInspirationIntent('settle-relocate'), 'settle-relocate');
+  assert.equal(
+    resolveAstrolabeTopicByInspirationIntent('settle-relocate'),
+    'settle-relocate',
+  );
+
+  assert.equal(resolveBaziPresetIdByInspirationIntent('study-advance'), 'ai-study-advance');
+  assert.equal(
+    resolveBaziQuestionSceneByInspirationIntent('study-advance'),
+    'study-advance',
+  );
+  assert.equal(resolveZiweiTopicByInspirationIntent('study-advance'), 'study-advance');
+  assert.equal(resolveAstrolabeTopicByInspirationIntent('study-advance'), 'study-advance');
+
+  assert.equal(resolveBaziPresetIdByInspirationIntent('exam-landing'), 'ai-exam-landing');
+  assert.equal(resolveBaziQuestionSceneByInspirationIntent('exam-landing'), 'exam-landing');
+  assert.equal(resolveZiweiTopicByInspirationIntent('exam-landing'), 'exam-landing');
+  assert.equal(resolveAstrolabeTopicByInspirationIntent('exam-landing'), 'exam-landing');
+});
+
+test('问题灵感会按分类映射到对应的八字、紫微与星盘专项框架', () => {
+  assert.equal(resolveBaziPresetIdByInspirationCategory('近期'), 'ai-recent');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('事业'), 'ai-career');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('财运'), 'ai-wealth-timing');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('婚恋'), 'ai-marriage');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('六亲'), 'ai-family');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('家庭'), 'ai-home');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('人际'), 'ai-social');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('情绪'), 'ai-emotion');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('健康'), 'ai-health');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('学业'), 'ai-study');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('成长'), 'ai-growth');
+  assert.equal(resolveBaziPresetIdByInspirationCategory('天赋'), 'ai-talent');
+  assert.equal(resolveBaziPresetIdByInspirationCategory(undefined), 'ai-mingge-zonglun');
+
+  assert.equal(resolveZiweiTopicByInspirationCategory('近期'), 'recent');
+  assert.equal(resolveZiweiTopicByInspirationCategory('事业'), 'career-wealth');
+  assert.equal(resolveZiweiTopicByInspirationCategory('财运'), 'career-wealth');
+  assert.equal(resolveZiweiTopicByInspirationCategory('婚恋'), 'relationship');
+  assert.equal(resolveZiweiTopicByInspirationCategory('子女'), 'relationship');
+  assert.equal(resolveZiweiTopicByInspirationCategory('六亲'), 'family');
+  assert.equal(resolveZiweiTopicByInspirationCategory('家庭'), 'family');
+  assert.equal(resolveZiweiTopicByInspirationCategory('人际'), 'social');
+  assert.equal(resolveZiweiTopicByInspirationCategory('情绪'), 'emotion');
+  assert.equal(resolveZiweiTopicByInspirationCategory('健康'), 'health');
+  assert.equal(resolveZiweiTopicByInspirationCategory('学业'), 'study');
+  assert.equal(resolveZiweiTopicByInspirationCategory('成长'), 'growth');
+  assert.equal(resolveZiweiTopicByInspirationCategory('天赋'), 'talent');
+  assert.equal(resolveZiweiTopicByInspirationCategory(undefined), 'life');
+
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('近期'), 'recent');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('事业'), 'career');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('财运'), 'wealth');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('婚恋'), 'relationship');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('子女'), 'family');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('六亲'), 'family');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('家庭'), 'family');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('人际'), 'social');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('情绪'), 'emotion');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('健康'), 'health');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('学业'), 'study');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('成长'), 'growth');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory('天赋'), 'talent');
+  assert.equal(resolveAstrolabeTopicByInspirationCategory(undefined), 'life');
 });

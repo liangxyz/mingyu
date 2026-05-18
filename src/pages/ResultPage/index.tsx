@@ -18,7 +18,12 @@ import { PageTopbar } from '@/components/PageTopbar';
 import { QuestionInspirationModal } from '@/components/QuestionInspirationModal';
 import { useViewportWidth } from '@/hooks/useViewportWidth';
 import { buildUnknownTimeBaziPrompt } from '@/lib/birth-time-reverse';
+import { getBaziDefaultQuestion } from '@/lib/prompt-default-questions';
+import { ASTROLABE_SHORTCUT_ACTIONS } from '@/lib/astrolabe-prompts';
 import { formatBaziForPrompt } from '@/utils/bazi/baziAnalysisFormatter';
+import { buildDivinationPrompt } from '@/lib/divination/engine';
+import { generateAstrolabe } from '@/lib/divination/algorithms/astrolabe';
+import type { AstrolabeData } from '@/types/divination';
 import type {
   BaziFortuneSelectionModule,
   InspirationCategory,
@@ -32,6 +37,7 @@ import {
   formatZiweiPromptScopeSummary,
   getBaziShortcutActions,
   getZiweiShortcutActions,
+  resolveBaziQuestionSceneByShortcutMode,
   resolveCompatType,
 } from './ResultPage.helpers';
 import {
@@ -40,6 +46,7 @@ import {
   PromptPreSkeleton,
   ZiweiBoardSkeleton,
 } from './components/skeletons';
+import { AstrolabeBoard } from './components/AstrolabeBoard';
 import { usePromptCopyShare } from '@/hooks/usePromptCopyShare';
 import { BaziChartBoard } from './components/BaziChartBoard';
 import { ThreePillarsBoard } from './components/ThreePillarsBoard';
@@ -65,12 +72,25 @@ export function ResultPage() {
     [inputSearch],
   );
   const promptState = useMemo(() => parsePromptState(searchParams), [searchParams]);
+  const hasAstrolabeChart =
+    inputState.analysisMode === 'single' &&
+    inputState.useTrueSolarTime &&
+    Boolean(inputState.birthHour) &&
+    Boolean(inputState.birthMinute) &&
+    Boolean(inputState.birthPlace) &&
+    Boolean(inputState.birthLongitude) &&
+    Boolean(inputState.birthLatitude);
+  const isAstrolabePromptSource = promptState.promptSource === 'astrolabe';
   const baziDraftStorageKey = useMemo(
     () => `${PROMPT_DRAFT_STORAGE_PREFIX}:bazi:${inputSearch}`,
     [inputSearch],
   );
   const ziweiDraftStorageKey = useMemo(
     () => `${PROMPT_DRAFT_STORAGE_PREFIX}:ziwei:${inputSearch}`,
+    [inputSearch],
+  );
+  const astrolabeDraftStorageKey = useMemo(
+    () => `${PROMPT_DRAFT_STORAGE_PREFIX}:astrolabe:${inputSearch}`,
     [inputSearch],
   );
   const shouldLoadBaziPromptModules =
@@ -85,6 +105,7 @@ export function ResultPage() {
   const [mountedTabs, setMountedTabs] = useState<Record<ResultTabKey, boolean>>(() => ({
     bazi: promptState.tab === 'bazi',
     ziwei: promptState.tab === 'ziwei',
+    astrolabe: promptState.tab === 'astrolabe',
     prompt: promptState.tab === 'prompt',
   }));
   const {
@@ -128,20 +149,27 @@ export function ResultPage() {
   const {
     activeBaziShortcutMode,
     activeZiweiShortcutMode,
+    activeAstrolabeShortcutMode,
     baziQuestionDraft,
     ziweiQuestionDraft,
+    astrolabeQuestionDraft,
     setBaziQuestionDraft,
     setZiweiQuestionDraft,
+    setAstrolabeQuestionDraft,
     effectiveBaziQuickQuestion,
     effectiveZiweiQuickQuestion,
+    effectiveAstrolabeQuickQuestion,
     applyBaziShortcutMode,
     applyZiweiShortcutMode,
+    applyAstrolabeShortcutMode,
     applyInspiredQuestion,
   } = usePromptShortcuts(
     inputState,
     promptState,
     baziDraftStorageKey,
     ziweiDraftStorageKey,
+    astrolabeDraftStorageKey,
+    ASTROLABE_SHORTCUT_ACTIONS,
     updatePromptState,
     inspiration.close,
   );
@@ -254,6 +282,71 @@ export function ResultPage() {
 
   const deferredBaziQuickQuestion = useDeferredValue(effectiveBaziQuickQuestion);
   const deferredZiweiQuickQuestion = useDeferredValue(effectiveZiweiQuickQuestion);
+  const deferredAstrolabeQuestion = useDeferredValue(effectiveAstrolabeQuickQuestion);
+
+  const astrolabeCalculation = useMemo<{
+    data: AstrolabeData | null;
+    error: string;
+  }>(() => {
+    if (!hasAstrolabeChart) {
+      return { data: null, error: '' };
+    }
+
+    try {
+      if (!inputState.birthHour || !inputState.birthMinute) {
+        throw new Error('星盘需要精准出生时间，请返回输入页补全。');
+      }
+      if (!inputState.birthPlace || !inputState.birthLongitude || !inputState.birthLatitude) {
+        throw new Error('星盘需要出生地，请返回输入页选择出生地。');
+      }
+
+      return {
+        data: generateAstrolabe({
+          name: inputState.name || '本人',
+          gender: inputState.gender === 'female' ? '女' : '男',
+          year: inputState.year,
+          month: inputState.month,
+          day: inputState.day,
+          hour: inputState.birthHour,
+          minute: inputState.birthMinute,
+          latitude: inputState.birthLatitude,
+          longitude: inputState.birthLongitude,
+          timezone: '8',
+          locationName: inputState.birthPlace,
+          useTrueSolarTime: inputState.useTrueSolarTime,
+        }),
+        error: '',
+      };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : '星盘生成失败。',
+      };
+    }
+  }, [
+    inputState.birthHour,
+    inputState.birthLatitude,
+    inputState.birthLongitude,
+    inputState.birthMinute,
+    inputState.birthPlace,
+    inputState.day,
+    inputState.gender,
+    inputState.month,
+    inputState.name,
+    inputState.useTrueSolarTime,
+    inputState.year,
+    hasAstrolabeChart,
+  ]);
+
+  function resolveActiveBaziQuestionScene() {
+    if (activeBaziShortcutMode === '自定义') {
+      return undefined;
+    }
+    if (activeBaziShortcutMode === '问题灵感') {
+      return promptState.baziQuestionScene;
+    }
+    return resolveBaziQuestionSceneByShortcutMode(activeBaziShortcutMode);
+  }
 
   function computeBaziPromptText(question: string, finalQuestion: string): string {
     if (promptState.tab !== 'prompt') return '';
@@ -277,24 +370,29 @@ export function ResultPage() {
           firstText,
           secondName: inputState.partnerName || '第二人',
           secondText,
-          question: question.trim() || '请先从婚恋匹配角度做整体解读。',
+          question,
+          isCustomQuestion: activeBaziShortcutMode === '自定义',
         });
       }
 
       if (!promptEngine || !baziResult || !partnerBaziResult) return '';
       const compatibilityPrompt = promptEngine.getCompatibilityPrompt(
-        question.trim() || '请先从婚恋匹配角度做整体解读。',
+        question,
         baziResult,
         partnerBaziResult,
         resolveCompatType(promptState.baziPresetId),
+        { isCustomQuestion: activeBaziShortcutMode === '自定义' },
       );
       return buildCombinedPromptText(compatibilityPrompt.system, compatibilityPrompt.user);
     }
     if (primaryHasUnknownTime) {
       if (!primaryThreePillarsState.profile) return '';
+      const isCustomQuestion = activeBaziShortcutMode === '自定义';
       return buildUnknownTimeBaziPrompt(
         primaryThreePillarsState.profile,
-        question.trim() || '请先做整体解读。',
+        question,
+        resolveActiveBaziQuestionScene(),
+        { isCustomQuestion },
       );
     }
     if (!promptEngine || !baziResult || !baziFortuneSelectionModule || !selectedBaziPreset) {
@@ -305,10 +403,19 @@ export function ResultPage() {
       selectedBaziPreset,
       baziResult,
       baziFortuneContext,
+      resolveActiveBaziQuestionScene(),
+      { isCustomQuestion: activeBaziShortcutMode === '自定义' },
     );
     return buildCombinedPromptText(system, user);
   }
 
+  const defaultBaziQuestion = useMemo(
+    () =>
+      getBaziDefaultQuestion(resolveActiveBaziQuestionScene(), {
+        isCustomQuestion: activeBaziShortcutMode === '自定义',
+      }),
+    [activeBaziShortcutMode, promptState.baziQuestionScene],
+  );
   function computeZiweiPromptText(question: string): string {
     if (promptState.tab !== 'prompt') return '';
     if (inputState.analysisMode === 'compatibility') {
@@ -317,31 +424,33 @@ export function ResultPage() {
         primaryPayload: currentZiweiPayload,
         partnerPayload: partnerZiweiPayload,
         topic: promptState.ziweiTopic,
-        question: question || '请先分析双方关系匹配度、互动模式和相处建议。',
+        question,
+        isCustomQuestion: activeZiweiShortcutMode === '自定义',
       });
     }
     if (!currentZiweiPayload) return '';
     return buildCombinedZiweiPrompt(
       currentZiweiPayload,
       promptState.ziweiTopic,
-      question || '请先做整体解读。',
+      question,
+      { isCustomQuestion: activeZiweiShortcutMode === '自定义' },
     );
   }
 
   const finalBaziQuestion = useMemo(() => {
-    const question = effectiveBaziQuickQuestion.trim() || '请先做整体解读。';
+    const question = effectiveBaziQuickQuestion.trim();
     if (baziFortuneContext) {
-      return `请结合${baziFortuneContext.displayLabel}重点回答：${question}`;
+      return `请结合${baziFortuneContext.displayLabel}重点回答：${question || defaultBaziQuestion}`;
     }
     return question;
-  }, [baziFortuneContext, effectiveBaziQuickQuestion]);
+  }, [baziFortuneContext, defaultBaziQuestion, effectiveBaziQuickQuestion]);
   const deferredFinalBaziQuestion = useMemo(() => {
-    const question = deferredBaziQuickQuestion.trim() || '请先做整体解读。';
+    const question = deferredBaziQuickQuestion.trim();
     if (baziFortuneContext) {
-      return `请结合${baziFortuneContext.displayLabel}重点回答：${question}`;
+      return `请结合${baziFortuneContext.displayLabel}重点回答：${question || defaultBaziQuestion}`;
     }
     return question;
-  }, [baziFortuneContext, deferredBaziQuickQuestion]);
+  }, [baziFortuneContext, defaultBaziQuestion, deferredBaziQuickQuestion]);
 
   const latestBaziPromptText = useMemo(
     () => computeBaziPromptText(effectiveBaziQuickQuestion, finalBaziQuestion),
@@ -350,6 +459,7 @@ export function ResultPage() {
       baziFortuneContext,
       baziFortuneSelectionModule,
       baziResult,
+      activeBaziShortcutMode,
       effectiveBaziQuickQuestion,
       finalBaziQuestion,
       inputState.analysisMode,
@@ -362,6 +472,7 @@ export function ResultPage() {
       primaryThreePillarsState.profile,
       promptEngine,
       promptState.baziPresetId,
+      promptState.baziQuestionScene,
       promptState.tab,
       selectedBaziPreset,
     ],
@@ -373,6 +484,7 @@ export function ResultPage() {
       baziFortuneContext,
       baziFortuneSelectionModule,
       baziResult,
+      activeBaziShortcutMode,
       deferredBaziQuickQuestion,
       deferredFinalBaziQuestion,
       inputState.analysisMode,
@@ -385,6 +497,7 @@ export function ResultPage() {
       primaryThreePillarsState.profile,
       promptEngine,
       promptState.baziPresetId,
+      promptState.baziQuestionScene,
       promptState.tab,
       selectedBaziPreset,
     ],
@@ -395,6 +508,7 @@ export function ResultPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       currentZiweiPayload,
+      activeZiweiShortcutMode,
       effectiveZiweiQuickQuestion,
       inputState.analysisMode,
       partnerZiweiPayload,
@@ -407,6 +521,7 @@ export function ResultPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       currentZiweiPayload,
+      activeZiweiShortcutMode,
       deferredZiweiQuickQuestion,
       inputState.analysisMode,
       partnerZiweiPayload,
@@ -415,12 +530,65 @@ export function ResultPage() {
     ],
   );
 
+  const latestAstrolabePromptText = useMemo(() => {
+    if (promptState.tab !== 'prompt' || !astrolabeCalculation.data) {
+      return '';
+    }
+
+    return buildDivinationPrompt(
+      'astrolabe',
+      effectiveAstrolabeQuickQuestion.trim(),
+      astrolabeCalculation.data,
+      undefined,
+      {
+        isCustomQuestion: activeAstrolabeShortcutMode === '自定义',
+        astrolabeTopic: promptState.astrolabeTopic,
+      },
+    );
+  }, [
+    activeAstrolabeShortcutMode,
+    astrolabeCalculation.data,
+    effectiveAstrolabeQuickQuestion,
+    promptState.astrolabeTopic,
+    promptState.tab,
+  ]);
+  const previewAstrolabePromptText = useMemo(() => {
+    if (promptState.tab !== 'prompt' || !astrolabeCalculation.data) {
+      return '';
+    }
+
+    return buildDivinationPrompt(
+      'astrolabe',
+      deferredAstrolabeQuestion.trim(),
+      astrolabeCalculation.data,
+      undefined,
+      {
+        isCustomQuestion: activeAstrolabeShortcutMode === '自定义',
+        astrolabeTopic: promptState.astrolabeTopic,
+      },
+    );
+  }, [
+    activeAstrolabeShortcutMode,
+    astrolabeCalculation.data,
+    deferredAstrolabeQuestion,
+    promptState.astrolabeTopic,
+    promptState.tab,
+  ]);
+
   const latestActivePromptText =
-    promptState.promptSource === 'bazi' ? latestBaziPromptText : latestZiweiPromptText;
+    promptState.promptSource === 'astrolabe'
+      ? latestAstrolabePromptText
+      : promptState.promptSource === 'bazi'
+        ? latestBaziPromptText
+        : latestZiweiPromptText;
   const { copyState, shareState, handleCopy, handleShare } =
     usePromptCopyShare(latestActivePromptText);
   const previewActivePromptText =
-    promptState.promptSource === 'bazi' ? previewBaziPromptText : previewZiweiPromptText;
+    promptState.promptSource === 'astrolabe'
+      ? previewAstrolabePromptText
+      : promptState.promptSource === 'bazi'
+        ? previewBaziPromptText
+        : previewZiweiPromptText;
   const isBaziFortuneSummaryLoading = shouldLoadBaziPromptModules && !baziFortuneSelectionModule;
   const baziFortuneSummaryText = baziFortuneContext?.displayText ?? '仅使用本命信息';
   const ziweiScopeSummaryText =
@@ -465,8 +633,17 @@ export function ResultPage() {
           className={`tab-chip ${promptState.tab === 'ziwei' ? 'is-active' : ''}`}
           onClick={() => switchTab('ziwei')}
         >
-          紫薇
+          紫微
         </button>
+        {hasAstrolabeChart ? (
+          <button
+            type="button"
+            className={`tab-chip ${promptState.tab === 'astrolabe' ? 'is-active' : ''}`}
+            onClick={() => switchTab('astrolabe')}
+          >
+            星盘
+          </button>
+        ) : null}
         <button
           type="button"
           className={`tab-chip ${promptState.tab === 'prompt' ? 'is-active' : ''}`}
@@ -595,6 +772,28 @@ export function ResultPage() {
         </div>
 
         <div
+          className={`result-tab-pane ${promptState.tab === 'astrolabe' ? 'is-active' : 'is-inactive'}`}
+          aria-hidden={promptState.tab !== 'astrolabe'}
+        >
+          {mountedTabs.astrolabe ? (
+            <div className="single-panel-shell">
+              <section className="panel result-panel result-panel-astrolabe">
+                {astrolabeCalculation.error ? (
+                  <p className="error-text">{astrolabeCalculation.error}</p>
+                ) : null}
+                {astrolabeCalculation.data ? (
+                  <AstrolabeBoard
+                    title="星盘总览"
+                    name={astrolabeCalculation.data.birth.name || inputState.name || '当前命盘'}
+                    data={astrolabeCalculation.data}
+                  />
+                ) : null}
+              </section>
+            </div>
+          ) : null}
+        </div>
+
+        <div
           className={`result-tab-pane ${promptState.tab === 'prompt' ? 'is-active' : 'is-inactive'}`}
           aria-hidden={promptState.tab !== 'prompt'}
         >
@@ -604,98 +803,131 @@ export function ResultPage() {
                 <div className="panel-head">
                   <div>
                     <h2 className="prompt-settings-title">提示词设置</h2>
-                    <p>选择基于八字或紫微，再用快捷按钮生成问题。</p>
+                    <p>
+                      {hasAstrolabeChart
+                        ? '选择星盘解读重点，生成可复制给 AI 的提示词。'
+                        : '选择基于八字或紫微，再用快捷按钮生成问题。'}
+                    </p>
                   </div>
                 </div>
 
                 <div className="field-list">
-                  <div className="prompt-compact-grid">
-                    <label className="field-card">
-                      <div className="field-header">
-                        <span className="prompt-source-title">提示词来源</span>
-                      </div>
-                      <select
-                        value={promptState.promptSource}
-                        onChange={(event) =>
-                          updatePromptState({
-                            promptSource: event.target.value as PromptSourceKey,
-                          })
-                        }
-                      >
-                        <option value="bazi">基于八字</option>
-                        <option value="ziwei" disabled={hasUnknownBirthTime}>
-                          {hasUnknownBirthTime ? '基于紫微（未知时辰不可用）' : '基于紫微'}
-                        </option>
-                      </select>
-                    </label>
-
-                    {promptState.promptSource === 'bazi' &&
-                    inputState.analysisMode === 'single' &&
-                    !primaryHasUnknownTime ? (
-                      <div className="field-card">
+                  <>
+                    <div className="prompt-compact-grid">
+                      <label className="field-card">
                         <div className="field-header">
-                          <span>年限选择</span>
+                          <span className="prompt-source-title">提示词来源</span>
                         </div>
-                        <button
-                          type="button"
-                          className="place-trigger"
-                          onClick={() => setIsBaziFortuneModalOpen(true)}
+                        <select
+                          value={promptState.promptSource}
+                          onChange={(event) =>
+                            updatePromptState({
+                              promptSource: event.target.value as PromptSourceKey,
+                            })
+                          }
                         >
-                          {isBaziFortuneSummaryLoading ? (
-                            <InlineSkeleton className="inline-skeleton inline-skeleton-medium" />
-                          ) : (
-                            <span>{baziFortuneSummaryText}</span>
-                          )}
-                        </button>
-                      </div>
+                          <option value="bazi">基于八字</option>
+                          <option value="ziwei" disabled={hasUnknownBirthTime}>
+                            {hasUnknownBirthTime ? '基于紫微（未知时辰不可用）' : '基于紫微'}
+                          </option>
+                          {hasAstrolabeChart ? <option value="astrolabe">基于星盘</option> : null}
+                        </select>
+                      </label>
+
+                      {promptState.promptSource === 'bazi' &&
+                      inputState.analysisMode === 'single' &&
+                      !primaryHasUnknownTime ? (
+                        <div className="field-card">
+                          <div className="field-header">
+                            <span>年限选择</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="place-trigger"
+                            onClick={() => setIsBaziFortuneModalOpen(true)}
+                          >
+                            {isBaziFortuneSummaryLoading ? (
+                              <InlineSkeleton className="inline-skeleton inline-skeleton-medium" />
+                            ) : (
+                              <span>{baziFortuneSummaryText}</span>
+                            )}
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {promptState.promptSource === 'ziwei' ? (
+                        <div className="field-card">
+                          <div className="field-header">
+                            <span>年限选择</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="place-trigger"
+                            onClick={() => setIsZiweiScopeModalOpen(true)}
+                            disabled={!primaryZiweiInput || !activeZiweiPayloadByScope}
+                          >
+                            {!primaryZiweiInput || !activeZiweiPayloadByScope ? (
+                              <InlineSkeleton className="inline-skeleton inline-skeleton-medium" />
+                            ) : (
+                              <span>{ziweiScopeSummaryText}</span>
+                            )}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {promptState.promptSource === 'bazi' ? (
+                      <PromptShortcutPanel
+                        actions={getBaziShortcutActions(inputState.analysisMode)}
+                        activeMode={activeBaziShortcutMode}
+                        onApplyMode={applyBaziShortcutMode}
+                        showCustomAndInspiration={inputState.analysisMode === 'single'}
+                        showCustomAction
+                        showInspirationAction={inputState.analysisMode === 'single'}
+                        customDraft={baziQuestionDraft}
+                        onCustomDraftChange={setBaziQuestionDraft}
+                        customPlaceholder={
+                          inputState.analysisMode === 'compatibility'
+                            ? '例如：我们适合继续合作，还是更适合保持边界？'
+                            : '例如：我近期适合换工作还是稳住？'
+                        }
+                        onOpenInspiration={inspiration.open}
+                      />
                     ) : null}
 
                     {promptState.promptSource === 'ziwei' ? (
-                      <div className="field-card">
-                        <div className="field-header">
-                          <span>年限选择</span>
-                        </div>
-                        <button
-                          type="button"
-                          className="place-trigger"
-                          onClick={() => setIsZiweiScopeModalOpen(true)}
-                          disabled={!primaryZiweiInput || !activeZiweiPayloadByScope}
-                        >
-                          {!primaryZiweiInput || !activeZiweiPayloadByScope ? (
-                            <InlineSkeleton className="inline-skeleton inline-skeleton-medium" />
-                          ) : (
-                            <span>{ziweiScopeSummaryText}</span>
-                          )}
-                        </button>
-                      </div>
+                      <PromptShortcutPanel
+                        actions={getZiweiShortcutActions(inputState.analysisMode)}
+                        activeMode={activeZiweiShortcutMode}
+                        onApplyMode={applyZiweiShortcutMode}
+                        showCustomAndInspiration={inputState.analysisMode === 'single'}
+                        showCustomAction
+                        showInspirationAction={inputState.analysisMode === 'single'}
+                        customDraft={ziweiQuestionDraft}
+                        onCustomDraftChange={setZiweiQuestionDraft}
+                        customPlaceholder={
+                          inputState.analysisMode === 'compatibility'
+                            ? '例如：请直接分析我们这段关系更适合推进，还是先放慢节奏。'
+                            : '例如：请重点分析我这段时间该主动还是先稳住。'
+                        }
+                        onOpenInspiration={inspiration.open}
+                      />
                     ) : null}
-                  </div>
 
-                  {promptState.promptSource === 'bazi' ? (
-                    <PromptShortcutPanel
-                      actions={getBaziShortcutActions(inputState.analysisMode)}
-                      activeMode={activeBaziShortcutMode}
-                      onApplyMode={applyBaziShortcutMode}
-                      showCustomAndInspiration={inputState.analysisMode === 'single'}
-                      customDraft={baziQuestionDraft}
-                      onCustomDraftChange={setBaziQuestionDraft}
-                      customPlaceholder="例如：我近期适合换工作还是稳住？"
-                      onOpenInspiration={inspiration.open}
-                    />
-                  ) : null}
-
-                  {promptState.promptSource === 'ziwei' ? (
-                    <PromptShortcutPanel
-                      actions={getZiweiShortcutActions(inputState.analysisMode)}
-                      activeMode={activeZiweiShortcutMode}
-                      onApplyMode={applyZiweiShortcutMode}
-                      showCustomAndInspiration={inputState.analysisMode === 'single'}
-                      customDraft={ziweiQuestionDraft}
-                      onCustomDraftChange={setZiweiQuestionDraft}
-                      customPlaceholder="例如：请重点分析我这段时间该主动还是先稳住。"
-                      onOpenInspiration={inspiration.open}
-                    />
-                  ) : null}
+                    {promptState.promptSource === 'astrolabe' ? (
+                      <PromptShortcutPanel
+                        actions={ASTROLABE_SHORTCUT_ACTIONS}
+                        activeMode={activeAstrolabeShortcutMode}
+                        onApplyMode={applyAstrolabeShortcutMode}
+                        showCustomAndInspiration
+                        quickGridClassName="astrolabe-quick-grid"
+                        customDraft={astrolabeQuestionDraft}
+                        onCustomDraftChange={setAstrolabeQuestionDraft}
+                        customPlaceholder="例如：请重点分析我的事业天赋和长期发展方向。"
+                        onOpenInspiration={inspiration.open}
+                      />
+                    ) : null}
+                  </>
                 </div>
               </section>
 
@@ -728,7 +960,9 @@ export function ResultPage() {
                     当前存在未知时辰，已自动改为三柱保守提示词，不会假定时柱。
                   </div>
                 ) : null}
-                {previewActivePromptText ? (
+                {isAstrolabePromptSource && astrolabeCalculation.error ? (
+                  <p className="error-text">{astrolabeCalculation.error}</p>
+                ) : previewActivePromptText ? (
                   <pre className="result-pre">{previewActivePromptText}</pre>
                 ) : (
                   <PromptPreSkeleton />

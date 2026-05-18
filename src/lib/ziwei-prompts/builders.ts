@@ -1,4 +1,4 @@
-import type { AnalysisPayloadV1, PalaceFact } from '@/types/analysis';
+import type { AnalysisPayloadV1, PalaceFact, StarFact } from '@/types/analysis';
 import { formatPalaceName, mapScopeLabel, normalizePalaceName } from './labels';
 import {
   collectMutagenStars,
@@ -8,10 +8,32 @@ import {
 } from './palace-helpers';
 import type { PromptContext } from './types';
 
+function formatStarFact(star: StarFact): string {
+  const tags = [
+    star.brightness,
+    star.birth_mutagen ? `生年化${star.birth_mutagen}` : '',
+    star.horoscope_mutagen ? `流耀化${star.horoscope_mutagen}` : '',
+    star.active_scope_mutagen ? `当前运限化${star.active_scope_mutagen}` : '',
+  ].filter(Boolean);
+
+  return tags.length ? `${star.name}(${tags.join('/')})` : star.name;
+}
+
+function isOriginScope(payload: AnalysisPayloadV1) {
+  return payload.active_scope.scope === 'origin';
+}
+
+function filterScopeTagsForOrigin(payload: AnalysisPayloadV1, tags: string[]) {
+  if (!isOriginScope(payload)) return tags;
+
+  return tags.filter((tag) => !/落宫$/.test(tag) && tag !== '有当前运限四化');
+}
+
 export function buildPalaceSummary(payload: AnalysisPayloadV1, palace: PalaceFact) {
   const oppositePalace = getOppositePalace(payload, palace);
   const surroundedPalaces = getSurroundedPalaces(payload, palace);
   const allStars = getAllStars(palace);
+  const includeScope = !isOriginScope(payload);
   const horoscopeMutagens = allStars
     .filter((star) => !!star.horoscope_mutagen)
     .map((star) => `${star.name}化${star.horoscope_mutagen}`);
@@ -19,26 +41,40 @@ export function buildPalaceSummary(payload: AnalysisPayloadV1, palace: PalaceFac
   const mutagedFlies = (palace.mutaged_palaces ?? [])
     .filter((item) => item.palace_name)
     .map((item) => `化${item.mutagen}入${formatPalaceName(item.palace_name!)}`);
+  const auxiliaryTags = [
+    palace.changsheng12 ? `长生十二神:${palace.changsheng12}` : '',
+    palace.boshi12 ? `博士十二神:${palace.boshi12}` : '',
+    palace.base_jiangqian12 ? `原局将前十二神:${palace.base_jiangqian12}` : '',
+    palace.base_suiqian12 ? `原局岁前十二神:${palace.base_suiqian12}` : '',
+    palace.yearly_jiangqian12 ? `流年将前十二神:${palace.yearly_jiangqian12}` : '',
+    palace.yearly_suiqian12 ? `流年岁前十二神:${palace.yearly_suiqian12}` : '',
+  ].filter(Boolean);
 
   return {
     宫位: formatPalaceName(palace.name),
     宫干支: `${palace.heavenly_stem}${palace.earthly_branch}`,
-    当前动态宫名: palace.dynamic_scope_name || undefined,
-    主星: palace.major_stars.map((item) => item.name),
-    辅星: palace.minor_stars.map((item) => item.name),
-    杂曜: palace.other_stars.map((item) => item.name),
-    当前运限加临星曜: palace.scope_stars.map((item) => item.name),
+    当前动态宫名: includeScope ? palace.dynamic_scope_name || undefined : undefined,
+    空宫提示:
+      palace.empty_state && oppositePalace
+        ? `空宫，需借对宫${formatPalaceName(oppositePalace.name)}共同判断`
+        : palace.empty_state
+          ? '空宫，需借对宫与三方四正共同判断'
+          : undefined,
+    主星: palace.major_stars.map(formatStarFact),
+    辅星: palace.minor_stars.map(formatStarFact),
+    杂曜: palace.other_stars.map(formatStarFact),
+    当前运限加临星曜: includeScope ? palace.scope_stars.map(formatStarFact) : undefined,
     生年四化: collectMutagenStars(allStars, 'birth_mutagen'),
-    流耀四化: horoscopeMutagens,
-    当前运限四化: collectMutagenStars(allStars, 'active_scope_mutagen'),
+    流耀四化: includeScope ? horoscopeMutagens : undefined,
+    当前运限四化: includeScope ? collectMutagenStars(allStars, 'active_scope_mutagen') : undefined,
     自化情况: selfMutagens,
     飞星走向: mutagedFlies,
-    关键词: palace.summary_tags,
-    运限命中: palace.scope_hits,
+    关键词: filterScopeTagsForOrigin(payload, palace.summary_tags),
+    运限命中: includeScope ? palace.scope_hits : undefined,
     对宫: oppositePalace ? formatPalaceName(oppositePalace.name) : '无',
     三方四正: surroundedPalaces.map((item) => formatPalaceName(item.name)),
     大限范围: `${palace.decadal_range[0]}-${palace.decadal_range[1]}岁`,
-    长生十二神: palace.changsheng12,
+    传统辅证: auxiliaryTags.length ? auxiliaryTags.join(' | ') : undefined,
   };
 }
 
@@ -85,11 +121,44 @@ export function buildEvidenceSummary(
   }));
 }
 
+export function buildScopeStructureSummary(payload: AnalysisPayloadV1) {
+  if (isOriginScope(payload)) {
+    return [];
+  }
+
+  const scopeLandings = payload.palaces.flatMap((palace) =>
+    palace.scope_hits.map((hit) => ({
+      类型: '运限落宫',
+      运限: hit.replace(/落宫$/, ''),
+      本命落宫: formatPalaceName(palace.name),
+      当前动态宫名: palace.dynamic_scope_name || undefined,
+      宫位干支: `${palace.heavenly_stem}${palace.earthly_branch}`,
+      关键标签: palace.summary_tags.slice(0, 5),
+      主星: palace.major_stars.map(formatStarFact),
+    })),
+  );
+
+  const activeMutagens = payload.active_scope.mutagen_map.map((item) => ({
+    类型: '当前四化飞入',
+    运限: payload.active_scope.label,
+    星曜: item.star,
+    四化: `化${item.mutagen}`,
+    飞入宫位: item.palace_name ? formatPalaceName(item.palace_name) : '未定位',
+  }));
+
+  return [...scopeLandings, ...activeMutagens];
+}
+
 export function buildPalaceIndex(payload: AnalysisPayloadV1) {
+  const includeScope = !isOriginScope(payload);
+
   return payload.palaces.map((item) => ({
     宫位: formatPalaceName(item.name),
-    主星: item.major_stars.map((star) => star.name),
-    当前动态宫名: item.dynamic_scope_name || undefined,
-    关键标签: [...item.summary_tags, ...item.scope_hits].slice(0, 4),
+    主星: item.major_stars.map(formatStarFact),
+    当前动态宫名: includeScope ? item.dynamic_scope_name || undefined : undefined,
+    关键标签: [
+      ...filterScopeTagsForOrigin(payload, item.summary_tags),
+      ...(includeScope ? item.scope_hits : []),
+    ].slice(0, 4),
   }));
 }

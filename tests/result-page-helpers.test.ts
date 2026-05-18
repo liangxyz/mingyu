@@ -16,6 +16,7 @@ import {
   formatZiweiPromptScopeSummary,
   joinMultilineText,
   joinText,
+  mapBaziFortuneToZiweiScope,
   parseOptionalNumber,
   parseZiweiDateParts,
   readPromptDraft,
@@ -106,6 +107,32 @@ test('formatZiweiPromptScopeSummary 根据范围和日期格式化摘要', () =>
   assert.equal(formatZiweiPromptScopeSummary('decadal', '2024-05-13'), '大限 · 2024-05-13');
   assert.equal(formatZiweiPromptScopeSummary('yearly', '2024-05-13', '流年'), '流年 · 2024-05-13');
   assert.equal(formatZiweiPromptScopeSummary('daily', '2024-05-13'), '流日 · 2024-05-13');
+});
+
+test('八字年限可映射为统一的紫微范围', () => {
+  assert.deepEqual(mapBaziFortuneToZiweiScope({ scope: 'natal' }), {
+    scope: 'origin',
+    dateStr: '',
+  });
+  assert.deepEqual(mapBaziFortuneToZiweiScope({ scope: 'dayun', year: 2028 }), {
+    scope: 'decadal',
+    dateStr: '2028-01-01',
+  });
+  assert.deepEqual(mapBaziFortuneToZiweiScope({ scope: 'year', year: 2028 }), {
+    scope: 'yearly',
+    dateStr: '2028-01-01',
+  });
+  assert.deepEqual(mapBaziFortuneToZiweiScope({ scope: 'month', year: 2028, month: 6 }), {
+    scope: 'monthly',
+    dateStr: '2028-06-15',
+  });
+  assert.deepEqual(
+    mapBaziFortuneToZiweiScope({ scope: 'day', year: 2028, month: 6, day: 9 }),
+    {
+      scope: 'daily',
+      dateStr: '2028-06-09',
+    },
+  );
 });
 
 test('formatGender 转换性别值', () => {

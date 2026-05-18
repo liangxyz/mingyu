@@ -524,6 +524,46 @@ export function formatZiweiPromptScopeSummary(
   return `${label} · ${dateStr}`;
 }
 
+export function mapBaziFortuneToZiweiScope(params: {
+  scope: BaziFortuneSelectionValue['scope'];
+  year?: number;
+  month?: number;
+  day?: number;
+}) {
+  switch (params.scope) {
+    case 'natal':
+      return { scope: 'origin' as const, dateStr: '' };
+    case 'dayun':
+      return {
+        scope: 'decadal' as const,
+        dateStr: params.year ? `${params.year}-01-01` : '',
+      };
+    case 'year':
+      return {
+        scope: 'yearly' as const,
+        dateStr: params.year ? `${params.year}-01-01` : '',
+      };
+    case 'month':
+      return {
+        scope: 'monthly' as const,
+        dateStr:
+          params.year && params.month
+            ? `${params.year}-${String(params.month).padStart(2, '0')}-15`
+            : '',
+      };
+    case 'day':
+      return {
+        scope: 'daily' as const,
+        dateStr:
+          params.year && params.month && params.day
+            ? `${params.year}-${String(params.month).padStart(2, '0')}-${String(params.day).padStart(2, '0')}`
+            : '',
+      };
+    default:
+      return { scope: 'origin' as const, dateStr: '' };
+  }
+}
+
 export function joinStarNames(stars: PalaceFact['major_stars'], fallback: string) {
   return stars.length > 0 ? stars.map((star) => star.name).join(' ') : fallback;
 }

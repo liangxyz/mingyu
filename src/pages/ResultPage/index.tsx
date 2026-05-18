@@ -39,6 +39,7 @@ import {
   formatZiweiPromptScopeSummary,
   getBaziShortcutActions,
   getZiweiShortcutActions,
+  mapBaziFortuneToZiweiScope,
   resolveBaziQuestionSceneByShortcutMode,
   resolveCompatType,
   resolveZiweiTopicByBaziQuestionScene,
@@ -924,9 +925,7 @@ export function ResultPage() {
                       !primaryHasUnknownTime ? (
                         <div className="field-card">
                           <div className="field-header">
-                            <span>
-                              {promptState.promptSource === 'bazi-ziwei' ? '八字年限' : '年限选择'}
-                            </span>
+                            <span>年限选择</span>
                           </div>
                           <button
                             type="button"
@@ -942,13 +941,10 @@ export function ResultPage() {
                         </div>
                       ) : null}
 
-                      {promptState.promptSource === 'ziwei' ||
-                      promptState.promptSource === 'bazi-ziwei' ? (
+                      {promptState.promptSource === 'ziwei' ? (
                         <div className="field-card">
                           <div className="field-header">
-                            <span>
-                              {promptState.promptSource === 'bazi-ziwei' ? '紫微范围' : '年限选择'}
-                            </span>
+                            <span>年限选择</span>
                           </div>
                           <button
                             type="button"
@@ -984,7 +980,9 @@ export function ResultPage() {
                         }
                         onOpenInspiration={inspiration.open}
                         sections={
-                          inputState.analysisMode === 'single' ? singlePromptShortcutSections : undefined
+                          inputState.analysisMode === 'single'
+                            ? singlePromptShortcutSections
+                            : undefined
                         }
                       />
                     ) : null}
@@ -1006,7 +1004,9 @@ export function ResultPage() {
                         }
                         onOpenInspiration={inspiration.open}
                         sections={
-                          inputState.analysisMode === 'single' ? singlePromptShortcutSections : undefined
+                          inputState.analysisMode === 'single'
+                            ? singlePromptShortcutSections
+                            : undefined
                         }
                       />
                     ) : null}
@@ -1078,16 +1078,24 @@ export function ResultPage() {
             result={baziResult}
             selection={baziFortuneSelection}
             onClose={() => setIsBaziFortuneModalOpen(false)}
-            onApply={(next) =>
-              updatePromptState({
+            onApply={(next) => {
+              const nextPromptState: Partial<QueryPromptState> = {
                 baziFortuneScope: next.scope,
                 baziFortuneCycleIndex: next.scope === 'natal' ? '' : String(next.cycleIndex ?? ''),
                 baziFortuneYear: next.scope === 'natal' ? '' : String(next.year ?? ''),
                 baziFortuneMonth:
                   next.scope === 'month' || next.scope === 'day' ? String(next.month ?? '') : '',
                 baziFortuneDay: next.scope === 'day' ? String(next.day ?? '') : '',
-              })
-            }
+              };
+
+              if (promptState.promptSource === 'bazi-ziwei') {
+                const mappedZiweiScope = mapBaziFortuneToZiweiScope(next);
+                nextPromptState.ziweiScope = mappedZiweiScope.scope;
+                nextPromptState.ziweiScopeDate = mappedZiweiScope.dateStr;
+              }
+
+              updatePromptState(nextPromptState);
+            }}
           />
         </Suspense>
       ) : null}

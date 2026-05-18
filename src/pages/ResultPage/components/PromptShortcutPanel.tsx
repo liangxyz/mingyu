@@ -58,10 +58,7 @@ export function PromptShortcutPanel({
       .filter((section) => section.items.length > 0);
   }, [actionMap, sections]);
   const sectionLabelSet = useMemo(
-    () =>
-      new Set(
-        normalizedSections.flatMap((section) => section.items.map((item) => item.label)),
-      ),
+    () => new Set(normalizedSections.flatMap((section) => section.items.map((item) => item.label))),
     [normalizedSections],
   );
   const ungroupedActions = useMemo(
@@ -122,7 +119,9 @@ export function PromptShortcutPanel({
                 </button>
 
                 {isExpanded ? (
-                  <div className={`quick-grid${quickGridClassName ? ` ${quickGridClassName}` : ''}`}>
+                  <div
+                    className={`quick-grid${quickGridClassName ? ` ${quickGridClassName}` : ''}`}
+                  >
                     {section.items.map((item) => (
                       <button
                         key={item.label}

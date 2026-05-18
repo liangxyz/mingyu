@@ -324,7 +324,7 @@ export function usePromptShortcuts(
     category?: string,
     intent?: QuestionInspirationIntent,
   ) {
-    if (promptState.promptSource === 'bazi') {
+    if (promptState.promptSource === 'bazi' || promptState.promptSource === 'bazi-ziwei') {
       writePromptDraft(baziDraftStorageKey, question, 'inspiration');
       setActiveBaziShortcutMode('问题灵感');
       setBaziQuestionDraft(question);

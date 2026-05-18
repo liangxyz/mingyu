@@ -106,7 +106,9 @@ export function useZiweiCalculations(
     }
   }, [inputState, partnerHasUnknownTime]);
 
-  const shouldLoadZiweiPromptPayload = isPromptTabMounted && promptState.promptSource === 'ziwei';
+  const shouldLoadZiweiPromptPayload =
+    isPromptTabMounted &&
+    (promptState.promptSource === 'ziwei' || promptState.promptSource === 'bazi-ziwei');
   const shouldWarmZiweiRuntime = Boolean(primaryZiweiInput);
   const shouldWarmPartnerZiweiRuntime =
     inputState.analysisMode === 'compatibility' && Boolean(partnerZiweiInput);
@@ -261,7 +263,7 @@ export function useZiweiCalculations(
   const ziweiPromptScopeType = promptState.ziweiScope as ScopeType;
   const shouldUseCustomZiweiPromptPayload =
     promptState.tab === 'prompt' &&
-    promptState.promptSource === 'ziwei' &&
+    (promptState.promptSource === 'ziwei' || promptState.promptSource === 'bazi-ziwei') &&
     Boolean(promptState.ziweiScopeDate);
 
   useEffect(() => {

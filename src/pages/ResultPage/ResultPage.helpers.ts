@@ -2,9 +2,14 @@ import type { DecadalTimelineOption } from '@/lib/iztro/decadal';
 import { formatPromptCurrentTime } from '@/lib/prompt-time';
 import type { BaziQuestionScene, QueryPromptState, ZiweiScopeMode } from '@/lib/query-state';
 import type { AstrolabePromptTopic } from '@/lib/astrolabe-prompts';
+import { buildPortablePromptPack, type PromptContext } from '@/lib/ziwei-prompts';
+import { getBaziDefaultQuestion } from '@/lib/prompt-default-questions';
+import { formatBaziForPrompt } from '@/utils/bazi/baziAnalysisFormatter';
+import type { AnalysisPayloadV1 } from '@/types/analysis';
 import type { PalaceFact } from '@/types/analysis';
 import type { BaziChartResult } from '@/utils/bazi/baziTypes';
 import type { BaziFortuneSelectionValue } from '@/utils/bazi/fortuneSelection';
+import { buildBaziQuestionGuidanceSection } from '@/utils/ai/baziQuestionScene';
 import { safeStorage } from '@/lib/safe-storage';
 import { ASTROLABE_SHORTCUT_ACTIONS } from '@/lib/astrolabe-prompts';
 import {
@@ -309,6 +314,118 @@ export function resolveAstrolabeShortcutMode(promptState: QueryPromptState) {
 
 export function buildCombinedPromptText(system: string, user: string) {
   return [system, '', user].join('\n');
+}
+
+export function resolveZiweiTopicByBaziQuestionScene(scene?: BaziQuestionScene) {
+  switch (scene) {
+    case 'recent':
+      return 'recent';
+    case 'career':
+    case 'wealth':
+      return 'career-wealth';
+    case 'job-change':
+      return 'job-change';
+    case 'startup-partnership':
+      return 'startup-partnership';
+    case 'investment-partnership':
+      return 'investment-partnership';
+    case 'marriage':
+    case 'children':
+      return 'relationship';
+    case 'relationship-push':
+      return 'relationship-push';
+    case 'relationship-decision':
+      return 'relationship-decision';
+    case 'reconciliation-decision':
+      return 'reconciliation-decision';
+    case 'family':
+    case 'home-move':
+    case 'settle-relocate':
+    case 'parents':
+      return 'family';
+    case 'social':
+      return 'social';
+    case 'emotion':
+      return 'emotion';
+    case 'health':
+      return 'health';
+    case 'study':
+      return 'study';
+    case 'study-advance':
+      return 'study-advance';
+    case 'exam-landing':
+      return 'exam-landing';
+    case 'growth':
+      return 'growth';
+    case 'talent':
+      return 'talent';
+    default:
+      return 'life';
+  }
+}
+
+export function buildEnhancedZiweiPromptPack(payload: AnalysisPayloadV1, selectedTopic: string) {
+  const reportContext: PromptContext = {
+    report_key: `enhanced:${selectedTopic}:${payload.active_scope.scope}:${payload.active_scope.solar_date}`,
+    report_title: '紫微交叉校验资料',
+    report_type: 'enhanced',
+    selected_topic: selectedTopic,
+    scope_type: payload.active_scope.scope,
+    scope_label: payload.active_scope.label,
+    focus_notes: ['本资料用于与八字结论交叉校验，不单独脱离问题做空泛总论。'],
+  };
+
+  return buildPortablePromptPack({
+    payload,
+    reportContext,
+  });
+}
+
+export function buildBaziZiweiEnhancedPrompt(params: {
+  baziResult: BaziChartResult;
+  ziweiText: string;
+  question: string;
+  questionScene?: BaziQuestionScene;
+  baziFortuneSummary?: string;
+  ziweiScopeSummary?: string;
+  isCustomQuestion?: boolean;
+}) {
+  const isCustomQuestion = Boolean(params.isCustomQuestion);
+  const normalizedQuestion =
+    params.question.trim() || getBaziDefaultQuestion(params.questionScene, { isCustomQuestion });
+  const baziText = formatBaziForPrompt(params.baziResult, null, 'general');
+  const sourceLabels = [params.baziFortuneSummary, params.ziweiScopeSummary]
+    .map((item) => item?.trim())
+    .filter(Boolean);
+
+  return [
+    '你是一位同时熟悉八字与紫微斗数的资深命理分析师，擅长先用八字判断命局结构与岁运主线，再用紫微斗数校验宫位主轴、四化触发与运限落点。',
+    '【要求】',
+    '- 只基于提供的八字排盘、紫微盘面和问题作答。',
+    '- 先用八字判断长期底色、用神喜忌、结构强弱和当前触发，再用紫微校验对应宫位、四化、三方四正和运限呼应。',
+    '- 两套体系结论一致时可以增强结论；出现分歧时必须指出哪一侧证据更强、另一侧对应的条件与待核验点。',
+    '- 资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定。',
+    '- 不要平均复述两套盘面资料，优先提炼最能回答【问题】的核心证据。',
+    '- 使用简体中文，不写空话；证据不足处直接说明。',
+    '',
+    `【当前时间】\n${formatPromptCurrentTime()}`,
+    sourceLabels.length > 0 ? `【增强来源】\n${sourceLabels.join('\n')}` : '',
+    `【八字排盘信息】\n${baziText}`,
+    `【紫微盘面信息】\n${params.ziweiText}`,
+    `【问题】\n${normalizedQuestion}`,
+    ...(isCustomQuestion
+      ? []
+      : [
+          `【八字研判框架】\n${buildBaziQuestionGuidanceSection(
+            params.questionScene,
+            Boolean(params.baziFortuneSummary),
+          )}`,
+          '【任务】\n先用八字判断命局主线、结构强弱、喜忌取用与当前触发，再用紫微校验对应宫位主轴、四化牵动、三方四正和运限落点，最后整合成一致结论、冲突点与现实建议。',
+          '【输出要求】\n先直接回答【问题】，再按“八字主线”“紫微校验”“综合结论与建议”展开；每部分都尽量写明依据、触发条件与建议；若两套体系存在冲突，单列“冲突点与待核验项”。',
+        ]),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 export function buildCompatibilityPromptWithUnknownTime(params: {

@@ -31,6 +31,8 @@ import type {
 } from './ResultPage.types';
 import { PROMPT_DRAFT_STORAGE_PREFIX } from './ResultPage.constants';
 import {
+  buildBaziZiweiEnhancedPrompt,
+  buildEnhancedZiweiPromptPack,
   buildBaziFortuneSelectionValue,
   buildCombinedPromptText,
   buildCompatibilityPromptWithUnknownTime,
@@ -39,6 +41,7 @@ import {
   getZiweiShortcutActions,
   resolveBaziQuestionSceneByShortcutMode,
   resolveCompatType,
+  resolveZiweiTopicByBaziQuestionScene,
 } from './ResultPage.helpers';
 import {
   BaziFortuneLoadingModal,
@@ -94,7 +97,8 @@ export function ResultPage() {
     [inputSearch],
   );
   const shouldLoadBaziPromptModules =
-    promptState.tab === 'prompt' && promptState.promptSource === 'bazi';
+    promptState.tab === 'prompt' &&
+    (promptState.promptSource === 'bazi' || promptState.promptSource === 'bazi-ziwei');
   const [isBaziFortuneModalOpen, setIsBaziFortuneModalOpen] = useState(false);
   const [isZiweiScopeModalOpen, setIsZiweiScopeModalOpen] = useState(false);
   const inspiration = useQuestionInspiration();
@@ -188,7 +192,10 @@ export function ResultPage() {
   }, [promptState.tab]);
 
   useEffect(() => {
-    if (!hasUnknownBirthTime || promptState.promptSource !== 'ziwei') {
+    if (
+      !hasUnknownBirthTime ||
+      (promptState.promptSource !== 'ziwei' && promptState.promptSource !== 'bazi-ziwei')
+    ) {
       return;
     }
 
@@ -196,6 +203,16 @@ export function ResultPage() {
       promptSource: 'bazi',
     });
   }, [hasUnknownBirthTime, promptState.promptSource, updatePromptState]);
+
+  useEffect(() => {
+    if (inputState.analysisMode === 'single' || promptState.promptSource !== 'bazi-ziwei') {
+      return;
+    }
+
+    updatePromptState({
+      promptSource: 'bazi',
+    });
+  }, [inputState.analysisMode, promptState.promptSource, updatePromptState]);
 
   useEffect(() => {
     if (
@@ -434,6 +451,36 @@ export function ResultPage() {
     });
   }
 
+  const ziweiScopeSummaryText =
+    promptState.ziweiScope === 'origin'
+      ? '仅使用本命信息'
+      : formatZiweiPromptScopeSummary(
+          promptState.ziweiScope,
+          promptState.ziweiScopeDate,
+          promptState.ziweiScopeDate ? currentZiweiPayload?.active_scope.label : undefined,
+        );
+
+  function computeEnhancedPromptText(question: string, finalQuestion: string): string {
+    if (promptState.tab !== 'prompt' || inputState.analysisMode !== 'single') return '';
+    if (primaryHasUnknownTime || !baziResult || !currentZiweiPayload) return '';
+
+    const ziweiTopic = resolveZiweiTopicByBaziQuestionScene(activeBaziQuestionScene);
+    const ziweiText = buildEnhancedZiweiPromptPack(currentZiweiPayload, ziweiTopic);
+
+    return buildBaziZiweiEnhancedPrompt({
+      baziResult,
+      ziweiText,
+      question: finalQuestion || question,
+      questionScene: activeBaziQuestionScene,
+      baziFortuneSummary: baziFortuneContext
+        ? `八字分析对象：${baziFortuneContext.displayText}`
+        : '',
+      ziweiScopeSummary:
+        promptState.ziweiScope === 'origin' ? '' : `紫微分析范围：${ziweiScopeSummaryText}`,
+      isCustomQuestion: activeBaziShortcutMode === '自定义',
+    });
+  }
+
   const finalBaziQuestion = useMemo(() => {
     const question = effectiveBaziQuickQuestion.trim();
     if (baziFortuneContext) {
@@ -571,31 +618,63 @@ export function ResultPage() {
     promptState.astrolabeTopic,
     promptState.tab,
   ]);
+  const latestEnhancedPromptText = useMemo(
+    () => computeEnhancedPromptText(effectiveBaziQuickQuestion, finalBaziQuestion),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      activeBaziQuestionScene,
+      activeBaziShortcutMode,
+      baziFortuneContext,
+      baziResult,
+      currentZiweiPayload,
+      effectiveBaziQuickQuestion,
+      finalBaziQuestion,
+      inputState.analysisMode,
+      primaryHasUnknownTime,
+      promptState.tab,
+      promptState.ziweiScope,
+      ziweiScopeSummaryText,
+    ],
+  );
+  const previewEnhancedPromptText = useMemo(
+    () => computeEnhancedPromptText(deferredBaziQuickQuestion, deferredFinalBaziQuestion),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      activeBaziQuestionScene,
+      activeBaziShortcutMode,
+      baziFortuneContext,
+      baziResult,
+      currentZiweiPayload,
+      deferredBaziQuickQuestion,
+      deferredFinalBaziQuestion,
+      inputState.analysisMode,
+      primaryHasUnknownTime,
+      promptState.tab,
+      promptState.ziweiScope,
+      ziweiScopeSummaryText,
+    ],
+  );
 
   const latestActivePromptText =
     promptState.promptSource === 'astrolabe'
       ? latestAstrolabePromptText
-      : promptState.promptSource === 'bazi'
-        ? latestBaziPromptText
-        : latestZiweiPromptText;
+      : promptState.promptSource === 'bazi-ziwei'
+        ? latestEnhancedPromptText
+        : promptState.promptSource === 'bazi'
+          ? latestBaziPromptText
+          : latestZiweiPromptText;
   const { copyState, shareState, handleCopy, handleShare } =
     usePromptCopyShare(latestActivePromptText);
   const previewActivePromptText =
     promptState.promptSource === 'astrolabe'
       ? previewAstrolabePromptText
-      : promptState.promptSource === 'bazi'
-        ? previewBaziPromptText
-        : previewZiweiPromptText;
+      : promptState.promptSource === 'bazi-ziwei'
+        ? previewEnhancedPromptText
+        : promptState.promptSource === 'bazi'
+          ? previewBaziPromptText
+          : previewZiweiPromptText;
   const isBaziFortuneSummaryLoading = shouldLoadBaziPromptModules && !baziFortuneSelectionModule;
   const baziFortuneSummaryText = baziFortuneContext?.displayText ?? '仅使用本命信息';
-  const ziweiScopeSummaryText =
-    promptState.ziweiScope === 'origin'
-      ? '仅使用本命信息'
-      : formatZiweiPromptScopeSummary(
-          promptState.ziweiScope,
-          promptState.ziweiScopeDate,
-          promptState.ziweiScopeDate ? currentZiweiPayload?.active_scope.label : undefined,
-        );
   const showShareButton = shouldShowPromptShareButton({
     viewportWidth,
     hasNavigatorShare: typeof navigator !== 'undefined' && typeof navigator.share === 'function',
@@ -803,7 +882,7 @@ export function ResultPage() {
                     <p>
                       {hasAstrolabeChart
                         ? '选择星盘解读重点，生成可复制给 AI 的提示词。'
-                        : '选择基于八字或紫微，再用快捷按钮生成问题。'}
+                        : '选择基于八字、紫微或八字+紫微增强来源，再用快捷按钮生成问题。'}
                     </p>
                   </div>
                 </div>
@@ -827,16 +906,26 @@ export function ResultPage() {
                           <option value="ziwei" disabled={hasUnknownBirthTime}>
                             {hasUnknownBirthTime ? '基于紫微（未知时辰不可用）' : '基于紫微'}
                           </option>
+                          {inputState.analysisMode === 'single' ? (
+                            <option value="bazi-ziwei" disabled={hasUnknownBirthTime}>
+                              {hasUnknownBirthTime
+                                ? '基于八字+紫微（未知时辰不可用）'
+                                : '基于八字+紫微'}
+                            </option>
+                          ) : null}
                           {hasAstrolabeChart ? <option value="astrolabe">基于星盘</option> : null}
                         </select>
                       </label>
 
-                      {promptState.promptSource === 'bazi' &&
+                      {(promptState.promptSource === 'bazi' ||
+                        promptState.promptSource === 'bazi-ziwei') &&
                       inputState.analysisMode === 'single' &&
                       !primaryHasUnknownTime ? (
                         <div className="field-card">
                           <div className="field-header">
-                            <span>年限选择</span>
+                            <span>
+                              {promptState.promptSource === 'bazi-ziwei' ? '八字年限' : '年限选择'}
+                            </span>
                           </div>
                           <button
                             type="button"
@@ -852,10 +941,13 @@ export function ResultPage() {
                         </div>
                       ) : null}
 
-                      {promptState.promptSource === 'ziwei' ? (
+                      {promptState.promptSource === 'ziwei' ||
+                      promptState.promptSource === 'bazi-ziwei' ? (
                         <div className="field-card">
                           <div className="field-header">
-                            <span>年限选择</span>
+                            <span>
+                              {promptState.promptSource === 'bazi-ziwei' ? '紫微范围' : '年限选择'}
+                            </span>
                           </div>
                           <button
                             type="button"
@@ -873,7 +965,8 @@ export function ResultPage() {
                       ) : null}
                     </div>
 
-                    {promptState.promptSource === 'bazi' ? (
+                    {promptState.promptSource === 'bazi' ||
+                    promptState.promptSource === 'bazi-ziwei' ? (
                       <PromptShortcutPanel
                         actions={getBaziShortcutActions(inputState.analysisMode)}
                         activeMode={activeBaziShortcutMode}
@@ -892,7 +985,8 @@ export function ResultPage() {
                       />
                     ) : null}
 
-                    {promptState.promptSource === 'ziwei' ? (
+                    {promptState.promptSource === 'ziwei' ||
+                    promptState.promptSource === 'bazi-ziwei' ? (
                       <PromptShortcutPanel
                         actions={getZiweiShortcutActions(inputState.analysisMode)}
                         activeMode={activeZiweiShortcutMode}
@@ -952,7 +1046,9 @@ export function ResultPage() {
                 <div className="prompt-send-tip">
                   点击复制后，发送到你常用的在线 AI 软件继续提问。
                 </div>
-                {hasUnknownBirthTime && promptState.promptSource === 'bazi' ? (
+                {hasUnknownBirthTime &&
+                (promptState.promptSource === 'bazi' ||
+                  promptState.promptSource === 'bazi-ziwei') ? (
                   <div className="prompt-send-tip">
                     当前存在未知时辰，已自动改为三柱保守提示词，不会假定时柱。
                   </div>

@@ -45,6 +45,13 @@ OpenAPI：[https://aov.cc/api/v1/openapi.json](https://aov.cc/api/v1/openapi.jso
 - 提供问题灵感库，帮助用户快速提出更适合命理或占卜分析的问题。
 - 支持复制和移动端分享，方便把结构化提示词带到其他 AI 平台继续解读。
 
+### 模型评测
+
+- 内置 `2025年第十六届全球算命师比赛` 评测资料，包含原题、8 份八字提示词和 40 题正确答案。
+- 提示词已补入题目涉及年份、年龄段对应的大运、流年、年龄、十神和小运信息，方便直接评测不同模型的命理选择题表现。
+- 提供快速评测脚本，支持 OpenAI Chat Completions、OpenAI Responses、Claude Messages、Gemini generateContent 四种接口格式。
+- 评测结果按 100 分制输出，并同时给出准确率和逐题明细。
+
 ## 给普通用户
 
 直接打开 [https://aov.cc](https://aov.cc)，选择排盘或占卜模式：
@@ -201,6 +208,45 @@ npm test
 ```bash
 npx tsc --project mcp/tsconfig.json --noEmit
 ```
+
+## 模型评测
+
+比赛资料位于：[docs/2025第十六届全球算命师比赛](docs/2025第十六届全球算命师比赛)
+
+交互式运行：
+
+```bash
+npm run contest:evaluate
+```
+
+脚本会依次询问接口 URL、API Key 和模型名称，自动读取 8 份提示词与 `正确答案.md`。每个命例只要求模型输出 5 个 A/B/C/D 答案字母，减少长理由导致的截断和解析错误；调用完成后输出 100 分制总分、准确率、分命例得分和逐题明细。
+
+也可以直接传参：
+
+```bash
+npm run contest:evaluate -- --format chat --url https://api.openai.com/v1 --key sk-xxx --model gpt-4.1-mini
+```
+
+批量并发评测：
+
+```bash
+npm run contest:evaluate -- --format chat --url https://openrouter.ai/api/v1 --key sk-xxx --concurrency 3 --models "GPT-5.4=openai/gpt-5.4,Claude Sonnet 4.6=anthropic/claude-sonnet-4.6"
+```
+
+`--concurrency` 控制同时评测的模型数量，默认批量为 3；`--caseConcurrency` 控制同一模型内命例并发数量，默认 1。批量模式会合并更新比赛目录下的 `模型评测排名报告.md` 和 `评测结果/本次排名原始结果.json`。
+
+使用 OpenRouter 测 reasoning 模型时，可以加 `--reasoningEffort none --excludeReasoning --maxTokens 256`，让模型尽量只返回最终答案。若某个命例没有解析满 5 个答案，脚本会把该模型标为失败，不会把 `?????` 当作 0 分答案计入排名。
+
+支持的 `--format`：
+
+| 格式 | 说明 | URL 示例 |
+| --- | --- | --- |
+| `chat` | OpenAI Chat Completions 或兼容接口 | `https://api.openai.com/v1` |
+| `responses` | OpenAI Responses | `https://api.openai.com/v1` |
+| `claude` | Claude Messages | `https://api.anthropic.com/v1` |
+| `gemini` | Gemini generateContent | `https://generativelanguage.googleapis.com/v1beta` |
+
+不传 `--format` 时会自动识别；评测报告会保存到比赛资料目录下的 `评测结果/`。
 
 ## 适合贡献的方向
 

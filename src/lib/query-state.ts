@@ -2,7 +2,7 @@ import { BAZI_QUESTION_SCENES, type BaziQuestionScene } from '@/utils/ai/baziQue
 import { ASTROLABE_PROMPT_TOPICS, type AstrolabePromptTopic } from '@/lib/astrolabe-prompts';
 
 export type ResultTabKey = 'bazi' | 'ziwei' | 'astrolabe' | 'prompt';
-export type PromptSourceKey = 'bazi' | 'ziwei' | 'astrolabe';
+export type PromptSourceKey = 'bazi' | 'ziwei' | 'bazi-ziwei' | 'astrolabe';
 export type BaziFortuneScope = 'natal' | 'dayun' | 'year' | 'month' | 'day';
 export type { BaziQuestionScene };
 export type { AstrolabePromptTopic };
@@ -558,7 +558,11 @@ export function parsePromptState(params: URLSearchParams): QueryPromptState {
       : defaultPromptState.tab;
   const rawPromptSource = getString(params, 'promptSource', defaultPromptState.promptSource);
   const promptSource: PromptSourceKey =
-    rawPromptSource === 'ziwei' || rawPromptSource === 'astrolabe' ? rawPromptSource : 'bazi';
+    rawPromptSource === 'ziwei' ||
+    rawPromptSource === 'bazi-ziwei' ||
+    rawPromptSource === 'astrolabe'
+      ? rawPromptSource
+      : 'bazi';
 
   return normalizePromptState({
     tab,

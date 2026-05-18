@@ -68,21 +68,23 @@ function compareEvidenceStarPriority(left: string, right: string, palace: Palace
   return starWeight(left) - starWeight(right) || left.localeCompare(right, 'zh-CN');
 }
 
-function resolveEvidencePalaces(payload: AnalysisPayloadV1, palace: PalaceFact[], item: {
-  palace_indexes: number[];
-  palace_names: string[];
-}) {
+function resolveEvidencePalaces(
+  payload: AnalysisPayloadV1,
+  palace: PalaceFact[],
+  item: {
+    palace_indexes: number[];
+    palace_names: string[];
+  },
+) {
   const byIndexes = item.palace_indexes.map((index) => getPalaceByIndex(payload, index));
   const byNames = item.palace_names.map((name) => getPalaceByName(payload, name));
 
-  return [
-    ...palace,
-    ...byIndexes,
-    ...byNames,
-  ].filter((candidate, index, list): candidate is PalaceFact => {
-    if (!candidate) return false;
-    return list.findIndex((entry) => entry?.index === candidate.index) === index;
-  });
+  return [...palace, ...byIndexes, ...byNames].filter(
+    (candidate, index, list): candidate is PalaceFact => {
+      if (!candidate) return false;
+      return list.findIndex((entry) => entry?.index === candidate.index) === index;
+    },
+  );
 }
 
 function deriveEvidenceStars(

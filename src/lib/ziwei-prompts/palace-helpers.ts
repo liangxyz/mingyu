@@ -1,4 +1,4 @@
-import type { AnalysisPayloadV1, PalaceFact, StarFact } from '@/types/analysis';
+import type { AnalysisPayloadV1, PalaceFact, StarFact } from '../../types/analysis';
 
 export function getAllStars(palace: PalaceFact) {
   return [...palace.major_stars, ...palace.minor_stars, ...palace.other_stars];

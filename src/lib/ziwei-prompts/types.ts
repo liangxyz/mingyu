@@ -1,4 +1,4 @@
-import type { ScopeType } from '@/types/analysis';
+import type { ScopeType } from '../../types/analysis';
 
 export type PromptContext = {
   report_key: string;

@@ -1,4 +1,4 @@
-import type { SsgwData } from '@/types/divination';
+import type { SsgwData } from '../../types/divination';
 
 function normalizeSsgwText(text: string) {
   return text.replace(/[，。、《》；：？！“”"'、\s]/g, '');

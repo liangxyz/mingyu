@@ -1,24 +1,24 @@
-import { resolveZiweiTrueSolarBirth } from '@/lib/ziwei/true-solar-input';
-import type { ChartInput } from '@/types/chart';
-import type { AnalysisPayloadV1, ScopeType } from '@/types/analysis';
-import type { IztroAstrolabe, IztroHoroscope } from '@/types/iztro';
+import { resolveZiweiTrueSolarBirth } from '../ziwei/true-solar-input';
+import type { ChartInput } from '../../types/chart';
+import type { AnalysisPayloadV1, ScopeType } from '../../types/analysis';
+import type { IztroAstrolabe, IztroHoroscope } from '../../types/iztro';
 import {
   buildAstrolabeFromInput,
   buildHoroscope,
   getDefaultHoroscopeContext,
-} from '@/lib/iztro/runtime-helpers';
-import { buildAnalysisPayloadV1 } from '@/lib/iztro/build-analysis-payload';
+} from '../iztro/runtime-helpers';
+import { buildAnalysisPayloadV1 } from '../iztro/build-analysis-payload';
 import {
   getZiweiCompatibilityDefaultQuestion,
   getZiweiDefaultQuestion,
-} from '@/lib/prompt-default-questions';
-import { buildPortablePromptPack, type PromptContext } from '@/lib/ziwei-prompts';
-import { formatPromptCurrentTime } from '@/lib/prompt-time';
+} from '../prompt-default-questions';
+import { buildPortablePromptPack, type PromptContext } from '../ziwei-prompts';
+import { formatPromptCurrentTime } from '../prompt-time';
 import {
   ZIWEI_ANALYSIS_REQUIREMENT,
   ZIWEI_ANALYST_ROLE,
   ZIWEI_COMPATIBILITY_ROLE,
-} from '@/lib/ziwei-prompt-copy';
+} from '../ziwei-prompt-copy';
 
 export type ZiweiRuntime = {
   astrolabe: IztroAstrolabe;

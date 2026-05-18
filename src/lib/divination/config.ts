@@ -7,7 +7,7 @@ import type {
   MeihuaDivinationMethod,
   TarotSpreadType,
   XiaoliurenDivinationMethod,
-} from '@/types/divination';
+} from '../../types/divination';
 
 export type DivinationMethodId =
   | 'random'

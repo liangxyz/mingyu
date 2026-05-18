@@ -1,4 +1,4 @@
-import type { ScopeType } from '@/types/analysis';
+import type { ScopeType } from '../../types/analysis';
 
 export function formatPalaceName(name: string) {
   return name.endsWith('宫') ? name : `${name}宫`;

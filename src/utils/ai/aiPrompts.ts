@@ -8,18 +8,18 @@
  * 两者均通过 prompt-engine.ts 统一导出给 ResultPage.tsx
  */
 
-import type { BaziChartResult } from '@/utils/bazi/baziTypes';
-import { formatBaziForPrompt, type PromptChartScene } from '@/utils/bazi/baziAnalysisFormatter';
-import type { FortuneSelectionContext } from '@/utils/bazi/fortuneSelection';
+import type { BaziChartResult } from '../bazi/baziTypes';
+import { formatBaziForPrompt, type PromptChartScene } from '../bazi/baziAnalysisFormatter';
+import type { FortuneSelectionContext } from '../bazi/fortuneSelection';
 import {
   getBaziCompatibilityDefaultQuestion,
   getBaziDefaultQuestion,
-} from '@/lib/prompt-default-questions';
-import { formatPromptCurrentTime } from '@/lib/prompt-time';
+} from '../../lib/prompt-default-questions';
+import { formatPromptCurrentTime } from '../../lib/prompt-time';
 import {
   generateEnhancedAnalysisSection,
   generateCompatibilityEnhancedSection,
-} from '@/utils/bazi/baziPromptEnhancement';
+} from '../bazi/baziPromptEnhancement';
 import {
   buildBaziQuestionGuidanceSection,
   resolveBaziQuestionScene,

@@ -2,9 +2,9 @@ import type {
   XiaoliurenData,
   XiaoliurenDivinationMethod,
   XiaoliurenPalaceDetail,
-} from '@/types/divination';
-import { getTimeIndexFromClock } from '@/utils/dateUtils';
-import { getDivinationTime } from '@/utils/timeManager';
+} from '../../../types/divination';
+import { getTimeIndexFromClock } from '../../../utils/dateUtils';
+import { getDivinationTime } from '../../../utils/timeManager';
 
 const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {

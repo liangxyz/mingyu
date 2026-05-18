@@ -4,8 +4,8 @@ import type {
   AstrolabeBirthInput,
   AstrolabeData,
   AstrolabePoint,
-} from '@/types/divination';
-import { calculateTrueSolarTime } from '@/utils/bazi/trueSolarTime';
+} from '../../../types/divination';
+import { calculateTrueSolarTime } from '../../../utils/bazi/trueSolarTime';
 
 const PLANET_LABELS: Record<string, string> = {
   Sun: '太阳',

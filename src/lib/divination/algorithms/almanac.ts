@@ -1,12 +1,12 @@
 import { SolarDay } from 'tyme4ts';
-import { baziCalculator } from '@/utils/bazi/baziCalculator';
+import { baziCalculator } from '../../../utils/bazi/baziCalculator';
 import type {
   AlmanacData,
   AlmanacDayCandidate,
   AlmanacParticipantInput,
   AlmanacParticipantProfile,
   AlmanacTopic,
-} from '@/types/divination';
+} from '../../../types/divination';
 
 export const ALMANAC_TOPIC_LABELS: Record<AlmanacTopic, string> = {
   move: '搬家入宅',

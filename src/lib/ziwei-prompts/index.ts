@@ -1,4 +1,4 @@
-import type { AnalysisPayloadV1 } from '@/types/analysis';
+import type { AnalysisPayloadV1 } from '../../types/analysis';
 import { buildZiweiReadableSnapshot } from './snapshot';
 import type { PromptContext } from './types';
 

@@ -1,4 +1,4 @@
-import type { TarotData } from '@/types/divination';
+import type { TarotData } from '../../types/divination';
 
 type TarotFocusRule = {
   spreadTypes?: string[];

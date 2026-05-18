@@ -1,4 +1,4 @@
-import type { AnalysisPayloadV1, PalaceFact, StarFact } from '@/types/analysis';
+import type { AnalysisPayloadV1, PalaceFact, StarFact } from '../../types/analysis';
 import { formatPalaceName, mapScopeLabel, normalizePalaceName } from './labels';
 import {
   collectMutagenStars,

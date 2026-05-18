@@ -1,4 +1,4 @@
-import type { LenormandData, LenormandSpreadType } from '@/types/divination';
+import type { LenormandData, LenormandSpreadType } from '../../../types/divination';
 
 const LENORMAND_CARDS = [
   { id: 1, name: '骑士', keywords: ['消息', '到来', '进展'], meaning: '消息抵达，事情开始移动。' },

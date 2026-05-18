@@ -1,4 +1,4 @@
-import type { AnalysisPayloadV1 } from '@/types/analysis';
+import type { AnalysisPayloadV1 } from '../../types/analysis';
 import {
   buildEvidenceSummary,
   buildPalaceIndex,

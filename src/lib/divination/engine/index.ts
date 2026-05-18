@@ -18,7 +18,7 @@ import {
   buildAstrolabeTopicTask,
   getAstrolabeDefaultQuestion,
   type AstrolabePromptTopic,
-} from '@/lib/astrolabe-prompts';
+} from '../../astrolabe-prompts';
 import {
   buildSection,
   buildSolarTimeInfoText,

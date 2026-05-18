@@ -9,7 +9,7 @@ import type {
   DivinationData,
   LenormandData,
   XiaoliurenData,
-} from '@/types/divination';
+} from '../../types/divination';
 import { resolveSsgwStoryContent } from './ssgw-content';
 import { formatTarotCardLabel, getTarotFocusCards } from './tarot-focus';
 

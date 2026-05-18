@@ -1,11 +1,10 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateMeihua } from '../../../src/lib/divination/algorithms/meihua/index.js';
-import { PROMPT_MODES } from '../../../src/lib/public-api/prompt-builders.js';
 import type { MeihuaSettings } from '../../../src/types/divination.js';
-import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
+import { resultOutputSchema } from '../schemas.js';
 import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
-import { buildDivinationPromptText } from './prompt-helpers.js';
+import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-common.js';
 
 const meihuaSchema = z.object({
   method: z
@@ -16,13 +15,7 @@ const meihuaSchema = z.object({
   customDate: z.string().optional().describe('自定义起卦时间（ISO 8601 格式），不提供则使用当前时间'),
 });
 
-const meihuaPromptSchema = meihuaSchema.extend({
-  question: z.string().describe('用户希望围绕卦盘解读的问题'),
-  promptMode: z
-    .enum(PROMPT_MODES)
-    .optional()
-    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
-});
+const meihuaPromptSchema = extendPromptSchema(meihuaSchema, '用户希望围绕卦盘解读的问题');
 
 export function registerMeihuaTool(server: McpServer) {
   server.registerTool(
@@ -34,12 +27,11 @@ export function registerMeihuaTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const customDate = args.customDate ? new Date(args.customDate) : undefined;
         const settings: MeihuaSettings = {
           method: args.method || 'time',
           ...(args.number ? { number: args.number } : {}),
         };
-        const result = generateMeihua(customDate, settings);
+        const result = generateMeihua(args.customDate ? new Date(args.customDate) : undefined, settings);
         return createStructuredToolResult({ result });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '起卦失败'));
@@ -52,24 +44,21 @@ export function registerMeihuaTool(server: McpServer) {
     {
       description: '梅花易数起卦并生成结构化 AI 解读提示词：一次调用返回卦盘数据和可直接复制给 AI 的提示词',
       inputSchema: meihuaPromptSchema.shape,
-      outputSchema: promptOutputSchema,
+      outputSchema: {
+        result: z.unknown().describe('梅花易数卦盘数据'),
+        prompt: z.string().describe('可直接用于 AI 解读的结构化提示词'),
+      },
     },
     async (args) => {
       try {
-        const customDate = args.customDate ? new Date(args.customDate) : undefined;
         const settings: MeihuaSettings = {
           method: args.method || 'time',
           ...(args.number ? { number: args.number } : {}),
         };
-        const result = generateMeihua(customDate, settings);
+        const result = generateMeihua(args.customDate ? new Date(args.customDate) : undefined, settings);
         return createStructuredToolResult({
           result,
-          prompt: buildDivinationPromptText({
-            method: 'meihua',
-            question: args.question,
-            data: result,
-            promptMode: args.promptMode,
-          }),
+          prompt: buildCommonDivinationPrompt('meihua', args.question, result, args.promptMode),
         });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '生成梅花提示词失败'));

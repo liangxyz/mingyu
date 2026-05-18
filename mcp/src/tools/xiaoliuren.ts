@@ -1,14 +1,9 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateXiaoliuren } from '../../../src/lib/divination/algorithms/xiaoliuren.js';
-import { PROMPT_MODES } from '../../../src/lib/public-api/prompt-builders.js';
-import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
-import {
-  createErrorToolResult,
-  createStructuredToolResult,
-  getErrorMessage,
-} from '../tool-results.js';
-import { buildDivinationPromptText } from './prompt-helpers.js';
+import { resultOutputSchema } from '../schemas.js';
+import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
+import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-common.js';
 
 const xiaoliurenSchema = z.object({
   xiaoliurenMethod: z
@@ -22,13 +17,7 @@ const xiaoliurenSchema = z.object({
     .describe('自定义起课时间（ISO 8601 格式），不提供则使用当前时间'),
 });
 
-const xiaoliurenPromptSchema = xiaoliurenSchema.extend({
-  question: z.string().describe('用户希望围绕小六壬结果解读的问题'),
-  promptMode: z
-    .enum(PROMPT_MODES)
-    .optional()
-    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
-});
+const xiaoliurenPromptSchema = extendPromptSchema(xiaoliurenSchema, '用户希望围绕小六壬结果解读的问题');
 
 export function registerXiaoliurenTool(server: McpServer) {
   server.registerTool(
@@ -59,7 +48,10 @@ export function registerXiaoliurenTool(server: McpServer) {
       description:
         '小六壬起课并生成结构化 AI 解读提示词：一次调用返回课盘结果和可直接复制给 AI 的提示词',
       inputSchema: xiaoliurenPromptSchema.shape,
-      outputSchema: promptOutputSchema,
+      outputSchema: {
+        result: z.unknown().describe('小六壬课盘数据'),
+        prompt: z.string().describe('可直接用于 AI 解读的结构化提示词'),
+      },
     },
     async (args) => {
       try {
@@ -70,12 +62,7 @@ export function registerXiaoliurenTool(server: McpServer) {
         });
         return createStructuredToolResult({
           result,
-          prompt: buildDivinationPromptText({
-            method: 'xiaoliuren',
-            question: args.question,
-            data: result,
-            promptMode: args.promptMode,
-          }),
+          prompt: buildCommonDivinationPrompt('xiaoliuren', args.question, result, args.promptMode),
         });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '生成小六壬提示词失败'));

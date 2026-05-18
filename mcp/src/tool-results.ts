@@ -14,10 +14,6 @@ export function createStructuredToolResult(structuredContent: StructuredContent)
   };
 }
 
-export function createResultToolResult(result: unknown): CallToolResult {
-  return createStructuredToolResult({ result });
-}
-
 export function createErrorToolResult(message: string): CallToolResult {
   return {
     structuredContent: { error: message },

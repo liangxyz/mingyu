@@ -1,14 +1,14 @@
 <p align="center">
     <a href="https://linux.do" alt="LINUX DO">
         <img
-            src="https://img.shields.io/badge/LINUX-DO-FFB003.svg?logo=data:image/svg%2bxml;base64,DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cGF0aCBkPSJNNDYuODItLjA1NWg2LjI1cTIzLjk2OSAyLjA2MiAzOCAyMS40MjZjNS4yNTggNy42NzYgOC4yMTUgMTYuMTU2IDguODc1IDI1LjQ1djYuMjVxLTIuMDY0IDIzLjk2OC0yMS40MyAzOC0xMS41MTIgNy44ODUtMjUuNDQ1IDguODc0aC02LjI1cS0yMy45Ny0yLjA2NC0zOC4wMDQtMjEuNDNRLjk3MSA2Ny4wNTYtLjA1NCA1My4xOHYtNi40NzNDMS4zNjIgMzAuNzgxIDguNTAzIDE4LjE0OCAyMS4zNyA4LjgxNyAyOS4wNDcgMy41NjIgMzcuNTI3LjYwNCA0Ni44MjEtLjA1NiIgc3R5bGU9InN0cm9rZTpub25lO2ZpbGwtcnVsZTpldmVub2RkO2ZpbGw6I2VjZWNlYztmaWxsLW9wYWNpdHk6MSIvPjxwYXRoIGQ9Ik00Ny4yNjYgMi45NTdxMjIuNTMtLjY1IDM3Ljc3NyAxNS43MzhhNDkuNyA0OS43IDAgMCAxIDYuODY3IDEwLjE1N3EtNDEuOTY0LjIyMi04My45MyAwIDkuNzUtMTguNjE2IDMwLjAyNC0yNC4zODdhNjEgNjEgMCAwIDEgOS4yNjItMS41MDgiIHN0eWxlPSJzdHJva2U6bm9uZTtmaWxsLXJ1bGU6ZXZlbm9kZDtmaWxsOiMxOTE5MTk7ZmlsbC1vcGFjaXR5OjEiLz48cGF0aCBkPSJNNy45OCA3MC45MjZjMjcuOTc3LS4wMzUgNTUuOTU0IDAgODMuOTMuMTEzUTgzLjQyNiA4Ny40NzMgNjYuMTMgOTQuMDg2cS0xOC44MSA2LjU0NC0zNi44MzItMS44OTgtMTQuMjAzLTcuMDktMjEuMzE3LTIxLjI2MiIgc3R5bGU9InN0cm9rZTpub25lO2ZpbGwtcnVsZTpldmVuZDtmaWxsOiNmOWFmMDA7ZmlsbC1vcGFjaXR5OjEiLz48L3N2Zz4=" /></a>
+            src="https://img.shields.io/badge/LINUX-DO-FFB003.svg?logo=data:image/svg%2bxml;base64,DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiPjxwYXRoIGQ9Ik00Ni44Mi0uMDU1aDYuMjVxMjMuOTY5IDIuMDYyIDM4IDIxLjQyNmM1LjI1OCA3LjY3NiA4LjIxNSAxNi4xNTYgOC44NzUgMjUuNDV2Ni4yNXEtMi4wNjQgMjMuOTY4LTIxLjQzIDM4LTExLjUxMiA3Ljg4NS0yNS40NDUgOC44NzRoLTYuMjVxLTIzLjk3LTIuMDY0LTM4LjAwNC0yMS40M1EuOTcxIDY3LjA1Ni0uMDU0IDUzLjE4di02LjQ3M0MxLjM2MiAzMC43ODEgOC41MDMgMTguMTQ4IDIxLjM3IDguODE3IDI5LjA0NyAzLjU2MiAzNy41MjcuNjA0IDQ2LjgyMS0uMDU2IiBzdHlsZT0ic3Ryb2tlOm5vbmU7ZmlsbC1ydWxlOmV2ZW5vZGQ7ZmlsbDojZWNlY2VjO2ZpbGwtb3BhY2l0eToxIi8+PHBhdGggZD0iTTQ3LjI2NiAyLjk1N3EyMi41My0uNjUgMzcuNzc3IDE1LjczOGE0OS43IDQ5LjcgMCAwIDEgNi44NjcgMTAuMTU3cS00MS45NjQuMjIyLTgzLjkzIDAgOS43NS0xOC42MTYgMzAuMDI0LTI0LjM4N2E2MSA2MSAwIDAgMSA5LjI2Mi0xLjUwOCIgc3R5bGU9InN0cm9rZTpub25lO2ZpbGwtcnVsZTpldmVub2RkO2ZpbGw6IzE5MTkxOTtmaWxsLW9wYWNpdHk6MSIvPjxwYXRoIGQ9Ik03Ljk4IDcwLjkyNmMyNy45NzctLjAzNSA1NS45NTQgMCA4My45My4xMTNRODMuNDI2IDg3LjQ3MyA2Ni4xMyA5NC4wODZxLTE4LjgxIDYuNTQ0LTM2LjgzMi0xLjg5OC0xNC4yMDMtNy4wOS0yMS4zMTctMjEuMjYyIiBzdHlsZT0ic3Ryb2tlOm5vbmU7ZmlsbC1ydWxlOmV2ZW5kZDtmaWxsOiNmOWFmMDA7ZmlsbC1vcGFjaXR5OjEiLz48L3N2Zz4=" /></a>
 </p>
 
 # 命语
 
-命语是一个面向 AI 时代的命理、占卜与提示词生成项目，目标不是把传统术数包装成神秘黑箱，而是把排盘、起卦、抽牌、结构化数据和 AI 提示词连接成一条清晰可复用的流程。让所有人都可以快速的生成专业可靠的排盘信息，而不是依靠模糊的关键词和无脑堆叠专业词汇，让AI占卜相对更加可靠，享受术数的神秘智慧。
+命语是一个算命、占卜、择日的提示词生成项目，目标是把排盘、起卦、抽牌、结构化数据和 AI 提示词连接成一条清晰可复用的流程。让所有人都可以快速的生成专业可靠的排盘信息，而不是依靠模糊的关键词和无脑堆叠专业词汇，让AI占卜相对更加可靠，享受术数的神秘智慧。
 
-它适合两类人使用：普通用户可以在网页端快速完成排盘或占卜，并把生成的结构化提示词交给常用 AI 工具继续解读；开发者和 AI 代理则可以通过公开 API、MCP Server 或 skill，把命语的排盘与提示词能力接入自己的应用、工作流和智能体系统。
+你可以在网页端快速完成排盘或占卜，并复制提示词给你常用的所有 AI 工具继续解读，对于移动端用户还可以使用分享功能快速跳转；也可以通过公开 API、MCP Server 或 skill，把命语的排盘与提示词能力接入自己的应用、工作流和智能体系统。
 
 项目目前覆盖八字排盘、紫微斗数、星盘、六爻、梅花易数、奇门遁甲、大六壬、小六壬、塔罗牌、雷诺曼、三山国王灵签、择日等场景，并尽量将结果拆分为机器可读的数据、用户可理解的摘要和适合大模型继续分析的提示词。
 
@@ -45,28 +45,12 @@ OpenAPI：[https://aov.cc/api/v1/openapi.json](https://aov.cc/api/v1/openapi.jso
 
 - 黄历择日：支持搬家入宅、订婚结婚、开业启动、签约合作、出行赴任、就医手术、考试学习等事项，按参与人生辰与事项类型推荐最佳日期并给出评分。
 
-### AI 提示词
-
-- 使用 `【当前时间】`、`【问题】`、`【任务】`、`【输出要求】` 等稳定 section 结构。
-- 支持八字、紫微、占卜三类提示词，并按婚姻、事业、财运、健康、学业等场景补充分析重点。
-- 提供问题灵感库，帮助用户快速提出更适合命理或占卜分析的问题。
-- 支持复制和移动端分享，方便把结构化提示词带到其他 AI 平台继续解读。
-
 ### 模型评测
 
-- 内置 `2025年第十六届全球算命师比赛` 评测资料，包含原题、8 份八字提示词和 40 题正确答案。
+- 内置 `2025年第十六届全球算命师比赛` 评测资料，包含原题、8 份提示词和 40 题正确答案。
 - 提示词已补入题目涉及年份、年龄段对应的大运、流年、年龄、十神和小运信息，方便直接评测不同模型的命理选择题表现。
 - 提供快速评测脚本，支持 OpenAI Chat Completions、OpenAI Responses、Claude Messages、Gemini generateContent 四种接口格式。
 - 评测结果按 100 分制输出，并同时给出准确率和逐题明细。
-
-## 给普通用户
-
-直接打开 [https://aov.cc](https://aov.cc)，选择排盘或占卜模式：
-
-1. 填写出生信息，生成八字、紫微或星盘。
-2. 输入问题，选择六爻、梅花、奇门、大六壬、小六壬、塔罗、雷诺曼或灵签；或进入择日选择事项与日期范围。
-3. 复制生成的结构化提示词，发送给你常用的 AI 工具进行解读。
-4. 在历史记录中找回之前生成过的排盘、占卜和提示词。
 
 ## 给开发者
 

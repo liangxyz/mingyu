@@ -43,6 +43,7 @@ import {
   resolveCompatType,
   resolveZiweiTopicByBaziQuestionScene,
 } from './ResultPage.helpers';
+import { singlePromptShortcutSections } from './ResultPage.constants';
 import {
   BaziFortuneLoadingModal,
   InlineSkeleton,
@@ -982,11 +983,13 @@ export function ResultPage() {
                             : '例如：我近期适合换工作还是稳住？'
                         }
                         onOpenInspiration={inspiration.open}
+                        sections={
+                          inputState.analysisMode === 'single' ? singlePromptShortcutSections : undefined
+                        }
                       />
                     ) : null}
 
-                    {promptState.promptSource === 'ziwei' ||
-                    promptState.promptSource === 'bazi-ziwei' ? (
+                    {promptState.promptSource === 'ziwei' ? (
                       <PromptShortcutPanel
                         actions={getZiweiShortcutActions(inputState.analysisMode)}
                         activeMode={activeZiweiShortcutMode}
@@ -1002,6 +1005,9 @@ export function ResultPage() {
                             : '例如：请重点分析我这段时间该主动还是先稳住。'
                         }
                         onOpenInspiration={inspiration.open}
+                        sections={
+                          inputState.analysisMode === 'single' ? singlePromptShortcutSections : undefined
+                        }
                       />
                     ) : null}
 

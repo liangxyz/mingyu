@@ -626,6 +626,33 @@ export const ziweiScopeLabelMap: Record<ZiweiScopeMode, string> = {
   hourly: '流时',
 };
 
+export const singlePromptShortcutSections = [
+  {
+    key: 'overview',
+    title: '先看整体',
+    description: '适合先判断大方向和近期主线。',
+    labels: ['综合', '近期'],
+  },
+  {
+    key: 'career',
+    title: '工作与财务',
+    description: '事业选择、跳槽、创业、合作和财运都放在这里。',
+    labels: ['事业', '换工作', '创业合作', '投资合作', '财运'],
+  },
+  {
+    key: 'relationship',
+    title: '关系与家庭',
+    description: '婚恋推进、关系去留、亲子和家庭议题集中处理。',
+    labels: ['婚恋', '关系推进', '关系去留', '复合判断', '子女', '六亲', '家庭'],
+  },
+  {
+    key: 'life',
+    title: '生活与成长',
+    description: '搬家、人际、情绪、健康、学习和天赋相关问题。',
+    labels: ['搬家置业', '定居换城', '人际', '情绪', '健康', '学业', '考证进修', '考试上岸', '成长', '天赋'],
+  },
+] as const;
+
 export const ZIWEI_GRID_ORDER = [
   3,
   4,

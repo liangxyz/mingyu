@@ -647,7 +647,7 @@ function buildReport({ model, endpoint, format, startedAt, finishedAt, caseResul
 async function loadContestData() {
   const correctAnswers = parseCorrectAnswers(await readFile(answersFile, 'utf8'));
   const promptFiles = (await readdir(contestDir))
-    .filter((name) => /^\d{2}_命例.+_八字提示词\.md$/.test(name))
+    .filter((name) => /^\d{2}_命例.+_提示词\.md$/.test(name))
     .sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
   if (promptFiles.length !== 8) {

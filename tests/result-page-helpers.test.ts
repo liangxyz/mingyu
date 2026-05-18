@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildBaziZiweiEnhancedPrompt,
   buildCombinedPromptText,
   buildCompatibilityPromptWithUnknownTime,
   buildZiweiMonthAnchorDate,
@@ -22,12 +23,15 @@ import {
   resolveBaziPresetIdByInspirationIntent,
   resolveBaziQuestionSceneByInspirationIntent,
   resolveBaziQuestionSceneByShortcutMode,
+  resolveZiweiTopicByBaziQuestionScene,
   resolveZiweiTopicByInspirationCategory,
   resolveZiweiTopicByInspirationIntent,
   resolveCompatType,
   splitGanZhi,
   writePromptDraft,
 } from '../src/pages/ResultPage/ResultPage.helpers';
+import { buildPersonFromInput, calculateFullBaziChart } from '../src/lib/full-chart-engine/bazi';
+import { buildZiweiChartInput, calculateFullZiweiChart } from '../src/lib/full-chart-engine/ziwei';
 
 test('parseZiweiDateParts 正确解析合法日期', () => {
   assert.deepEqual(parseZiweiDateParts('2024-05-13'), { year: 2024, month: 5, day: 13 });
@@ -156,6 +160,67 @@ test('buildCombinedPromptText 拼接系统提示和用户提示', () => {
   assert.equal(buildCombinedPromptText('系统', '用户'), '系统\n\n用户');
 });
 
+test('八字问题场景会映射到对应紫微专题', () => {
+  assert.equal(resolveZiweiTopicByBaziQuestionScene('career'), 'career-wealth');
+  assert.equal(resolveZiweiTopicByBaziQuestionScene('marriage'), 'relationship');
+  assert.equal(resolveZiweiTopicByBaziQuestionScene('health'), 'health');
+  assert.equal(resolveZiweiTopicByBaziQuestionScene('general'), 'life');
+});
+
+test('单人增强提示词会保留 section 结构并强调双体系交叉校验', async () => {
+  const baziPerson = buildPersonFromInput({
+    gender: 'male',
+    dateType: 'solar',
+    year: '1990',
+    month: '5',
+    day: '15',
+    timeIndex: 1,
+    isLeapMonth: false,
+    useTrueSolarTime: false,
+    birthHour: '',
+    birthMinute: '',
+    birthPlace: '',
+    birthLongitude: '',
+  });
+  const baziResult = calculateFullBaziChart(baziPerson);
+  const ziweiRuntime = await calculateFullZiweiChart(
+    buildZiweiChartInput({
+      name: '本人',
+      gender: 'male',
+      dateType: 'solar',
+      year: '1990',
+      month: '5',
+      day: '15',
+      timeIndex: 1,
+      isLeapMonth: false,
+      useTrueSolarTime: false,
+    }),
+  );
+
+  const prompt = buildBaziZiweiEnhancedPrompt({
+    baziResult,
+    ziweiText: `【分析背景】\n${ziweiRuntime.payloadByScope.origin.report_type || '紫微摘要'}`,
+    question: '请重点分析我的事业方向和当前突破口。',
+    questionScene: 'career',
+    baziFortuneSummary: '八字分析对象：当前大运',
+    ziweiScopeSummary: '紫微分析范围：流年 · 2028-01-01',
+  });
+
+  assert.match(prompt, /【当前时间】/);
+  assert.match(prompt, /【增强来源】\n八字分析对象：当前大运\n紫微分析范围：流年 · 2028-01-01/);
+  assert.match(prompt, /【八字排盘信息】/);
+  assert.match(prompt, /【紫微盘面信息】/);
+  assert.match(prompt, /【问题】\n请重点分析我的事业方向和当前突破口。/);
+  assert.match(
+    prompt,
+    /先用八字判断长期底色、用神喜忌、结构强弱和当前触发，再用紫微校验对应宫位、四化、三方四正和运限呼应/,
+  );
+  assert.match(
+    prompt,
+    /【输出要求】\n先直接回答【问题】，再按“八字主线”“紫微校验”“综合结论与建议”展开/,
+  );
+});
+
 test('问题灵感草稿应与自定义草稿分开存储，避免互相覆盖', () => {
   const storage = new Map<string, string>();
   const originalWindow = globalThis.window;
@@ -277,19 +342,13 @@ test('问题灵感细粒度意图会优先映射到更具体的专项框架', ()
   assert.equal(resolveZiweiTopicByInspirationIntent('job-change'), 'job-change');
   assert.equal(resolveAstrolabeTopicByInspirationIntent('job-change'), 'job-change');
 
-  assert.equal(
-    resolveBaziPresetIdByInspirationIntent('relationship-push'),
-    'ai-relationship-push',
-  );
+  assert.equal(resolveBaziPresetIdByInspirationIntent('relationship-push'), 'ai-relationship-push');
   assert.equal(
     resolveBaziQuestionSceneByInspirationIntent('relationship-push'),
     'relationship-push',
   );
   assert.equal(resolveZiweiTopicByInspirationIntent('relationship-push'), 'relationship-push');
-  assert.equal(
-    resolveAstrolabeTopicByInspirationIntent('relationship-push'),
-    'relationship-push',
-  );
+  assert.equal(resolveAstrolabeTopicByInspirationIntent('relationship-push'), 'relationship-push');
 
   assert.equal(
     resolveBaziPresetIdByInspirationIntent('startup-partnership'),
@@ -361,25 +420,13 @@ test('问题灵感细粒度意图会优先映射到更具体的专项框架', ()
     'reconciliation-decision',
   );
 
-  assert.equal(
-    resolveBaziPresetIdByInspirationIntent('settle-relocate'),
-    'ai-settle-relocate',
-  );
-  assert.equal(
-    resolveBaziQuestionSceneByInspirationIntent('settle-relocate'),
-    'settle-relocate',
-  );
+  assert.equal(resolveBaziPresetIdByInspirationIntent('settle-relocate'), 'ai-settle-relocate');
+  assert.equal(resolveBaziQuestionSceneByInspirationIntent('settle-relocate'), 'settle-relocate');
   assert.equal(resolveZiweiTopicByInspirationIntent('settle-relocate'), 'settle-relocate');
-  assert.equal(
-    resolveAstrolabeTopicByInspirationIntent('settle-relocate'),
-    'settle-relocate',
-  );
+  assert.equal(resolveAstrolabeTopicByInspirationIntent('settle-relocate'), 'settle-relocate');
 
   assert.equal(resolveBaziPresetIdByInspirationIntent('study-advance'), 'ai-study-advance');
-  assert.equal(
-    resolveBaziQuestionSceneByInspirationIntent('study-advance'),
-    'study-advance',
-  );
+  assert.equal(resolveBaziQuestionSceneByInspirationIntent('study-advance'), 'study-advance');
   assert.equal(resolveZiweiTopicByInspirationIntent('study-advance'), 'study-advance');
   assert.equal(resolveAstrolabeTopicByInspirationIntent('study-advance'), 'study-advance');
 

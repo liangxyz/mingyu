@@ -125,6 +125,16 @@ test('紫微提示词指定年限日期会写入并从地址栏恢复', () => {
   assert.equal(parsed.ziweiScopeDate, '2028-06-01');
 });
 
+test('八字加紫微增强来源可从地址栏恢复', () => {
+  const parsed = parsePromptState(
+    new URLSearchParams({
+      promptSource: 'bazi-ziwei',
+    }),
+  );
+
+  assert.equal(parsed.promptSource, 'bazi-ziwei');
+});
+
 test('紫微提示词参数非法时应回到稳定默认值', () => {
   const parsed = parsePromptState(
     new URLSearchParams({

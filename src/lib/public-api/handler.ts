@@ -726,30 +726,27 @@ function buildDivinationPromptResult(
 }
 
 function calculateDivinationData(method: Exclude<DivinationMethodId, 'random'>, input: JsonRecord) {
-  const inputWithoutQuestion = { ...input };
-  delete inputWithoutQuestion.question;
-
   switch (method) {
     case 'liuyao':
-      return generateLiuyao(readCustomDate(inputWithoutQuestion));
+      return generateLiuyao(readCustomDate(input));
     case 'meihua':
-      return calculateMeihua(inputWithoutQuestion);
+      return calculateMeihua(input);
     case 'xiaoliuren':
-      return calculateXiaoliuren(inputWithoutQuestion);
+      return calculateXiaoliuren(input);
     case 'qimen':
-      return generateQimen(readCustomDate(inputWithoutQuestion));
+      return generateQimen(readCustomDate(input));
     case 'liuren':
-      return calculateLiuren(inputWithoutQuestion);
+      return calculateLiuren(input);
     case 'tarot':
-      return calculateTarot(inputWithoutQuestion);
+      return calculateTarot(input);
     case 'ssgw':
       return drawRandomSign();
     case 'almanac':
-      return calculateAlmanac(inputWithoutQuestion);
+      return calculateAlmanac(input);
     case 'lenormand':
-      return calculateLenormand(inputWithoutQuestion);
+      return calculateLenormand(input);
     case 'astrolabe':
-      return calculateAstrolabe(inputWithoutQuestion);
+      return calculateAstrolabe(input);
   }
 }
 

@@ -12,7 +12,6 @@ import {
 import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
 import {
   createErrorToolResult,
-  createResultToolResult,
   createStructuredToolResult,
   getErrorMessage,
 } from '../tool-results.js';
@@ -60,7 +59,7 @@ export function registerBaziTool(server: McpServer) {
 
       try {
         const result = baziCalculator.calculateBazi(person);
-        return createResultToolResult(result);
+        return createStructuredToolResult({ result });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '排盘失败'));
       }

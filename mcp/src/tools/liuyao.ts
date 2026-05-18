@@ -1,11 +1,9 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateLiuyao } from '../../../src/lib/divination/algorithms/liuyao.js';
-import { PROMPT_MODES } from '../../../src/lib/public-api/prompt-builders.js';
-import type { LiuyaoTemplateType } from '../../../src/types/divination.js';
-import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
+import { resultOutputSchema } from '../schemas.js';
 import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
-import { buildDivinationPromptText } from './prompt-helpers.js';
+import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-common.js';
 
 const liuyaoSchema = z.object({
   customDate: z.string().optional().describe('自定义起卦时间（ISO 8601 格式），不提供则使用当前时间'),
@@ -15,13 +13,7 @@ const liuyaoSchema = z.object({
     .describe('专项断卦模板：general=通用, ganqing=感情, shiye=事业, caifu=财运, guaishen=鬼神怪异'),
 });
 
-const liuyaoPromptSchema = liuyaoSchema.extend({
-  question: z.string().describe('用户希望围绕卦盘解读的问题'),
-  promptMode: z
-    .enum(PROMPT_MODES)
-    .optional()
-    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
-});
+const liuyaoPromptSchema = extendPromptSchema(liuyaoSchema, '用户希望围绕卦盘解读的问题');
 
 export function registerLiuyaoTool(server: McpServer) {
   server.registerTool(
@@ -33,8 +25,7 @@ export function registerLiuyaoTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const customDate = args.customDate ? new Date(args.customDate) : undefined;
-        const result = generateLiuyao(customDate);
+        const result = generateLiuyao(args.customDate ? new Date(args.customDate) : undefined);
         return createStructuredToolResult({ result });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '起卦失败'));
@@ -47,21 +38,18 @@ export function registerLiuyaoTool(server: McpServer) {
     {
       description: '六爻起卦并生成结构化 AI 解读提示词：一次调用返回卦盘数据和可直接复制给 AI 的提示词',
       inputSchema: liuyaoPromptSchema.shape,
-      outputSchema: promptOutputSchema,
+      outputSchema: {
+        result: z.unknown().describe('六爻卦盘数据'),
+        prompt: z.string().describe('可直接用于 AI 解读的结构化提示词'),
+      },
     },
     async (args) => {
       try {
-        const customDate = args.customDate ? new Date(args.customDate) : undefined;
-        const liuyaoTemplate: LiuyaoTemplateType = args.liuyaoTemplate || 'general';
-        const result = generateLiuyao(customDate);
+        const result = generateLiuyao(args.customDate ? new Date(args.customDate) : undefined);
         return createStructuredToolResult({
           result,
-          prompt: buildDivinationPromptText({
-            method: 'liuyao',
-            question: args.question,
-            data: result,
-            liuyaoTemplate,
-            promptMode: args.promptMode,
+          prompt: buildCommonDivinationPrompt('liuyao', args.question, result, args.promptMode, {
+            liuyaoTemplate: args.liuyaoTemplate,
           }),
         });
       } catch (error) {

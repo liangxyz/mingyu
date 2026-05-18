@@ -1,6 +1,6 @@
 ---
 name: aov-mingyu-api
-description: 通过 aov.cc 公开 API 调用命理、占卜和一站式提示词能力。用于需要八字排盘、紫微斗数排盘、六爻、梅花易数、奇门遁甲、大六壬、塔罗、三山国王灵签，或直接返回可交给 AI 解读的完整提示词的任务。
+description: 通过 aov.cc 公开 API 调用命理、占卜和一站式提示词能力。用于需要八字排盘、紫微斗数排盘、六爻、梅花易数、奇门遁甲、大六壬、小六壬、塔罗、三山国王灵签、黄历择日、雷诺曼、星盘，或直接返回可交给 AI 解读的完整提示词的任务。
 ---
 
 # AOV 命理与占卜 API
@@ -54,6 +54,8 @@ description: 通过 aov.cc 公开 API 调用命理、占卜和一站式提示词
 - `POST /divination/liuyao/prompt`：六爻起卦并生成结构化 AI 解读提示词。
 - `POST /divination/meihua`：梅花易数起卦。
 - `POST /divination/meihua/prompt`：梅花易数起卦并生成结构化 AI 解读提示词。
+- `POST /divination/xiaoliuren`：小六壬起课。
+- `POST /divination/xiaoliuren/prompt`：小六壬起课并生成结构化 AI 解读提示词。
 - `POST /divination/qimen`：奇门遁甲排盘。
 - `POST /divination/qimen/prompt`：奇门遁甲排盘并生成结构化 AI 解读提示词。
 - `POST /divination/liuren`：大六壬排盘。
@@ -62,6 +64,12 @@ description: 通过 aov.cc 公开 API 调用命理、占卜和一站式提示词
 - `POST /divination/tarot/prompt`：塔罗抽牌并生成结构化 AI 解读提示词。
 - `POST /divination/ssgw`：三山国王灵签求签。
 - `POST /divination/ssgw/prompt`：三山国王灵签求签并生成结构化 AI 解读提示词。
+- `POST /divination/almanac`：黄历择日。
+- `POST /divination/almanac/prompt`：黄历择日并生成结构化 AI 解读提示词。
+- `POST /divination/lenormand`：雷诺曼抽牌。
+- `POST /divination/lenormand/prompt`：雷诺曼抽牌并生成结构化 AI 解读提示词。
+- `POST /divination/astrolabe`：星盘生成。
+- `POST /divination/astrolabe/prompt`：星盘生成并生成结构化 AI 解读提示词。
 
 ## 请求示例
 
@@ -113,16 +121,56 @@ curl -X POST https://aov.cc/api/v1/divination/tarot/prompt \
   -d '{"spreadType":"single","question":"我近期事业应该注意什么？"}'
 ```
 
+黄历择日：
+
+```bash
+curl -X POST https://aov.cc/api/v1/divination/almanac \
+  -H "Content-Type: application/json" \
+  -d '{"topic":"move","startDate":"2026-06-01","endDate":"2026-06-05","participants":[{"id":"self","name":"本人","gender":"男","year":1990,"month":1,"day":1,"timeIndex":12,"dateType":"solar"}]}'
+```
+
+星盘生成：
+
+```bash
+curl -X POST https://aov.cc/api/v1/divination/astrolabe \
+  -H "Content-Type: application/json" \
+  -d '{"name":"本人","gender":"女","year":1995,"month":5,"day":20,"hour":12,"minute":30,"latitude":39.9042,"longitude":116.4074,"timezone":8,"locationName":"北京"}'
+```
+
 ## 参数约定
 
-- `gender` 使用 `male` 或 `female`。
-- `dateType` 使用 `solar` 或 `lunar`。
-- `timeIndex` 范围为 `0` 到 `12`，其中 `0` 为早子时，`12` 为晚子时。
-- `question` 是所有 `/prompt` 接口的必填字段。
-- 八字 `promptTopic` 支持 `general`、`career`、`wealth`、`marriage`、`children`、`health`。
-- 紫微 `promptTopic` 支持 `destiny`、`relationship`、`career-wealth`、`life`、`chat`。
-- 紫微 `promptScope` 支持 `origin`、`decadal`、`yearly`、`monthly`、`daily`、`hourly`、`age`。
-- `customDate` 使用 ISO 8601 时间字符串。
-- 梅花易数 `method` 支持 `time`、`number`、`random`、`external`。
-- 塔罗 `spreadType` 支持 `single`、`three`、`love`、`career`、`decision`。
-- 大六壬 `template` 支持 `general`、`ganqing`、`shiye`、`caifu`。
+通用参数：
+
+- `gender`：八字和紫微使用 `male` 或 `female`；黄历择日和星盘使用 `男`、`女` 或空字符串。
+- `dateType`：使用 `solar`（阳历）或 `lunar`（农历）。
+- `timeIndex`：范围为 `0` 到 `12`，其中 `0` 为早子时，`1` 为丑时，...，`11` 为亥时，`12` 为晚子时。
+- `isLeapMonth`：布尔值，仅农历有效。
+- `useTrueSolarTime`：布尔值，启用真太阳时校正。开启后需提供 `birthHour`、`birthMinute`、`birthLongitude`，此时 `timeIndex` 由程序自动换算。
+
+八字 `promptTopic` 支持以下主题：
+`general`（综合）、`recent`（近期）、`career`（事业）、`job-change`（跳槽）、`startup-partnership`（创业合作）、`investment-partnership`（投资合作）、`wealth`（财运）、`marriage`（婚恋）、`relationship-push`（感情推进）、`relationship-decision`（关系去留）、`reconciliation-decision`（复合判断）、`children`（子女）、`family`（家庭）、`home-move`（搬家置业）、`settle-relocate`（定居换城）、`social`（人际合作）、`emotion`（情绪心理）、`health`（健康）、`parents`（父母）、`study`（学业）、`study-advance`（考证进修）、`exam-landing`（考试上岸）、`growth`（成长方向）、`talent`（天赋特质）。
+
+紫微 `promptTopic` 支持以下主题：
+`destiny`（命局）、`relationship`（感情）、`relationship-push`（感情推进）、`relationship-decision`（关系去留）、`career-wealth`（事业财运）、`job-change`（工作变动）、`startup-partnership`（创业合作）、`investment-partnership`（投资合作）、`recent`（近期趋势）、`family`（六亲家庭）、`home-move`（搬家置业）、`settle-relocate`（定居换城）、`social`（人际合作）、`emotion`（情绪心理）、`health`（健康养护）、`study`（学业成长）、`study-advance`（考证进修）、`exam-landing`（考试上岸）、`growth`（成长方向）、`talent`（天赋特质）、`reconciliation-decision`（复合判断）、`life`（人生解析）、`chat`（自由聊天）。
+
+紫微 `promptScope` 支持：`origin`（本命）、`decadal`（大限）、`yearly`（流年）、`monthly`（流月）、`daily`（流日）、`hourly`（流时）、`age`（年龄）。
+
+`promptMode` 支持：`framework`（内置完整框架，默认）、`custom`（只围绕用户问题自由作答，不塞框架）。
+
+占卜通用参数：
+
+- `customDate`：ISO 8601 时间字符串，不提供则使用当前时间。
+- `question`：所有 `/prompt` 接口的必填字段，黄历择日 `/prompt` 中可不填。
+- `supplementaryInfo`：对象类型，占卜补充信息。
+
+各占卜方法特有参数：
+
+- 梅花易数 `method`：`time`（时间起卦）、`number`（数字起卦）、`random`（随机起卦）、`external`（外应起卦）。`method` 为 `number` 时需提供 `number`（正整数）。
+- 小六壬 `xiaoliurenMethod`：`time`、`number`、`random`。`number` 时需提供 `xiaoliurenNumber`（正整数）。
+- 塔罗 `spreadType`：`single`（单牌指引）、`three`（时间流）、`love`（爱情）、`career`（事业）、`decision`（选择）。
+- 六爻 `liuyaoTemplate`：`general`（通用）、`ganqing`（感情）、`shiye`（事业）、`caifu`（财运）、`guaishen`（鬼神怪异）。
+- 大六壬 `liurenTemplate`：`general`（通用）、`ganqing`（感情）、`shiye`（事业）、`caifu`（财富）。
+- 黄历择日 `topic`：`marriage`（嫁娶）、`move`（搬家）、`opening`（开业）、`contract`（签约）、`travel`（出行）、`medical`（求医）、`study`（求学）、`custom`（自定义）。
+- 黄历择日 `startDate`、`endDate`：日期范围字符串。`participants`：参与者数组，每人包含 `id`、`name`、`gender`、`year`、`month`、`day`、`timeIndex`、`dateType`、`isLeapMonth`。
+- 雷诺曼 `spreadType`：`single`、`three`、`relationship`、`decision`、`nine`。
+- 星盘 `year`、`month`、`day`、`hour`、`minute`：出生时间。`latitude`、`longitude`：经纬度。`timezone`：时区偏移。`locationName`：地点名称。

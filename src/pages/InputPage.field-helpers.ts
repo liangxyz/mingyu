@@ -17,6 +17,7 @@ export const SELF_FIELD_MAP = {
   birthMinute: 'birthMinute',
   birthPlace: 'birthPlace',
   birthLongitude: 'birthLongitude',
+  birthLatitude: 'birthLatitude',
 } as const;
 
 export const PARTNER_FIELD_MAP = {
@@ -33,6 +34,7 @@ export const PARTNER_FIELD_MAP = {
   birthMinute: 'partnerBirthMinute',
   birthPlace: 'partnerBirthPlace',
   birthLongitude: 'partnerBirthLongitude',
+  birthLatitude: 'partnerBirthLatitude',
 } as const;
 
 export function getFieldKey(role: PersonRole, key: keyof typeof SELF_FIELD_MAP) {

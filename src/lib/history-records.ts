@@ -1,5 +1,6 @@
 import type { QueryInputState } from '@/lib/query-state';
 import type { DivinationDraft, DivinationSession } from '@/lib/divination/engine';
+import { ALMANAC_TOPIC_OPTIONS } from '@/lib/divination/config';
 import { safeStorage } from '@/lib/safe-storage';
 
 const PERSONAL_HISTORY_STORAGE_KEY = 'prompt_studio_personal_history_v1';
@@ -12,6 +13,7 @@ type PersonalHistoryRecord = {
   type: 'single';
   name: string;
   gender: 'male' | 'female';
+  chartType: QueryInputState['chartType'];
   birthText: string;
   input: QueryInputState;
   updatedAt: string;
@@ -71,6 +73,26 @@ function cloneDivinationSession(session: DivinationSession): DivinationSession {
   return JSON.parse(JSON.stringify(session)) as DivinationSession;
 }
 
+const almanacTopicLabelMap = Object.fromEntries(
+  ALMANAC_TOPIC_OPTIONS.map((item) => [item.value, item.label]),
+) as Record<DivinationDraft['almanacTopic'], string>;
+
+function resolveDivinationRecordTitle(draft: DivinationDraft, session: DivinationSession) {
+  const question = session.question.trim();
+  if (question) {
+    return question;
+  }
+  if (session.method === 'almanac') {
+    const topic = almanacTopicLabelMap[draft.almanacTopic] || '择日';
+    const dateRange =
+      draft.almanacStartDate && draft.almanacEndDate
+        ? `（${draft.almanacStartDate} 至 ${draft.almanacEndDate}）`
+        : '';
+    return `黄历择日：${topic}${dateRange}`;
+  }
+  return '';
+}
+
 export function loadPersonalHistory() {
   return readRecords<PersonalHistoryRecord>(PERSONAL_HISTORY_STORAGE_KEY);
 }
@@ -91,6 +113,7 @@ export function upsertPersonalHistory(input: QueryInputState) {
 
   const id = [
     normalizeText(name),
+    input.chartType,
     input.gender,
     input.dateType,
     input.year,
@@ -103,6 +126,7 @@ export function upsertPersonalHistory(input: QueryInputState) {
     type: 'single',
     name,
     gender: input.gender,
+    chartType: input.chartType,
     birthText: buildBirthText(input),
     input: cloneInput({
       ...input,
@@ -174,7 +198,7 @@ export function removeCompatibilityHistory(id: string) {
 }
 
 export function addDivinationHistory(draft: DivinationDraft, session: DivinationSession) {
-  const question = session.question.trim();
+  const question = resolveDivinationRecordTitle(draft, session);
   if (!question) {
     return null;
   }

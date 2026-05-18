@@ -20,6 +20,12 @@ const divinationMethodLabelMap = Object.fromEntries(
   DIVINATION_METHOD_OPTIONS.map((item) => [item.value, item.label]),
 ) as Record<(typeof DIVINATION_METHOD_OPTIONS)[number]['value'], string>;
 
+const personalChartTypeLabelMap = {
+  bazi: '八字',
+  ziwei: '紫微',
+  astrolabe: '星盘',
+} as const;
+
 function formatUpdatedAt(value: string) {
   try {
     return new Date(value).toLocaleString('zh-CN', {
@@ -95,7 +101,13 @@ export function RecordsPage() {
 
   function handleOpenPersonal(index: number) {
     const record = filteredPersonal[index];
-    navigate(`/result?${buildResultSearch(record.input, defaultPromptState)}`);
+    navigate(
+      `/result?${buildResultSearch(record.input, {
+        ...defaultPromptState,
+        tab: 'bazi',
+        promptSource: 'bazi',
+      })}`,
+    );
   }
 
   function handleOpenCompatibility(index: number) {
@@ -205,7 +217,9 @@ export function RecordsPage() {
                         <div className="details-line">
                           <span className="gender">{record.gender === 'male' ? '男' : '女'}</span>
                           <span className="birthday">{record.birthText}</span>
-                          <span className="record-tag">个人</span>
+                          <span className="record-tag">
+                            {personalChartTypeLabelMap[record.chartType] || '个人'}
+                          </span>
                         </div>
                       </div>
                       <div className="history-actions">

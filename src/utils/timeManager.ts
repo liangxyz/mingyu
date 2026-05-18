@@ -25,8 +25,9 @@ export class TimeManager {
    * 时区偏移覆盖（单位：分钟，正数表示 UTC+）
    * - null：不覆盖，使用运行环境本地时区
    * - 例如：北京时间为 480
+   * - 默认固定北京时间，避免服务端时区差异导致占卜盘与提示词不一致
    */
-  private static timezoneOffsetMinutesOverride: number | null = null;
+  private static timezoneOffsetMinutesOverride: number | null = 480;
 
   /**
    * 设置时区偏移覆盖（用于服务端/边缘环境固定时区）

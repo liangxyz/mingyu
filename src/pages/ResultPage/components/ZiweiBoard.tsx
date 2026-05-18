@@ -114,7 +114,7 @@ export const ZiweiBoard = memo(function ZiweiBoard(props: {
         <div className="result-stat-card">
           <span>五行局</span>
           <strong>{displayPayload.basic_info.five_elements_class}</strong>
-          <small>{displayPayload.basic_info.sign}</small>
+          <small>{displayPayload.basic_info.zodiac}</small>
         </div>
         <div className="result-stat-card">
           <span>当前时限</span>
@@ -156,10 +156,8 @@ export const ZiweiBoard = memo(function ZiweiBoard(props: {
                 <strong>{displayPayload.basic_info.lunar_date}</strong>
               </div>
               <div>
-                <span>生肖 / 星座</span>
-                <strong>
-                  {displayPayload.basic_info.zodiac} / {displayPayload.basic_info.sign}
-                </strong>
+                <span>生肖</span>
+                <strong>{displayPayload.basic_info.zodiac}</strong>
               </div>
             </div>
             <div className="result-tag-cloud">

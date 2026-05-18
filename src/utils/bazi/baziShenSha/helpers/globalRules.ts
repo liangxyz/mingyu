@@ -7,7 +7,7 @@ export function analyzeGlobalShenSha(shenShaList: string[]): string[] {
   const analysis: string[] = [];
 
   if (shenShaList.includes('三奇贵人')) {
-    analysis.push('整局天干顺布三奇，主悟性、机缘与贵人助力');
+    analysis.push('整局天干顺布三奇，传统多视为悟性、机缘与贵人助力较易形成合力。');
   }
 
   return analysis;

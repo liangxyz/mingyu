@@ -69,20 +69,12 @@ export function getPatternTag(pattern: LiurenData['transmissionPattern']) {
 
 export function buildTransmissionDetail(
   rule: string,
-  pattern: LiurenData['transmissionPattern'],
+  _pattern: LiurenData['transmissionPattern'],
   transmissions: LiurenTransmission[],
 ) {
-  const stageText = transmissions.map((item) => `${item.stage}${item.branch}`).join(' → ');
-  return `取传采用${rule}，传态为${pattern}，链路为${stageText}。`;
-}
-
-export function buildDivinationTemplateHint(
-  transmissions: LiurenTransmission[],
-  pattern: LiurenData['transmissionPattern'],
-) {
-  const [chu, zhong, mo] = transmissions;
-  if (!chu || !zhong || !mo) {
-    throw new Error('buildDivinationTemplateHint 需要完整的三传(初/中/末)。');
+  const initialTransmission = transmissions[0];
+  if (!initialTransmission) {
+    throw new Error('buildTransmissionDetail 需要至少包含初传信息。');
   }
-  return `断课模板：先看${chu.stage}(${chu.branch})定起因，再看${zhong.stage}(${zhong.branch})看过程，最后看${mo.stage}(${mo.branch})定结果；传态为${pattern}。`;
+  return `取传采用${rule}，以${initialTransmission.stage}${initialTransmission.branch}为初传发用。`;
 }

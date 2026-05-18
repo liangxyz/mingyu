@@ -11,6 +11,7 @@
  * 6. 排神盘：八神（或称九神）追随天盘值符星，阳顺阴逆飞布八宫。
  */
 import { getDivinationTime } from '../../../../utils/timeManager.ts';
+import { getVoidBranches } from '../../../../utils/lunar.ts';
 import { qimen } from '../../../../config/divination-data.ts';
 import { getQimenJuShu, getZhiFuZhiShi } from './helpers/jushu';
 import { getDunJiaStem } from './helpers/palace-utils';
@@ -18,6 +19,29 @@ import { arrangeJiuGongGe } from './helpers/layout';
 import { buildPalaceInsights, buildPatternDetails, getQimenPatternTags } from './helpers/patterns';
 
 const { diPanPalaces } = qimen;
+
+function getPalaceName(jiuGongGe: ReturnType<typeof arrangeJiuGongGe>, palace: number) {
+  return jiuGongGe.find((item) => item.gong === palace)?.name || `${palace}宫`;
+}
+
+function resolveQimenBranchPalace(branch: string, jiuGongGe: ReturnType<typeof arrangeJiuGongGe>) {
+  const palace = diPanPalaces[branch as keyof typeof diPanPalaces];
+  if (!palace) return null;
+
+  return {
+    branch,
+    palace,
+    name: getPalaceName(jiuGongGe, palace),
+  };
+}
+
+function getHorseBranch(sourceBranch: string) {
+  if (['申', '子', '辰'].includes(sourceBranch)) return '寅';
+  if (['寅', '午', '戌'].includes(sourceBranch)) return '申';
+  if (['亥', '卯', '未'].includes(sourceBranch)) return '巳';
+  if (['巳', '酉', '丑'].includes(sourceBranch)) return '亥';
+  return '';
+}
 
 /**
  * 生成奇门遁甲盘
@@ -33,6 +57,12 @@ export function generateQimen(customDate?: Date) {
   const jiuGongGe = arrangeJiuGongGe(isYangDun, juShu, zhiFu, zhiShi, { hour: ganzhi.hour });
   const hourZhi = ganzhi.hour.charAt(1);
   const hourGanForFind = getDunJiaStem(ganzhi.hour);
+  const voidBranches = getVoidBranches(ganzhi.hour);
+  const voidPalaces = voidBranches
+    .map((branch) => resolveQimenBranchPalace(branch, jiuGongGe))
+    .filter(Boolean);
+  const horseBranch = getHorseBranch(hourZhi);
+  const horsePalace = horseBranch ? resolveQimenBranchPalace(horseBranch, jiuGongGe) : null;
   const zhiFuLandingPalace = jiuGongGe.find((gong) => gong.tianPan.star === zhiFu)?.gong;
   if (zhiFuLandingPalace === undefined) {
     throw new Error(`找不到值符星 "${zhiFu}" 落宫。`);
@@ -70,8 +100,18 @@ export function generateQimen(customDate?: Date) {
     patternTags,
     patternDetails,
     palaceInsights,
+    voidBranches,
+    voidPalaces,
+    horseStar: horsePalace
+      ? {
+          ...horsePalace,
+          sourceBranch: hourZhi,
+        }
+      : undefined,
     specialConditions,
     jiuGongGe,
     timestamp,
   };
 }
+
+export { getHorseBranch, resolveQimenBranchPalace };

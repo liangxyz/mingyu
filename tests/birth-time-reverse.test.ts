@@ -31,8 +31,10 @@ test('未知时辰索引会被查询参数正确保留', () => {
     defaultPromptState,
   );
 
-  assert.match(search, /timeIndex=-1/);
-  assert.match(search, /partnerTimeIndex=-1/);
+  assert.match(search, /ti=-1/);
+  assert.match(search, /pti=-1/);
+  assert.doesNotMatch(search, /timeIndex=-1/);
+  assert.doesNotMatch(search, /partnerTimeIndex=-1/);
 });
 
 test('反推时辰提示词保持 section 结构，并要求先互动再判断', () => {
@@ -76,12 +78,14 @@ test('反推时辰提示词保持 section 结构，并要求先互动再判断',
   assert.match(prompt, /月柱：/);
   assert.match(prompt, /日柱：/);
   assert.match(prompt, /时辰：未知/);
-  assert.match(prompt, /【用户已选择的信息】/);
-  assert.match(prompt, /【用户已补充的线索】/);
+  assert.match(prompt, /【已知线索】/);
+  assert.match(prompt, /【补充线索】/);
   assert.match(prompt, /已知线索初判/);
   assert.match(prompt, /第一轮/);
   assert.match(prompt, /不要直接假定时柱/);
-  assert.match(prompt, /让用户只回复选项/);
+  assert.match(prompt, /资料里没有直接写出的额外盘面事实，不得自行补算、脑补或假定/);
+  assert.match(prompt, /让我只回复选项/);
+  assert.match(prompt, /更可能影响哪些候选时辰/);
   assert.match(prompt, /A\/B\/C\/D|1\/2\/3\/4/);
   assert.match(prompt, /小时候和母亲更亲/);
   assert.match(prompt, /慢热谨慎/);
@@ -97,6 +101,7 @@ test('反推时辰提示词保持 section 结构，并要求先互动再判断',
   assert.match(prompt, /恋爱少但很认真/);
   assert.match(prompt, /恋爱偏晚/);
   assert.match(prompt, /大学阶段感情经历更明显/);
+  assert.doesNotMatch(prompt, /星座：/);
   assert.doesNotMatch(prompt, /暂时说不清/);
   assert.doesNotMatch(prompt, /说不清或较复杂/);
   assert.doesNotMatch(prompt, /暂未补充/);
@@ -129,7 +134,28 @@ test('反推时辰提示词不会输出未填写或说不清的占位信息', ()
   assert.doesNotMatch(prompt, /体型气质：/);
 });
 
-test('未知时辰基础提示词会明确只按三柱作保守判断', () => {
+test('反推时辰在没有补充线索时不应假定存在已补充资料', () => {
+  const profile = buildThreePillarsProfile({
+    gender: 'male',
+    dateType: 'solar',
+    year: '1990',
+    month: '1',
+    day: '1',
+    isLeapMonth: false,
+  });
+
+  const prompt = buildReverseBirthTimePrompt({
+    profile,
+    formData: DEFAULT_REVERSE_BIRTH_TIME_FORM_DATA,
+  });
+
+  assert.doesNotMatch(prompt, /我已经补充的信息/);
+  assert.doesNotMatch(prompt, /我已补充的资料/);
+  assert.match(prompt, /当前还没有补充额外线索/);
+  assert.match(prompt, /请先阅读三柱信息/);
+});
+
+test('未知时辰自定义基础提示词会明确只按三柱作保守判断，且不强塞问题框架', () => {
   const profile = buildThreePillarsProfile({
     gender: 'female',
     dateType: 'lunar',
@@ -142,13 +168,32 @@ test('未知时辰基础提示词会明确只按三柱作保守判断', () => {
   const prompt = buildUnknownTimeBaziPrompt(
     profile,
     '请先看我的整体命局特点，并说明哪些地方因为时辰未知还不能下死结论。',
+    undefined,
+    { isCustomQuestion: true },
   );
 
   assert.match(prompt, /只基于提供的三柱信息与问题作答/);
   assert.match(prompt, /不得擅自假定时柱/);
-  assert.match(prompt, /确定部分/);
-  assert.match(prompt, /待确认部分/);
-  assert.match(prompt, /建议补充线索/);
+  assert.match(prompt, /三柱资料里没有直接写出的额外盘面事实，不得自行补算、脑补或假定/);
+  assert.doesNotMatch(prompt, /问题研判框架/);
+  assert.doesNotMatch(prompt, /【任务】/);
+  assert.doesNotMatch(prompt, /【输出要求】/);
+});
+
+test('未知时辰内置快捷提示词会使用对应的传统专项框架', () => {
+  const profile = buildThreePillarsProfile({
+    gender: 'male',
+    dateType: 'solar',
+    year: '1991',
+    month: '3',
+    day: '12',
+    isLeapMonth: false,
+  });
+
+  const prompt = buildUnknownTimeBaziPrompt(profile, '我适合换工作吗？', 'career');
+
+  assert.match(prompt, /事业问题先看官杀代表规则职位与压力/);
+  assert.doesNotMatch(prompt, /婚恋问题优先看配偶星/);
 });
 
 test('输入页与路由会暴露未知时辰和反推时辰入口', () => {

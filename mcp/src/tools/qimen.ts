@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateQimen } from '../../../src/lib/divination/algorithms/qimen/index.js';
+import { PROMPT_MODES } from '../../../src/lib/public-api/prompt-builders.js';
 import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
 import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
 import { buildDivinationPromptText } from './prompt-helpers.js';
@@ -11,6 +12,10 @@ const qimenSchema = z.object({
 
 const qimenPromptSchema = qimenSchema.extend({
   question: z.string().describe('用户希望围绕奇门盘解读的问题'),
+  promptMode: z
+    .enum(PROMPT_MODES)
+    .optional()
+    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
 
 export function registerQimenTool(server: McpServer) {
@@ -46,7 +51,12 @@ export function registerQimenTool(server: McpServer) {
         const result = generateQimen(customDate);
         return createStructuredToolResult({
           result,
-          prompt: buildDivinationPromptText({ method: 'qimen', question: args.question, data: result }),
+          prompt: buildDivinationPromptText({
+            method: 'qimen',
+            question: args.question,
+            data: result,
+            promptMode: args.promptMode,
+          }),
         });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '生成奇门提示词失败'));

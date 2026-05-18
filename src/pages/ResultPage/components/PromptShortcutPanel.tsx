@@ -7,6 +7,11 @@ interface PromptShortcutPanelProps {
   onCustomDraftChange: (value: string) => void;
   customPlaceholder: string;
   onOpenInspiration: () => void;
+  quickGridClassName?: string;
+  showCustomAction?: boolean;
+  showInspirationAction?: boolean;
+  alwaysShowCustomField?: boolean;
+  customFieldTitle?: string;
 }
 
 export function PromptShortcutPanel({
@@ -18,10 +23,18 @@ export function PromptShortcutPanel({
   onCustomDraftChange,
   customPlaceholder,
   onOpenInspiration,
+  quickGridClassName,
+  showCustomAction = showCustomAndInspiration,
+  showInspirationAction = showCustomAndInspiration,
+  alwaysShowCustomField = false,
+  customFieldTitle = '自定义问题',
 }: PromptShortcutPanelProps) {
+  const shouldShowCustomField =
+    (showCustomAction && activeMode === '自定义') || alwaysShowCustomField;
+
   return (
     <>
-      <div className="quick-grid">
+      <div className={`quick-grid${quickGridClassName ? ` ${quickGridClassName}` : ''}`}>
         {actions.map((item) => (
           <button
             key={item.label}
@@ -32,26 +45,32 @@ export function PromptShortcutPanel({
             {item.label}
           </button>
         ))}
-        {showCustomAndInspiration ? (
+        {showCustomAction ? (
+          <button
+            type="button"
+            className={`quick-chip ${activeMode === '自定义' ? 'is-active' : ''}`}
+            onClick={() => onApplyMode('自定义')}
+          >
+            自定义
+          </button>
+        ) : null}
+        {showInspirationAction ? (
           <>
             <button
               type="button"
-              className={`quick-chip ${activeMode === '自定义' ? 'is-active' : ''}`}
-              onClick={() => onApplyMode('自定义')}
+              className={`quick-chip ${activeMode === '问题灵感' ? 'is-active' : ''}`}
+              onClick={onOpenInspiration}
             >
-              自定义
-            </button>
-            <button type="button" className="quick-chip" onClick={onOpenInspiration}>
               问题灵感
             </button>
           </>
         ) : null}
       </div>
 
-      {showCustomAndInspiration && activeMode === '自定义' ? (
+      {shouldShowCustomField ? (
         <label className="field-card">
           <div className="field-header">
-            <span>自定义问题</span>
+            <span>{customFieldTitle}</span>
           </div>
           <textarea
             rows={6}

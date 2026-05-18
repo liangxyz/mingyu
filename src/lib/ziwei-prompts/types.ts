@@ -9,5 +9,4 @@ export type PromptContext = {
   scope_label: string;
   palace_name?: string;
   focus_notes: string[];
-  suggested_questions: string[];
 };

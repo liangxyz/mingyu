@@ -71,6 +71,111 @@ function getPalaceNamesByIndexes(palaces: PalaceFact[], indexes: number[]) {
     .filter(Boolean) as string[];
 }
 
+function getAllPalaceStars(palace: PalaceFact) {
+  return [
+    ...palace.major_stars,
+    ...palace.minor_stars,
+    ...palace.other_stars,
+    ...palace.scope_stars,
+  ];
+}
+
+function findStarPalace(palaces: PalaceFact[], starName: string) {
+  return palaces.find((palace) => getAllPalaceStars(palace).some((star) => star.name === starName));
+}
+
+function buildScopeTitle(scope: ScopeType, scopeName?: string) {
+  const base = mapScopeLabel(scope);
+  return scopeName && scopeName !== base ? `${base}（${scopeName}）` : base;
+}
+
+function getScopeItems(horoscope: IFunctionalHoroscope): Array<{
+  scope: ScopeType;
+  item: IFunctionalHoroscope['decadal'];
+}> {
+  return [
+    { scope: 'decadal', item: horoscope.decadal },
+    { scope: 'yearly', item: horoscope.yearly },
+    { scope: 'monthly', item: horoscope.monthly },
+    { scope: 'daily', item: horoscope.daily },
+    { scope: 'hourly', item: horoscope.hourly },
+    { scope: 'age', item: horoscope.age },
+  ];
+}
+
+function collectScopeStructureEvidence(params: {
+  horoscope: IFunctionalHoroscope;
+  currentScope: ScopeType;
+  palaces: PalaceFact[];
+}): EvidenceDraft[] {
+  const { horoscope, currentScope, palaces } = params;
+  const drafts: EvidenceDraft[] = [];
+  const landingPriority: Record<ScopeType, number> = {
+    origin: 0,
+    decadal: 94,
+    yearly: 93,
+    monthly: 89,
+    daily: 88,
+    hourly: 76,
+    age: 78,
+  };
+
+  if (currentScope === 'origin') {
+    return drafts;
+  }
+
+  getScopeItems(horoscope).forEach(({ scope, item }) => {
+    const palace = palaces.find((candidate) => candidate.index === item.index);
+    if (!palace) return;
+
+    const scopeLabel = buildScopeTitle(scope, item.name);
+    const stemBranch = [item.heavenlyStem, item.earthlyBranch].filter(Boolean).join('');
+
+    drafts.push({
+      stable_key: buildStableKey(['scope-landing', scope, item.index, item.name]),
+      type: 'scope_landing',
+      title: `${scopeLabel}落入${palace.name}`,
+      scope,
+      palace_indexes: [palace.index],
+      palace_names: [palace.name],
+      star_names: [],
+      mutagens: [],
+      description: `${scopeLabel}${stemBranch ? `干支为${stemBranch}，` : ''}当前落在本命${palace.name}，解读时应把该宫作为阶段触发点。`,
+      priority: landingPriority[scope],
+    });
+
+    item.mutagen?.slice(0, MUTAGEN_LIST.length).forEach((starName, index) => {
+      const mutagen = MUTAGEN_LIST[index];
+      const targetPalace = findStarPalace(palaces, starName);
+      const palaceIndexes = targetPalace
+        ? Array.from(new Set([palace.index, targetPalace.index]))
+        : [palace.index];
+      const palaceNames = targetPalace
+        ? Array.from(new Set([palace.name, targetPalace.name]))
+        : [palace.name];
+
+      drafts.push({
+        stable_key: buildStableKey(['scope-mutagen-destination', scope, starName, mutagen]),
+        type: 'scope_mutagen_destination',
+        title: targetPalace
+          ? `${scopeLabel}${starName}化${mutagen}入${targetPalace.name}`
+          : `${scopeLabel}${starName}化${mutagen}`,
+        scope,
+        palace_indexes: palaceIndexes,
+        palace_names: palaceNames,
+        star_names: [starName],
+        mutagens: [mutagen],
+        description: targetPalace
+          ? `${scopeLabel}四化中的${starName}化${mutagen}落到本命${targetPalace.name}，需结合${palace.name}的运限落宫一起判断触发路径。`
+          : `${scopeLabel}四化中的${starName}化${mutagen}未能在本命宫位索引中定位，解读时只作为运限四化参考。`,
+        priority: mutagen === '忌' ? 96 : mutagen === '禄' ? 94 : 91,
+      });
+    });
+  });
+
+  return drafts;
+}
+
 function collectPalaceEvidence(params: {
   astrolabe: IFunctionalAstrolabe;
   currentScope: ScopeType;
@@ -166,7 +271,7 @@ function collectPalaceEvidence(params: {
     });
   });
 
-  if (palace.scope_hits.length > 0) {
+  if (currentScope !== 'origin' && palace.scope_hits.length > 0) {
     drafts.push({
       stable_key: buildStableKey(['scope-hit', palace.index, palace.scope_hits.join('|')]),
       type: 'palace_scope_hit',
@@ -301,5 +406,12 @@ export function buildEvidencePool(params: {
     }),
   );
 
-  return finalizeEvidence(drafts);
+  return finalizeEvidence([
+    ...collectScopeStructureEvidence({
+      horoscope,
+      currentScope,
+      palaces,
+    }),
+    ...drafts,
+  ]);
 }

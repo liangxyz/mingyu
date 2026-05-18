@@ -10,7 +10,6 @@ import {
 } from './helpers/plate';
 import { buildLessonNote, resolveInitialTransmission } from './helpers/lessons';
 import {
-  buildDivinationTemplateHint,
   buildTransmissionDetail,
   buildTransmissionNote,
   getPatternTag,
@@ -127,7 +126,9 @@ export function generateLiuren(customDate?: Date): LiurenData {
   const lessonSummary = `四课源于日干寄宫${dayStemResidence}与日支${dayBranch}，关系呈${fourLessons
     .map((item) => item.relation)
     .join('、')}，重点先看${initialResult.tag}落点。`;
-  const transmissionSummary = `${transmissionDetail}${buildDivinationTemplateHint(threeTransmissions, transmissionPattern)}`;
+  const transmissionSummary = `三传${transmissionPattern}，主线依次为${threeTransmissions
+    .map((item) => `${item.stage}${item.branch}`)
+    .join(' → ')}。`;
 
   return {
     ganzhi,

@@ -1,7 +1,10 @@
 import { buildDivinationPrompt } from '../../../src/lib/divination/engine/index.js';
+import type { AstrolabePromptTopic } from '../../../src/lib/astrolabe-prompts.js';
 import type { DivinationMethodId } from '../../../src/lib/divination/config.js';
+import type { PromptMode } from '../../../src/lib/public-api/prompt-builders.js';
 import type {
   DivinationData,
+  LiuyaoTemplateType,
   LiurenTemplateType,
   SupplementaryInfo,
 } from '../../../src/types/divination.js';
@@ -11,13 +14,21 @@ export function buildDivinationPromptText(params: {
   question: string;
   data: unknown;
   supplementaryInfo?: SupplementaryInfo;
-  template?: LiurenTemplateType;
+  liuyaoTemplate?: LiuyaoTemplateType;
+  liurenTemplate?: LiurenTemplateType;
+  promptMode?: PromptMode;
+  astrolabeTopic?: AstrolabePromptTopic;
 }) {
   return buildDivinationPrompt(
     params.method,
     params.question,
     params.data as DivinationData,
     params.supplementaryInfo,
-    params.template ?? 'general',
+    {
+      isCustomQuestion: params.promptMode === 'custom',
+      liuyaoTemplate: params.liuyaoTemplate,
+      liurenTemplate: params.liurenTemplate,
+      astrolabeTopic: params.astrolabeTopic,
+    },
   );
 }

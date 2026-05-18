@@ -4,8 +4,10 @@ import { baziCalculator } from '../../../src/utils/bazi/baziCalculator.js';
 import type { Person } from '../../../src/utils/bazi/baziTypes.js';
 import {
   BAZI_PROMPT_TOPICS,
+  PROMPT_MODES,
   buildBaziPromptForResult,
   type BaziPromptTopic,
+  type PromptMode,
 } from '../../../src/lib/public-api/prompt-builders.js';
 import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
 import {
@@ -31,6 +33,10 @@ const baziPromptSchema = baziSchema.extend({
     .enum(BAZI_PROMPT_TOPICS)
     .optional()
     .describe('提示词主题：general=综合, career=事业, wealth=财运, marriage=婚恋, children=子女, health=健康'),
+  promptMode: z
+    .enum(PROMPT_MODES)
+    .optional()
+    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
 
 export function registerBaziTool(server: McpServer) {
@@ -87,6 +93,7 @@ export function registerBaziTool(server: McpServer) {
             result,
             question: args.question,
             topic: (args.promptTopic ?? 'general') as BaziPromptTopic,
+            mode: (args.promptMode ?? 'framework') as PromptMode,
           }),
         });
       } catch (error) {

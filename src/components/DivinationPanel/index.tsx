@@ -7,10 +7,12 @@ import {
   type DivinationSession,
 } from '@/lib/divination/engine';
 import {
-  DIVINATION_INSPIRATION_CONTENT,
   DIVINATION_INSPIRATION_TABS,
+  getDivinationInspirationSections,
   getDefaultDivinationInspirationTab,
+  getDivinationSpecialInspiration,
   isDivinationInspirationTabVisible,
+  resolveDivinationInspiredDraftPatch,
   TAROT_SPREAD_INSPIRATION_QUESTIONS,
   type DivinationInspirationTabId,
 } from '@/lib/divination/inspiration';
@@ -27,10 +29,24 @@ import { defaultDraft, methodLabelMap } from './constants';
 import { DivinationForm } from './DivinationForm';
 import { DivinationResult } from './DivinationResult';
 
-export function DivinationPanel() {
+type DivinationPanelProps = {
+  initialMethod?: Extract<DivinationDraft['method'], 'almanac' | 'astrolabe'>;
+  lockedMethod?: Extract<DivinationDraft['method'], 'almanac' | 'astrolabe'>;
+};
+
+function createDefaultDraft(method?: DivinationPanelProps['initialMethod']): DivinationDraft {
+  return method
+    ? {
+        ...defaultDraft,
+        method,
+      }
+    : defaultDraft;
+}
+
+export function DivinationPanel({ initialMethod, lockedMethod }: DivinationPanelProps) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [draft, setDraft] = useState<DivinationDraft>(defaultDraft);
+  const [draft, setDraft] = useState<DivinationDraft>(() => createDefaultDraft(initialMethod));
   const [session, setSession] = useState<DivinationSession | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +66,7 @@ export function DivinationPanel() {
       return;
     }
 
-    setActiveInspirationTab(getDefaultDivinationInspirationTab(draft.method));
+    setActiveInspirationTab(getDefaultDivinationInspirationTab(draft));
   }, [activeInspirationTab, draft]);
 
   useEffect(() => {
@@ -80,15 +96,24 @@ export function DivinationPanel() {
     () => (session ? getDivinationSummaryBlocks(session.method, session.data) : null),
     [session],
   );
+  const specialInspiration = useMemo(() => getDivinationSpecialInspiration(draft), [draft]);
   const inspirationFilters = useMemo(
     () => [
       ...(draft.method === 'tarot' ? [{ label: '牌阵', value: 'spread' as const }] : []),
+      ...(specialInspiration
+        ? [
+            {
+              label: specialInspiration.label,
+              value: 'special' as const,
+            },
+          ]
+        : []),
       ...DIVINATION_INSPIRATION_TABS.map((item) => ({
         label: item.label,
         value: item.id,
       })),
     ],
-    [draft.method],
+    [draft.method, specialInspiration],
   );
   const filteredInspirationSections = useMemo<QuestionInspirationSection[]>(() => {
     const keyword = inspirationSearch.trim();
@@ -115,7 +140,24 @@ export function DivinationPanel() {
         : [];
     }
 
-    return DIVINATION_INSPIRATION_CONTENT[activeInspirationTab]
+    if (activeInspirationTab === 'special') {
+      if (!specialInspiration) {
+        return [];
+      }
+
+      return specialInspiration.sections
+        .map((section) => ({
+          id: `special-${section.heading}`,
+          heading: section.heading,
+          items: section.questions.filter(includeQuestion).map((question) => ({
+            id: `${section.heading}-${question}`,
+            question,
+          })),
+        }))
+        .filter((section) => section.items.length > 0);
+    }
+
+    return getDivinationInspirationSections(draft, activeInspirationTab)
       .map((section) => ({
         id: `${activeInspirationTab}-${section.heading}`,
         heading: section.heading,
@@ -125,13 +167,30 @@ export function DivinationPanel() {
         })),
       }))
       .filter((section) => section.items.length > 0);
-  }, [activeInspirationTab, draft.tarotSpread, inspirationSearch]);
+  }, [activeInspirationTab, draft, inspirationSearch, specialInspiration]);
   const showShareButton = shouldShowPromptShareButton({
     viewportWidth,
     hasNavigatorShare: typeof navigator !== 'undefined' && typeof navigator.share === 'function',
   });
 
+  useEffect(() => {
+    if (!lockedMethod || draft.method === lockedMethod) {
+      return;
+    }
+
+    setDraft((current) => ({
+      ...current,
+      method: lockedMethod,
+    }));
+    setSession(null);
+    setError('');
+  }, [draft.method, lockedMethod]);
+
   function updateDraft<K extends keyof DivinationDraft>(key: K, value: DivinationDraft[K]) {
+    if (lockedMethod && key === 'method' && value !== lockedMethod) {
+      return;
+    }
+
     setDraft((current) => ({
       ...current,
       [key]: value,
@@ -139,13 +198,16 @@ export function DivinationPanel() {
   }
 
   function openQuestionInspirationModal() {
-    setActiveInspirationTab(getDefaultDivinationInspirationTab(draft.method));
+    setActiveInspirationTab(getDefaultDivinationInspirationTab(draft));
     setInspirationSearch('');
     setIsQuestionInspirationModalOpen(true);
   }
 
   function applyInspiredQuestion(question: string) {
-    updateDraft('question', question);
+    setDraft((current) => ({
+      ...current,
+      ...resolveDivinationInspiredDraftPatch(current, question),
+    }));
     setIsQuestionInspirationModalOpen(false);
     window.setTimeout(() => {
       questionInputRef.current?.focus();
@@ -180,6 +242,7 @@ export function DivinationPanel() {
       <DivinationForm
         draft={draft}
         updateDraft={updateDraft}
+        lockedMethod={lockedMethod}
         isSubmitting={isSubmitting}
         error={error}
         onSubmit={handleSubmit}

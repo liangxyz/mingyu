@@ -10,6 +10,17 @@ import type { BaziChartResult } from '../src/utils/bazi/baziTypes';
 
 function createMockResult(): BaziChartResult {
   return {
+    pillars: {
+      year: { gan: '甲', zhi: '午', ganZhi: '甲午' },
+      month: { gan: '己', zhi: '丑', ganZhi: '己丑' },
+      day: { gan: '甲', zhi: '子', ganZhi: '甲子' },
+      hour: { gan: '庚', zhi: '申', ganZhi: '庚申' },
+    },
+    dayMaster: {
+      gan: '甲',
+      element: '木',
+      yinYang: '阳',
+    },
     luckInfo: {
       startInfo: '',
       handoverInfo: '',
@@ -61,6 +72,12 @@ test('选择大运时会附带该大运下的全部流年', () => {
   assert.match(context.promptPayload.breakdownTitle ?? '', /流年/);
   assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /2008年/);
   assert.doesNotMatch(context.promptPayload.breakdownLines?.[0] ?? '', /童运/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /大运十神：天干甲为比肩，地支子主气为正印/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /大运触发：/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /天干甲合月柱己/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /地支子冲年柱午/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /地支子合月柱丑/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /地支子与日柱子伏吟/);
 });
 
 test('选择流年时会附带该流年下的全部流月', () => {
@@ -82,6 +99,10 @@ test('选择流年时会附带该流年下的全部流月', () => {
     /\d{4}-\d{2}-\d{2} 至 \d{4}-\d{2}-\d{2}/,
   );
   assert.doesNotMatch(context.promptPayload.summaryLines.join('\n'), /童运/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /流年十神：天干戊为偏财，地支子主气为正印/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /流年触发：/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /地支子冲年柱午/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /地支子合月柱丑/);
 });
 
 test('节令月会使用实际交节日期范围，而不是直接套用公历月份', () => {
@@ -117,6 +138,8 @@ test('选择流月时会附带该节令月下的全部流日', () => {
   assert.equal(context.dayBreakdown?.length, 31);
   assert.match(context.promptPayload.breakdownTitle ?? '', /流日/);
   assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /2008-02-04/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /流月十神：天干甲为比肩，地支寅主气为比肩/);
+  assert.match(context.promptPayload.summaryLines.join('\n'), /流月触发：/);
 });
 
 test('选择流日时只保留该流日本身', () => {

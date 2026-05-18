@@ -32,7 +32,6 @@ export type ThreePillarsProfile = {
   solarDateLabel: string;
   lunarDateLabel: string;
   zodiac: string;
-  constellation: string;
   dayMaster: {
     gan: string;
     element: string;
@@ -165,7 +164,6 @@ export function buildThreePillarsProfile(input: BirthBaseInput): ThreePillarsPro
       .getEarthBranch()
       .getZodiac()
       .getName(),
-    constellation: solarTime.getSolarDay().getConstellation().getName(),
     dayMaster: {
       gan: dayMasterGan,
       element: getWuxing(dayMasterGan),
@@ -189,7 +187,6 @@ export function formatThreePillarsForPrompt(profile: ThreePillarsProfile) {
     `农历：${profile.lunarDateLabel}`,
     `时辰：未知（待反推）`,
     `生肖：${profile.zodiac}`,
-    `星座：${profile.constellation}`,
     `日主：${profile.dayMaster.gan} ${profile.dayMaster.element}（${profile.dayMaster.yinYang}）`,
     '',
     '【三柱】',

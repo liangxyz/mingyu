@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateMeihua } from '../../../src/lib/divination/algorithms/meihua/index.js';
+import { PROMPT_MODES } from '../../../src/lib/public-api/prompt-builders.js';
 import type { MeihuaSettings } from '../../../src/types/divination.js';
 import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
 import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
@@ -17,6 +18,10 @@ const meihuaSchema = z.object({
 
 const meihuaPromptSchema = meihuaSchema.extend({
   question: z.string().describe('用户希望围绕卦盘解读的问题'),
+  promptMode: z
+    .enum(PROMPT_MODES)
+    .optional()
+    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
 
 export function registerMeihuaTool(server: McpServer) {
@@ -59,7 +64,12 @@ export function registerMeihuaTool(server: McpServer) {
         const result = generateMeihua(customDate, settings);
         return createStructuredToolResult({
           result,
-          prompt: buildDivinationPromptText({ method: 'meihua', question: args.question, data: result }),
+          prompt: buildDivinationPromptText({
+            method: 'meihua',
+            question: args.question,
+            data: result,
+            promptMode: args.promptMode,
+          }),
         });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '生成梅花提示词失败'));

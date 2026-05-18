@@ -69,6 +69,44 @@ function getNaJiaAndLiuQin(mainHexagramName: string, palace: { name: string; wux
   return yaosWithInfo;
 }
 
+function buildHiddenSpirits(params: {
+  originalName: string;
+  palace: { name: string; wuxing: string };
+  yaosDetail: Array<{
+    position: number;
+    sixRelative: string;
+    najiaDizhi: string;
+    wuxing: string;
+  }>;
+  voidBranches: string[];
+}) {
+  const { originalName, palace, yaosDetail, voidBranches } = params;
+  const homeHexagramName = palaceHexagrams[palace.name as keyof typeof palaceHexagrams]?.[0];
+
+  if (!homeHexagramName || homeHexagramName === originalName) {
+    return [];
+  }
+
+  const appearedRelatives = new Set(yaosDetail.map((item) => item.sixRelative));
+  const homeYaos = getNaJiaAndLiuQin(homeHexagramName, palace);
+
+  return homeYaos
+    .map((homeYao, index) => ({
+      sixRelative: homeYao.liuqin,
+      position: index + 1,
+      najiaDizhi: homeYao.dizhi,
+      wuxing: homeYao.wuxing,
+      isVoid: voidBranches.includes(homeYao.dizhi),
+      underYao: {
+        position: yaosDetail[index].position,
+        sixRelative: yaosDetail[index].sixRelative,
+        najiaDizhi: yaosDetail[index].najiaDizhi,
+        wuxing: yaosDetail[index].wuxing,
+      },
+    }))
+    .filter((item) => !appearedRelatives.has(item.sixRelative));
+}
+
 /**
  * 安世应
  * @param hexagramName 卦名
@@ -238,6 +276,38 @@ export function generateLiuyao(customDate?: Date) {
     changingYaosResult.length,
     mainHexagram.name,
   );
+  const yaosDetail = yaosInfo.map((info, index) => {
+    const isChanging = rawYaos[index] === 6 || rawYaos[index] === 9;
+    const changedInfo = isChanging ? changedYaosInfo[index] : null;
+    return {
+      position: index + 1,
+      rawValue: rawYaos[index],
+      yaoType: mainYaos[index] as '阳' | '阴',
+      isChanging: isChanging,
+      changeType: rawYaos[index] === 6 ? '老阴' : rawYaos[index] === 9 ? '老阳' : '静爻',
+      sixGod: animals[index],
+      sixRelative: info.liuqin,
+      najiaDizhi: info.dizhi,
+      wuxing: info.wuxing,
+      isWorld: shiYing.shi === index + 1,
+      isResponse: shiYing.ying === index + 1,
+      isVoid: voids.includes(info.dizhi),
+      changedYao: changedInfo
+        ? {
+            dizhi: changedInfo.dizhi,
+            wuxing: changedInfo.wuxing,
+            liuqin: changedInfo.liuqin,
+            isVoid: voids.includes(changedInfo.dizhi),
+          }
+        : null,
+    };
+  });
+  const hiddenSpirits = buildHiddenSpirits({
+    originalName: mainHexagram.name,
+    palace,
+    yaosDetail,
+    voidBranches: voids,
+  });
 
   return {
     originalName: mainHexagram.name,
@@ -257,32 +327,10 @@ export function generateLiuyao(customDate?: Date) {
     specialAdvice,
     isChaotic,
     chaoticReason,
-    yaosDetail: yaosInfo.map((info, index) => {
-      const isChanging = rawYaos[index] === 6 || rawYaos[index] === 9;
-      const changedInfo = isChanging ? changedYaosInfo[index] : null;
-      return {
-        position: index + 1,
-        rawValue: rawYaos[index],
-        yaoType: mainYaos[index] as '阳' | '阴',
-        isChanging: isChanging,
-        changeType: rawYaos[index] === 6 ? '老阴' : rawYaos[index] === 9 ? '老阳' : '静爻',
-        sixGod: animals[index],
-        sixRelative: info.liuqin,
-        najiaDizhi: info.dizhi,
-        wuxing: info.wuxing,
-        isWorld: shiYing.shi === index + 1,
-        isResponse: shiYing.ying === index + 1,
-        isVoid: voids.includes(info.dizhi),
-        changedYao: changedInfo
-          ? {
-              dizhi: changedInfo.dizhi,
-              wuxing: changedInfo.wuxing,
-              liuqin: changedInfo.liuqin,
-              isVoid: voids.includes(changedInfo.dizhi),
-            }
-          : null,
-      };
-    }),
+    yaosDetail,
+    hiddenSpirits,
     timestamp,
   };
 }
+
+export { buildHiddenSpirits };

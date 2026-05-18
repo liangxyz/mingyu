@@ -38,6 +38,9 @@ export interface PersonFormProps {
   updateBirthTime: (role: PersonRole, value: string) => void;
   openBirthPlaceModal: (role: PersonRole) => void;
   openBirthTimeReversePage: (role: PersonRole) => void;
+  sectionTitle?: string;
+  historyHint?: string;
+  forcePreciseBirthPlace?: boolean;
 }
 
 export const PersonForm = memo(function PersonForm({
@@ -48,6 +51,9 @@ export const PersonForm = memo(function PersonForm({
   updateBirthTime,
   openBirthPlaceModal,
   openBirthTimeReversePage,
+  sectionTitle,
+  historyHint: historyHintOverride,
+  forcePreciseBirthPlace = false,
 }: PersonFormProps) {
   const birthTimeValue =
     getPersonValue(form, role, 'birthHour') !== '' &&
@@ -57,14 +63,17 @@ export const PersonForm = memo(function PersonForm({
         ).padStart(2, '0')}`
       : '';
   const isLunar = getPersonValue(form, role, 'dateType') === 'lunar';
-  const useTrueSolarTime = Boolean(getPersonValue(form, role, 'useTrueSolarTime'));
-  const historyHint = role === 'self' ? '录入姓名后会自动保存。' : '合盘模式下会自动生成合盘历史。';
+  const useTrueSolarTime =
+    forcePreciseBirthPlace || Boolean(getPersonValue(form, role, 'useTrueSolarTime'));
+  const historyHint =
+    historyHintOverride ||
+    (role === 'self' ? '录入姓名后会自动保存。' : '合盘模式下会自动生成合盘历史。');
   const trueSolarTimeLabel = getTrueSolarTimeLabel(form, role);
 
   return (
     <section className={`person-section ${role === 'partner' ? 'second-person' : ''}`}>
       <div className="person-section-head">
-        <h2>{getPersonSectionTitle(form.analysisMode, role)}</h2>
+        <h2>{sectionTitle || getPersonSectionTitle(form.analysisMode, role)}</h2>
         <p>{historyHint}</p>
       </div>
 
@@ -165,20 +174,22 @@ export const PersonForm = memo(function PersonForm({
           </div>
         </div>
 
-        <div className="form-row">
-          <label className="checkbox-label" htmlFor={`${role}-true-solar-time-input`}>
-            <input
-              id={`${role}-true-solar-time-input`}
-              checked={useTrueSolarTime}
-              type="checkbox"
-              className="checkbox-input"
-              onChange={(event) =>
-                updatePersonField(role, 'useTrueSolarTime', event.target.checked)
-              }
-            />
-            <span>使用真太阳时</span>
-          </label>
-        </div>
+        {forcePreciseBirthPlace ? null : (
+          <div className="form-row">
+            <label className="checkbox-label" htmlFor={`${role}-true-solar-time-input`}>
+              <input
+                id={`${role}-true-solar-time-input`}
+                checked={useTrueSolarTime}
+                type="checkbox"
+                className="checkbox-input"
+                onChange={(event) =>
+                  updatePersonField(role, 'useTrueSolarTime', event.target.checked)
+                }
+              />
+              <span>使用真太阳时</span>
+            </label>
+          </div>
+        )}
 
         {useTrueSolarTime ? (
           <>
@@ -241,7 +252,7 @@ export const PersonForm = memo(function PersonForm({
                 ))}
                 <option value={UNKNOWN_TIME_INDEX}>未知时辰</option>
               </select>
-              {form.analysisMode === 'single' && role === 'self' ? (
+              {form.analysisMode === 'single' && role === 'self' && !forcePreciseBirthPlace ? (
                 <div className="birth-time-actions">
                   <button
                     type="button"

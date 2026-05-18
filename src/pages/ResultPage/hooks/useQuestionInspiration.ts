@@ -26,6 +26,7 @@ export function useQuestionInspiration() {
           id: `${item.category}-${item.question}`,
           question: item.question,
           tag: item.category,
+          intent: item.intent,
         })),
       },
     ],

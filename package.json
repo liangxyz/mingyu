@@ -12,9 +12,11 @@
     "lint:fix": "eslint src --fix --max-warnings 999",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"build/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"build/**/*.ts\"",
+    "contest:evaluate": "node scripts/evaluate-fortune-contest-model.js",
     "mcp": "tsx --tsconfig mcp/tsconfig.json mcp/src/server.ts"
   },
   "dependencies": {
+    "celestine": "^0.2.1",
     "iztro": "^2.5.8",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

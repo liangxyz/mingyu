@@ -95,9 +95,7 @@ export const ThreePillarsBoard = memo(function ThreePillarsBoard(props: {
         <div className="result-stat-card">
           <span>日柱</span>
           <strong>{profile.pillars.day.ganZhi}</strong>
-          <small>
-            {profile.zodiac} · {profile.constellation}
-          </small>
+          <small>{profile.zodiac}</small>
         </div>
       </div>
 

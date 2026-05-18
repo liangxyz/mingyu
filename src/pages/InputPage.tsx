@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, useTransition } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useTransition } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrivacyHint } from '@/components/PrivacyHint';
@@ -17,7 +17,7 @@ import { BirthPlaceModal } from './InputPage.BirthPlaceModal';
 import { PersonForm } from './InputPage.PersonForm';
 import { getFieldKey, getPersonValue, type SELF_FIELD_MAP } from './InputPage.field-helpers';
 
-type InputEntryMode = 'single' | 'compatibility' | 'divination';
+type InputEntryMode = 'single' | 'compatibility' | 'divination' | 'almanac';
 
 const LazyDivinationPanel = lazy(async () => {
   const module = await import('@/components/DivinationPanel');
@@ -31,6 +31,9 @@ export function InputPage() {
   const [form, setForm] = useState<QueryInputState>(defaultInputState);
   const [entryMode, setEntryMode] = useState<InputEntryMode>('single');
   const [error, setError] = useState('');
+  const mainContentRef = useRef<HTMLDivElement | null>(null);
+  const tutorialEntryRef = useRef<HTMLDivElement | null>(null);
+  const [tutorialEntryPinned, setTutorialEntryPinned] = useState(false);
 
   const birthPlace = useBirthPlace({ form, setForm });
 
@@ -40,21 +43,25 @@ export function InputPage() {
         ? 'compatibility'
         : searchParams.get('mode') === 'divination'
           ? 'divination'
-          : 'single';
+          : searchParams.get('mode') === 'almanac'
+            ? 'almanac'
+            : 'single';
     setEntryMode(nextEntryMode);
 
-    if (nextEntryMode === 'divination') {
+    if (nextEntryMode === 'divination' || nextEntryMode === 'almanac') {
       return;
     }
 
-    setForm((current) =>
-      current.analysisMode === nextEntryMode
+    setForm((current) => {
+      const nextAnalysisMode = nextEntryMode === 'compatibility' ? 'compatibility' : 'single';
+      return current.analysisMode === nextAnalysisMode
         ? current
         : {
             ...current,
-            analysisMode: nextEntryMode,
-          },
-    );
+            analysisMode: nextAnalysisMode,
+            chartType: 'bazi',
+          };
+    });
   }, [searchParams]);
 
   useEffect(() => {
@@ -78,6 +85,7 @@ export function InputPage() {
     form.birthMinute,
     form.birthPlace,
     form.birthLongitude,
+    form.birthLatitude,
   ]);
 
   useEffect(() => {
@@ -106,7 +114,57 @@ export function InputPage() {
     form.partnerBirthMinute,
     form.partnerBirthPlace,
     form.partnerBirthLongitude,
+    form.partnerBirthLatitude,
   ]);
+
+  useEffect(() => {
+    const mainContentNode = mainContentRef.current;
+    const tutorialEntryNode = tutorialEntryRef.current;
+    if (!mainContentNode || !tutorialEntryNode) {
+      return;
+    }
+
+    let frameId = 0;
+
+    function updateTutorialEntryMode() {
+      frameId = 0;
+      const mainContentHeight = mainContentNode.getBoundingClientRect().height;
+      const tutorialEntryHeight = tutorialEntryNode.getBoundingClientRect().height;
+      const shouldPin = mainContentHeight + tutorialEntryHeight + 56 <= window.innerHeight;
+      setTutorialEntryPinned((current) => (current === shouldPin ? current : shouldPin));
+    }
+
+    function scheduleUpdate() {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+      frameId = window.requestAnimationFrame(updateTutorialEntryMode);
+    }
+
+    scheduleUpdate();
+    window.addEventListener('resize', scheduleUpdate);
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => {
+        window.removeEventListener('resize', scheduleUpdate);
+        if (frameId) {
+          window.cancelAnimationFrame(frameId);
+        }
+      };
+    }
+
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    resizeObserver.observe(mainContentNode);
+    resizeObserver.observe(tutorialEntryNode);
+
+    return () => {
+      window.removeEventListener('resize', scheduleUpdate);
+      resizeObserver.disconnect();
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [entryMode]);
 
   function updateField<K extends keyof QueryInputState>(key: K, value: QueryInputState[K]) {
     setForm((current) => ({
@@ -273,7 +331,7 @@ export function InputPage() {
   function updateEntryMode(value: InputEntryMode) {
     setEntryMode(value);
 
-    if (value !== 'divination') {
+    if (value !== 'divination' && value !== 'almanac') {
       updateField('analysisMode', value);
     }
 
@@ -290,7 +348,7 @@ export function InputPage() {
           <span className="skeleton-block input-mode-loading-line" />
         </div>
         <div className="input-mode-loading-methods">
-          {Array.from({ length: 7 }, (_, index) => (
+          {Array.from({ length: 8 }, (_, index) => (
             <span className="skeleton-block input-mode-loading-method" key={`method-${index}`} />
           ))}
         </div>
@@ -313,87 +371,103 @@ export function InputPage() {
   );
 
   return (
-    <div className="page-shell input-page-shell">
+    <div
+      className={`page-shell input-page-shell ${tutorialEntryPinned ? 'has-floating-tutorial-entry' : ''}`}
+    >
       <div className="bazi-view-container">
-        <PrivacyHint />
-        <div className="analysis-mode-strip">
-          <div className="top-switch-control">
-            <SegmentedControl
-              value={entryMode}
-              options={[
-                { label: '个人', value: 'single' as const },
-                { label: '合盘', value: 'compatibility' as const },
-                { label: '占卜', value: 'divination' as const },
-              ]}
-              onChange={updateEntryMode}
-            />
-          </div>
-        </div>
-
-        <div className="analysis-view">
-          {entryMode === 'divination' ? (
-            <Suspense fallback={divinationPanelFallback}>
-              <LazyDivinationPanel />
-            </Suspense>
-          ) : (
-            <div className="form-wrapper">
-              <PersonForm
-                role="self"
-                form={form}
-                updatePersonField={updatePersonField}
-                updateNumericField={updateNumericField}
-                updateBirthTime={updateBirthTime}
-                openBirthPlaceModal={birthPlace.openBirthPlaceModal}
-                openBirthTimeReversePage={openBirthTimeReversePage}
+        <div className="input-page-main-content" ref={mainContentRef}>
+          <PrivacyHint />
+          <div className="analysis-mode-strip">
+            <div className="top-switch-control">
+              <SegmentedControl
+                value={entryMode}
+                options={[
+                  { label: '个人', value: 'single' as const },
+                  { label: '合盘', value: 'compatibility' as const },
+                  { label: '占卜', value: 'divination' as const },
+                  { label: '择日', value: 'almanac' as const },
+                ]}
+                onChange={updateEntryMode}
               />
-              {entryMode === 'compatibility' ? (
+            </div>
+          </div>
+
+          <div className="analysis-view">
+            {entryMode === 'divination' || entryMode === 'almanac' ? (
+              <Suspense fallback={divinationPanelFallback}>
+                <LazyDivinationPanel
+                  initialMethod={entryMode === 'almanac' ? 'almanac' : undefined}
+                  lockedMethod={entryMode === 'almanac' ? 'almanac' : undefined}
+                />
+              </Suspense>
+            ) : (
+              <div className="form-wrapper">
                 <PersonForm
-                  role="partner"
+                  role="self"
                   form={form}
                   updatePersonField={updatePersonField}
                   updateNumericField={updateNumericField}
                   updateBirthTime={updateBirthTime}
                   openBirthPlaceModal={birthPlace.openBirthPlaceModal}
                   openBirthTimeReversePage={openBirthTimeReversePage}
-                />
-              ) : null}
-
-              {error ? <div className="form-error-text global-form-error">{error}</div> : null}
-
-              <div
-                className="form-actions page-submit-actions"
-                style={{
-                  width: '100%',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  justifyItems: 'stretch',
-                }}
-              >
-                <button
-                  className="secondary-page-button"
-                  type="button"
-                  style={{ width: '100%' }}
-                  onClick={() =>
-                    navigate(
-                      `/records?tab=${entryMode === 'compatibility' ? 'compatibility' : 'personal'}`,
-                    )
+                  historyHint={
+                    form.analysisMode === 'single'
+                      ? '填写一份个人信息，自动生成八字、紫微；勾选真太阳时后会同时生成星盘。'
+                      : undefined
                   }
+                />
+                {entryMode === 'compatibility' ? (
+                  <PersonForm
+                    role="partner"
+                    form={form}
+                    updatePersonField={updatePersonField}
+                    updateNumericField={updateNumericField}
+                    updateBirthTime={updateBirthTime}
+                    openBirthPlaceModal={birthPlace.openBirthPlaceModal}
+                    openBirthTimeReversePage={openBirthTimeReversePage}
+                  />
+                ) : null}
+
+                {error ? <div className="form-error-text global-form-error">{error}</div> : null}
+
+                <div
+                  className="form-actions page-submit-actions"
+                  style={{
+                    width: '100%',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    justifyItems: 'stretch',
+                  }}
                 >
-                  历史记录
-                </button>
-                <button
-                  className="primary-button start-submit-button"
-                  type="button"
-                  onClick={handleSubmit}
-                  style={{ width: '100%' }}
-                >
-                  开始排盘
-                </button>
+                  <button
+                    className="secondary-page-button"
+                    type="button"
+                    style={{ width: '100%' }}
+                    onClick={() =>
+                      navigate(
+                        `/records?tab=${entryMode === 'compatibility' ? 'compatibility' : 'personal'}`,
+                      )
+                    }
+                  >
+                    历史记录
+                  </button>
+                  <button
+                    className="primary-button start-submit-button"
+                    type="button"
+                    onClick={handleSubmit}
+                    style={{ width: '100%' }}
+                  >
+                    开始排盘
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <div className="input-page-bottom-tools">
+        <div
+          className={`input-page-bottom-tools ${tutorialEntryPinned ? 'is-floating' : 'is-inline'}`}
+          ref={tutorialEntryRef}
+        >
           <div className="tutorial-entry-card">
             <div className="tutorial-entry-copy">
               <strong>第一次使用？先看教程</strong>

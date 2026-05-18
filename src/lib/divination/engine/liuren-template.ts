@@ -35,12 +35,12 @@ export function buildLiurenTemplateText(template: LiurenTemplateType, data: Liur
   const mo = data.threeTransmissions[2];
 
   return [
-    `模板选择：${templateLabelMap[template]}`,
-    `模板关注：${templateFocusMap[template]}`,
+    `断课类型：${templateLabelMap[template]}`,
+    `断课重点：${templateFocusMap[template]}`,
     getLiurenPatternHint(data.transmissionPattern),
     `主线证据：先以${chu ? `${chu.branch}乘${chu.god}` : '初传'}定发用主线，再结合${data.transmissionRule || '取传法'}、${data.transmissionPattern || '传态'}与旬空${data.xunKong?.join('、') || '未知'}判断节奏。`,
-    '主辅分层：四课三传为主证，课体与神煞为辅证；若辅证与三传主线冲突，先以发用与三传演变为准。',
-    '作答模板：',
+    '取证顺序：四课三传为主证，课体与神煞为辅证；若辅证与三传主线冲突，先以发用与三传演变为准。',
+    '建议展开顺序：',
     `1. 起因判断：围绕初传${chu ? `${chu.branch}（${chu.relation}）` : '未知'}，交代事件为何起。`,
     `2. 过程判断：围绕中传${zhong ? `${zhong.branch}（${zhong.relation}）` : '未知'}，交代主要卡点与转折。`,
     `3. 结果判断：围绕末传${mo ? `${mo.branch}（${mo.relation}）` : '未知'}，交代短期落点与走势。`,

@@ -3,13 +3,19 @@ export type SixGod = '青龙' | '朱雀' | '勾陈' | '腾蛇' | '白虎' | '玄
 export type DivinationType =
   | 'liuyao'
   | 'meihua'
+  | 'xiaoliuren'
   | 'qimen'
   | 'liuren'
   | 'tarot'
   | 'tarot_single'
-  | 'ssgw';
+  | 'ssgw'
+  | 'almanac'
+  | 'lenormand'
+  | 'astrolabe';
 
 export type MeihuaDivinationMethod = 'time' | 'number' | 'random' | 'external';
+
+export type XiaoliurenDivinationMethod = 'time' | 'number' | 'random';
 
 export type MeihuaExternalDirection = '东' | '东南' | '南' | '西南' | '西' | '西北' | '北' | '东北';
 
@@ -71,6 +77,33 @@ export interface MeihuaSettings {
   externalOmens?: MeihuaExternalOmens;
 }
 
+export interface XiaoliurenPalaceDetail {
+  name: '大安' | '留连' | '速喜' | '赤口' | '小吉' | '空亡';
+  index: number;
+  meaning: string;
+  keywords: string[];
+  tendency: '宜推进' | '宜等待' | '易反复' | '易争执' | '有助力' | '易落空';
+  advice: string;
+}
+
+export interface XiaoliurenData {
+  method: XiaoliurenDivinationMethod;
+  methodLabel: string;
+  timestamp: number;
+  lunarMonth: number;
+  lunarDay: number;
+  hourIndex: number;
+  hourLabel: string;
+  sequence: {
+    start: XiaoliurenPalaceDetail;
+    process: XiaoliurenPalaceDetail;
+    result: XiaoliurenPalaceDetail;
+  };
+  primary: XiaoliurenPalaceDetail;
+  tendency: XiaoliurenPalaceDetail['tendency'];
+  questionHint: string;
+}
+
 export interface BaseGanZhi {
   year: string;
   month: string;
@@ -100,6 +133,20 @@ export interface LiuyaoYaoDetail extends BaseYaoDetail {
     liuqin: string;
     isVoid: boolean;
   } | null;
+}
+
+export interface LiuyaoHiddenSpirit {
+  sixRelative: string;
+  position: number;
+  najiaDizhi: string;
+  wuxing: string;
+  isVoid: boolean;
+  underYao: {
+    position: number;
+    sixRelative: string;
+    najiaDizhi: string;
+    wuxing: string;
+  };
 }
 
 export interface MeihuaYaoDetail extends BaseYaoDetail {
@@ -132,6 +179,7 @@ export interface LiuyaoData extends BaseHexagramData {
     wuxing: string;
   };
   yaosDetail: LiuyaoYaoDetail[];
+  hiddenSpirits?: LiuyaoHiddenSpirit[];
   specialPattern?: '静卦' | '独静卦' | '全动卦' | '乾卦用九' | '坤卦用六';
   specialAdvice?: string;
   isChaotic?: boolean;
@@ -259,6 +307,12 @@ export interface QimenTimeInfo {
   [key: string]: string;
 }
 
+export interface QimenBranchPalace {
+  branch: string;
+  palace: number;
+  name: string;
+}
+
 export interface QimenData {
   jiuGongGe: QimenJiuGongGe[];
   ganzhi: BaseGanZhi;
@@ -277,6 +331,11 @@ export interface QimenData {
     level: '有利' | '风险' | '关注';
     summary: string;
   }>;
+  voidBranches?: string[];
+  voidPalaces?: QimenBranchPalace[];
+  horseStar?: QimenBranchPalace & {
+    sourceBranch: string;
+  };
   timeInfo: QimenTimeInfo;
   specialConditions?: QimenSpecialConditions;
   timestamp: number;
@@ -352,7 +411,159 @@ export type TarotSpreadType =
   | 'mindBodySpirit'
   | 'horseshoe';
 
+export type LiuyaoTemplateType = 'general' | 'ganqing' | 'shiye' | 'caifu' | 'guaishen';
+
 export type LiurenTemplateType = 'general' | 'ganqing' | 'shiye' | 'caifu';
+
+export type AlmanacTopic =
+  | 'marriage'
+  | 'move'
+  | 'opening'
+  | 'contract'
+  | 'travel'
+  | 'medical'
+  | 'study'
+  | 'custom';
+
+export type AlmanacParticipantGender = '男' | '女' | '';
+
+export interface AlmanacParticipantInput {
+  id: string;
+  name: string;
+  gender: AlmanacParticipantGender;
+  year: string;
+  month: string;
+  day: string;
+  timeIndex: string;
+  dateType: 'solar' | 'lunar';
+  isLeapMonth?: boolean;
+}
+
+export interface AlmanacParticipantProfile {
+  id: string;
+  name: string;
+  gender: AlmanacParticipantGender;
+  solarDate: string;
+  lunarDate: string;
+  zodiac: string;
+  constellation: string;
+  dayMaster: string;
+  dayMasterElement: string;
+  pillars: BaseGanZhi;
+  usefulGods: string[];
+  avoidGods: string[];
+}
+
+export interface AlmanacDayCandidate {
+  date: string;
+  weekday: string;
+  lunarDate: string;
+  ganzhi: {
+    year: string;
+    month: string;
+    day: string;
+  };
+  zodiac: string;
+  dayOfficer: string;
+  twelveStar: string;
+  twentyEightStar: string;
+  nineStar: string;
+  gods: string[];
+  recommends: string[];
+  avoids: string[];
+  pengZu: string;
+  clash: string;
+  score: number;
+  highlights: string[];
+  cautions: string[];
+  participantNotes: string[];
+}
+
+export interface AlmanacData {
+  topic: AlmanacTopic;
+  topicLabel: string;
+  startDate: string;
+  endDate: string;
+  days: AlmanacDayCandidate[];
+  participants: AlmanacParticipantProfile[];
+  timestamp: number;
+}
+
+export type LenormandSpreadType = 'single' | 'three' | 'relationship' | 'decision' | 'nine';
+
+export interface LenormandData {
+  spreadType: LenormandSpreadType;
+  spreadName: string;
+  cards: {
+    id: number;
+    name: string;
+    position: string;
+    keywords: string[];
+    meaning: string;
+  }[];
+  timestamp: number;
+}
+
+export interface AstrolabeBirthInput {
+  name: string;
+  gender: AlmanacParticipantGender;
+  year: string;
+  month: string;
+  day: string;
+  hour: string;
+  minute: string;
+  latitude: string;
+  longitude: string;
+  timezone: string;
+  locationName?: string;
+  useTrueSolarTime?: boolean;
+}
+
+export interface AstrolabePoint {
+  name: string;
+  label: string;
+  longitude: number;
+  sign: string;
+  degree: number;
+  minute: number;
+  house: number;
+  formatted: string;
+  retrograde?: boolean;
+}
+
+export interface AstrolabeAspect {
+  body1: string;
+  body2: string;
+  type: string;
+  symbol: string;
+  orb: number;
+  strength: number;
+  applying: boolean | null;
+}
+
+export interface AstrolabeData {
+  birth: {
+    name: string;
+    gender: AlmanacParticipantGender;
+    dateTime: string;
+    location: string;
+    timezone: number;
+    standardDateTime?: string;
+    trueSolarDateTime?: string;
+    isTrueSolarTime?: boolean;
+  };
+  planets: AstrolabePoint[];
+  angles: AstrolabePoint[];
+  houses: AstrolabePoint[];
+  aspects: AstrolabeAspect[];
+  summary: {
+    elements: Record<string, string[]>;
+    modalities: Record<string, string[]>;
+    retrograde: string[];
+    patterns: string[];
+  };
+  timestamp: number;
+}
 
 export interface SsgwData {
   number: number;
@@ -367,14 +578,19 @@ export interface SsgwData {
 export type DivinationData =
   | LiuyaoData
   | MeihuaData
+  | XiaoliurenData
   | QimenData
   | LiurenData
   | TarotData
-  | SsgwData;
+  | SsgwData
+  | AlmanacData
+  | LenormandData
+  | AstrolabeData;
 
 export interface SupplementaryInfo {
   gender?: '男' | '女';
   birthYear?: number;
+  userSupplement?: string;
   interpretationStyle?: '入门' | '专业';
   outputLength?: '精简' | '详细' | '超详细';
   dayPillar?: {

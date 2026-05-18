@@ -52,7 +52,13 @@ test('大六壬会输出完整的四课三传与天盘结构', () => {
   assert.match(result.transmissionRule || '', /贼克法|克法|比用法|涉害法|别责法|八专法/);
   assert.match(result.transmissionPattern || '', /伏吟|反吟|回环|递传/);
   assert.ok(result.transmissionDetail?.includes(result.transmissionRule || ''));
-  assert.ok(result.transmissionSummary?.includes('断课模板'));
+  assert.match(result.transmissionDetail || '', /初传发用/);
+  assert.doesNotMatch(result.transmissionDetail || '', /传态为/);
+  assert.doesNotMatch(result.transmissionDetail || '', /链路为/);
+  assert.match(result.transmissionSummary || '', /三传.+主线依次为/);
+  assert.doesNotMatch(result.transmissionSummary || '', /断课模板/);
+  assert.doesNotMatch(result.transmissionSummary || '', /取传采用/);
+  assert.doesNotMatch(result.transmissionSummary || '', /链路为/);
 
   const chu = result.threeTransmissions[0].branch;
   const zhong = result.threeTransmissions[1].branch;

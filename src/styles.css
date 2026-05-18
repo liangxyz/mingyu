@@ -42,7 +42,7 @@
     radial-gradient(circle at top left, rgba(222, 90, 166, 0.14), transparent 34%),
     radial-gradient(circle at top right, rgba(184, 167, 234, 0.2), transparent 32%),
     linear-gradient(180deg, var(--surface-page) 0%, var(--surface-page-end) 100%);
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 }
@@ -146,13 +146,12 @@ body {
 .skeleton-block {
   display: block;
   border-radius: 999px;
-  background:
-    linear-gradient(
-      90deg,
-      var(--surface-muted) 0%,
-      var(--surface-elevated-strong) 50%,
-      var(--surface-muted) 100%
-    );
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 0%,
+    var(--surface-elevated-strong) 50%,
+    var(--surface-muted) 100%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
@@ -468,13 +467,12 @@ select {
 .ziwei-board-skeleton-panel {
   border-radius: 24px;
   border: 1px solid var(--border-soft);
-  background:
-    linear-gradient(
-      90deg,
-      var(--surface-muted) 0%,
-      var(--surface-elevated-strong) 50%,
-      var(--surface-muted) 100%
-    );
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 0%,
+    var(--surface-elevated-strong) 50%,
+    var(--surface-muted) 100%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
@@ -920,7 +918,10 @@ select {
   justify-content: flex-start;
   gap: 1px;
   cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease,
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
     box-shadow 0.2s ease;
   overflow: hidden;
 }
@@ -1512,7 +1513,11 @@ select {
   grid-column: 2 / span 2;
   grid-row: 2 / span 2;
   border-radius: 8px;
-  background: linear-gradient(180deg, var(--surface-elevated-strong), var(--surface-elevated-strong));
+  background: linear-gradient(
+    180deg,
+    var(--surface-elevated-strong),
+    var(--surface-elevated-strong)
+  );
   color: var(--text-strong);
   border: 1px solid var(--accent-soft);
   padding: 6px;
@@ -1773,6 +1778,15 @@ select {
   padding-top: 10px;
 }
 
+.input-page-shell.has-floating-tutorial-entry {
+  padding-bottom: 148px;
+}
+
+.input-page-main-content {
+  display: grid;
+  gap: 0;
+}
+
 .input-panel {
   max-width: 920px;
   margin: 0 auto;
@@ -1984,7 +1998,7 @@ select {
   gap: 8px;
 }
 
-.checkbox-card input[type="checkbox"] {
+.checkbox-card input[type='checkbox'] {
   width: 14px;
   height: 14px;
   margin: 0;
@@ -2000,7 +2014,11 @@ select {
 
 .segment-chip {
   border: 1px solid var(--border-strong);
-  background: linear-gradient(180deg, var(--surface-elevated-strong), var(--surface-elevated-strong));
+  background: linear-gradient(
+    180deg,
+    var(--surface-elevated-strong),
+    var(--surface-elevated-strong)
+  );
   color: var(--accent-deep);
   border-radius: 999px;
   padding: 10px 16px;
@@ -2244,11 +2262,21 @@ select {
   padding: 8px 14px;
   cursor: pointer;
   color: var(--text-strong);
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease,
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .quick-chip.is-active {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: var(--surface-base);
+  box-shadow: 0 10px 24px var(--accent-soft-strong);
+}
+
+.quick-chip.active {
   border-color: var(--accent-strong);
   background: var(--accent-strong);
   color: var(--surface-base);
@@ -2279,7 +2307,11 @@ select {
   width: 100%;
   border: 1px solid var(--border-strong);
   border-radius: 16px;
-  background: linear-gradient(180deg, var(--surface-elevated-strong), var(--surface-elevated-strong));
+  background: linear-gradient(
+    180deg,
+    var(--surface-elevated-strong),
+    var(--surface-elevated-strong)
+  );
   padding: 12px 14px;
   color: var(--text-strong);
   display: flex;
@@ -2398,7 +2430,10 @@ select {
   text-align: left;
   color: var(--text-strong);
   cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
   display: grid;
   gap: 6px;
 }
@@ -2604,12 +2639,19 @@ select {
   text-align: left;
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: linear-gradient(180deg, var(--surface-elevated-strong), var(--surface-elevated-strong));
+  background: linear-gradient(
+    180deg,
+    var(--surface-elevated-strong),
+    var(--surface-elevated-strong)
+  );
   padding: 4px 3px;
   display: grid;
   gap: 1px;
   cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
   min-width: 50px;
   flex: 0 0 50px;
 }
@@ -2844,13 +2886,29 @@ select {
 }
 
 .input-page-bottom-tools {
+  width: 100%;
+  position: fixed;
   display: flex;
   justify-content: center;
   margin-top: 12px;
 }
 
+.input-page-bottom-tools.is-floating {
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100vw - 24px), 760px);
+  bottom: max(12px, env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.input-page-bottom-tools.is-inline {
+  position: static;
+  transform: none;
+}
+
 .tutorial-entry-card {
-  width: min(100%, 720px);
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2860,6 +2918,7 @@ select {
   border: 1px solid var(--border-soft);
   background: linear-gradient(180deg, var(--surface-elevated), var(--surface-soft));
   box-shadow: var(--shadow-sm);
+  pointer-events: auto;
 }
 
 .tutorial-entry-copy {
@@ -2951,7 +3010,7 @@ select {
 
 .input-mode-loading-methods {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -3047,7 +3106,7 @@ select {
 
 .divination-method-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -3168,8 +3227,7 @@ select {
   transform: translateY(-50%);
   pointer-events: none;
   opacity: 0.68;
-  background:
-    center / 14px 14px no-repeat
+  background: center / 14px 14px no-repeat
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6.5 8 10l4-3.5' stroke='%2365566f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
@@ -3272,6 +3330,277 @@ select {
   line-height: 1.55;
 }
 
+.divination-extra-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-muted);
+}
+
+.divination-extra-head,
+.almanac-participant-head,
+.astrolabe-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.divination-extra-head strong,
+.almanac-participant-head strong,
+.astrolabe-chart-head strong {
+  color: var(--text-strong);
+  font-size: 14px;
+}
+
+.xiaoliuren-board {
+  margin-top: 14px;
+}
+
+.xiaoliuren-board .divination-extra-head span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.xiaoliuren-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.xiaoliuren-stage-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-elevated);
+}
+
+.xiaoliuren-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.xiaoliuren-stage-head span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.xiaoliuren-stage-head strong,
+.xiaoliuren-overview-item strong {
+  color: var(--text-strong);
+  font-size: 14px;
+}
+
+.xiaoliuren-stage-card p,
+.xiaoliuren-overview-item p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.xiaoliuren-stage-card small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.xiaoliuren-keyword-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.xiaoliuren-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.xiaoliuren-overview-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-elevated);
+}
+
+.xiaoliuren-overview-item span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.almanac-participant-list {
+  display: grid;
+  gap: 10px;
+}
+
+.almanac-participant-card {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+}
+
+.astrolabe-chart-panel {
+  display: grid;
+  gap: 10px;
+  padding: 2px 0 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.astrolabe-chart-head span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.astrolabe-chart-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.astrolabe-chart-svg {
+  width: min(360px, 100%);
+  aspect-ratio: 1;
+  justify-self: center;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(180deg, var(--surface-base), var(--surface-soft));
+}
+
+.astrolabe-board-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 420px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.astrolabe-board-main {
+  min-width: 0;
+}
+
+.astrolabe-board-side {
+  display: grid;
+  gap: 12px;
+}
+
+.astrolabe-aspect-list {
+  display: grid;
+  gap: 8px;
+}
+
+.astrolabe-aspect-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.astrolabe-aspect-item strong {
+  color: var(--text-strong);
+  font-size: 13px;
+}
+
+.astrolabe-aspect-item span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.astrolabe-aspect-item.is-empty {
+  justify-content: center;
+}
+
+.astrolabe-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.astrolabe-quick-grid .quick-chip {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  justify-content: center;
+  text-align: center;
+}
+
+.astrolabe-quick-grid + .field-card,
+.astrolabe-quick-grid + .quick-grid + .field-card {
+  margin-top: 0;
+}
+
+.astrolabe-quick-grid + .field-card textarea,
+.astrolabe-quick-grid + .quick-grid + .field-card textarea {
+  min-height: 132px;
+  resize: vertical;
+}
+
+.astrolabe-ring-outer,
+.astrolabe-ring-inner,
+.astrolabe-ring-core {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.astrolabe-zodiac-line,
+.astrolabe-house-line {
+  stroke: var(--border-soft);
+  stroke-width: 1;
+}
+
+.astrolabe-house-line {
+  stroke: var(--accent-strong);
+  opacity: 0.42;
+}
+
+.astrolabe-zodiac-label,
+.astrolabe-planet-label {
+  fill: var(--text-secondary);
+  font-size: 8px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.astrolabe-aspect-line {
+  stroke: var(--secondary-strong);
+  stroke-width: 0.8;
+  opacity: 0.58;
+}
+
+.astrolabe-aspect-line.is-tense {
+  stroke: var(--accent-strong);
+}
+
+.astrolabe-planet-dot {
+  fill: var(--surface-elevated);
+  stroke: var(--accent-strong);
+  stroke-width: 1;
+}
+
+.astrolabe-planet-label {
+  fill: var(--accent-deep);
+  font-size: 7px;
+  font-weight: 700;
+}
+
 .divination-result-skeleton {
   display: grid;
   gap: 12px;
@@ -3345,7 +3674,11 @@ select {
   padding: 8px 10px;
   border: 1px solid var(--border-strong);
   border-radius: 10px;
-  background: linear-gradient(180deg, var(--surface-elevated-strong), var(--surface-elevated-strong));
+  background: linear-gradient(
+    180deg,
+    var(--surface-elevated-strong),
+    var(--surface-elevated-strong)
+  );
   color: var(--text-strong);
   font-size: 16px;
   transition:
@@ -3625,6 +3958,9 @@ div.form-actions.page-submit-actions {
 
 .birth-place-modal-card {
   width: min(860px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .birth-place-modal-head {
@@ -3641,6 +3977,24 @@ div.form-actions.page-submit-actions {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.birth-place-modal-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.birth-place-modal-actions {
+  flex-shrink: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-soft);
 }
 
 .draft-selection-tip {
@@ -4033,7 +4387,8 @@ div.form-actions.page-submit-actions {
 
   .result-dual-layout,
   .bazi-core-layout,
-  .ziwei-layout {
+  .ziwei-layout,
+  .astrolabe-board-layout {
     grid-template-columns: 1fr;
   }
 
@@ -4356,8 +4711,9 @@ div.form-actions.page-submit-actions {
   }
 
   .tab-chip {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: 5px 8px;
+    font-size: 11px;
+    line-height: 1.2;
   }
 
   .workspace-grid {
@@ -4427,6 +4783,18 @@ div.form-actions.page-submit-actions {
     padding: 7px 6px;
     font-size: 11px;
     text-align: center;
+  }
+
+  .astrolabe-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .astrolabe-quick-grid .quick-chip {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 6px;
   }
 
   .copy-button {
@@ -4643,8 +5011,13 @@ div.form-actions.page-submit-actions {
     width: min(320px, 100%);
   }
 
-  .input-page-bottom-tools {
-    margin-top: 10px;
+  .input-page-shell.has-floating-tutorial-entry {
+    padding-bottom: 158px;
+  }
+
+  .input-page-bottom-tools.is-floating {
+    width: min(calc(100vw - 16px), 760px);
+    bottom: max(8px, env(safe-area-inset-bottom, 0px) + 8px);
   }
 
   .tutorial-entry-card {
@@ -4806,6 +5179,18 @@ div.form-actions.page-submit-actions {
   .divination-result-skeleton-line {
     height: 38px;
     border-radius: 10px;
+  }
+
+  .xiaoliuren-card-grid,
+  .xiaoliuren-overview-grid,
+  .astrolabe-board-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .xiaoliuren-stage-card,
+  .xiaoliuren-overview-item {
+    padding: 10px;
+    border-radius: 12px;
   }
 
   .form-row,
@@ -5060,7 +5445,7 @@ div.form-actions.page-submit-actions {
     white-space: nowrap;
   }
 
-  .input-panel .checkbox-card input[type="checkbox"] {
+  .input-panel .checkbox-card input[type='checkbox'] {
     width: 13px;
     height: 13px;
   }
@@ -5146,6 +5531,11 @@ div.form-actions.page-submit-actions {
   .birth-place-modal-card {
     width: min(860px, 100%);
     padding: 12px;
+  }
+
+  .birth-place-modal-body {
+    gap: 10px;
+    padding-right: 0;
   }
 
   .fortune-modal-grid {
@@ -5254,15 +5644,19 @@ div.form-actions.page-submit-actions {
     line-height: 1.35;
   }
 
-.modal-btn {
-  flex: 0 0 auto;
-  padding: 7px 8px;
-  font-size: 12px;
-}
+  .modal-btn {
+    flex: 0 0 auto;
+    padding: 7px 8px;
+    font-size: 12px;
+  }
 
   .modal-actions {
     display: flex;
     gap: 6px;
+  }
+
+  .birth-place-modal-actions {
+    padding-top: 2px;
   }
 
   .draft-tip,
@@ -5283,6 +5677,10 @@ div.form-actions.page-submit-actions {
     width: 100%;
   }
 
+  .input-page-bottom-tools.is-floating {
+    width: min(calc(100vw - 12px), 760px);
+  }
+
   .page-shell {
     padding: 10px 6px 16px;
   }
@@ -5297,13 +5695,15 @@ div.form-actions.page-submit-actions {
   .tab-strip {
     margin-bottom: 10px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
   }
 
   .tab-chip {
-    padding: 7px 0;
+    padding: 5px 0;
     min-width: 0;
+    font-size: 11px;
+    line-height: 1.15;
     text-align: center;
   }
 
@@ -5583,4 +5983,3 @@ div.form-actions.page-submit-actions {
   justify-content: center;
   flex-wrap: wrap;
 }
-

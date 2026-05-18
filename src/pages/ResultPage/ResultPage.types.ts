@@ -6,7 +6,33 @@ export type ZiweiPayloadByScopeState = Record<ScopeType, AnalysisPayloadV1> | nu
 export type PromptEngineModule = typeof import('@/lib/prompt-engine');
 export type BaziFortuneSelectionModule = typeof import('@/utils/bazi/fortuneSelection');
 export type PromptShortcutMode = string;
-export type InspirationCategory = '全部' | '事业' | '财运' | '婚恋' | '子女' | '六亲' | '健康';
+export type InspirationCategory =
+  | '全部'
+  | '近期'
+  | '事业'
+  | '财运'
+  | '婚恋'
+  | '子女'
+  | '六亲'
+  | '家庭'
+  | '人际'
+  | '情绪'
+  | '健康'
+  | '学业'
+  | '成长'
+  | '天赋';
+
+export type QuestionInspirationIntent =
+  | 'job-change'
+  | 'relationship-push'
+  | 'startup-partnership'
+  | 'relationship-decision'
+  | 'investment-partnership'
+  | 'reconciliation-decision'
+  | 'home-move'
+  | 'settle-relocate'
+  | 'study-advance'
+  | 'exam-landing';
 
 export type ZiweiYearOption = {
   year: number;

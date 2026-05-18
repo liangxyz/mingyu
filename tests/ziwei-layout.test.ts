@@ -20,6 +20,9 @@ test('紫微页采用左侧传统盘、右侧摘要与年限选择的布局', ()
     source,
     /<div className="ziwei-layout">\s*<div className="ziwei-board-stack">[\s\S]*?<ZiweiTraditionalBoard[\s\S]*?<div className="ziwei-side-panel">[\s\S]*?<div className="ziwei-focus-card ziwei-summary-card">[\s\S]*?<h3>盘面摘要<\/h3>[\s\S]*?<ZiweiFortuneSelector/s,
   );
+  assert.match(source, /<span>生肖<\/span>\s*<strong>\{displayPayload\.basic_info\.zodiac\}<\/strong>/);
+  assert.doesNotMatch(source, /生肖 \/ 星座/);
+  assert.doesNotMatch(source, /basic_info\.sign/);
 });
 
 test('紫微传统盘桌面端不依赖内部横向滚动条', () => {

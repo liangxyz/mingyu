@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { drawSingleCard, drawSpreadCards, getCardKeywords } from '../../../src/utils/tarot.js';
+import { PROMPT_MODES } from '../../../src/lib/public-api/prompt-builders.js';
 import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
 import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
 import { buildDivinationPromptText } from './prompt-helpers.js';
@@ -14,6 +15,10 @@ const tarotSchema = z.object({
 
 const tarotPromptSchema = tarotSchema.extend({
   question: z.string().describe('用户希望围绕牌阵解读的问题'),
+  promptMode: z
+    .enum(PROMPT_MODES)
+    .optional()
+    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
 
 export function registerTarotTool(server: McpServer) {
@@ -113,7 +118,12 @@ export function registerTarotTool(server: McpServer) {
 
         return createStructuredToolResult({
           result,
-          prompt: buildDivinationPromptText({ method: 'tarot', question: args.question, data: result }),
+          prompt: buildDivinationPromptText({
+            method: 'tarot',
+            question: args.question,
+            data: result,
+            promptMode: args.promptMode,
+          }),
         });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '生成塔罗提示词失败'));

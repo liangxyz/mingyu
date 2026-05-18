@@ -431,10 +431,13 @@ export class LunarUtil {
     ganzhi: string;
   } {
     const { solar, lunar, ganzhi } = timeInfo;
+    const lunarYear = lunar.yearInChinese.endsWith('年')
+      ? lunar.yearInChinese
+      : `${lunar.yearInChinese}年`;
 
     return {
       solar: `公历：${solar.year}年${solar.month}月${solar.day}日 ${solar.hour}时${solar.minute}分`,
-      lunar: `农历：${lunar.yearInChinese}年 ${lunar.monthInChinese}${lunar.dayInChinese} ${lunar.hourInChinese}`,
+      lunar: `农历：${lunarYear} ${lunar.monthInChinese}${lunar.dayInChinese} ${lunar.hourInChinese}`,
       ganzhi: `干支：${ganzhi.year}年 ${ganzhi.month}月 ${ganzhi.day}日 ${ganzhi.hour}时`,
     };
   }

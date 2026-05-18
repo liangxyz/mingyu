@@ -63,9 +63,7 @@ export function ZiweiTraditionalBoard(props: {
                     <div>
                       {name} · {payload.basic_info.gender}
                     </div>
-                    <div>
-                      {payload.basic_info.zodiac} / {payload.basic_info.sign}
-                    </div>
+                    <div>{payload.basic_info.zodiac}</div>
                     <div>{payload.basic_info.solar_date}</div>
                     <div>{payload.basic_info.lunar_date}</div>
                     <div>{payload.basic_info.birth_time_label}</div>

@@ -1,11 +1,18 @@
-export type ResultTabKey = 'bazi' | 'ziwei' | 'prompt';
-export type PromptSourceKey = 'bazi' | 'ziwei';
+import { BAZI_QUESTION_SCENES, type BaziQuestionScene } from '@/utils/ai/baziQuestionScene';
+import { ASTROLABE_PROMPT_TOPICS, type AstrolabePromptTopic } from '@/lib/astrolabe-prompts';
+
+export type ResultTabKey = 'bazi' | 'ziwei' | 'astrolabe' | 'prompt';
+export type PromptSourceKey = 'bazi' | 'ziwei' | 'astrolabe';
 export type BaziFortuneScope = 'natal' | 'dayun' | 'year' | 'month' | 'day';
+export type { BaziQuestionScene };
+export type { AstrolabePromptTopic };
 export type ZiweiScopeMode = 'origin' | 'decadal' | 'yearly' | 'monthly' | 'daily' | 'hourly';
 export type AnalysisMode = 'single' | 'compatibility';
+export type ChartType = 'bazi' | 'ziwei' | 'astrolabe';
 
 export type QueryInputState = {
   analysisMode: AnalysisMode;
+  chartType: ChartType;
   name: string;
   gender: 'male' | 'female';
   dateType: 'solar' | 'lunar';
@@ -19,6 +26,7 @@ export type QueryInputState = {
   birthMinute: string;
   birthPlace: string;
   birthLongitude: string;
+  birthLatitude: string;
   partnerName: string;
   partnerGender: 'male' | 'female';
   partnerDateType: 'solar' | 'lunar';
@@ -32,6 +40,7 @@ export type QueryInputState = {
   partnerBirthMinute: string;
   partnerBirthPlace: string;
   partnerBirthLongitude: string;
+  partnerBirthLatitude: string;
 };
 
 export type QueryPromptState = {
@@ -39,6 +48,7 @@ export type QueryPromptState = {
   promptSource: PromptSourceKey;
   baziPresetId: string;
   baziShortcutMode: string;
+  baziQuestionScene: BaziQuestionScene;
   baziQuickQuestion: string;
   baziFortuneScope: BaziFortuneScope;
   baziFortuneCycleIndex: string;
@@ -50,12 +60,53 @@ export type QueryPromptState = {
   ziweiQuickQuestion: string;
   ziweiScope: ZiweiScopeMode;
   ziweiScopeDate: string;
+  astrolabeTopic: AstrolabePromptTopic;
+  astrolabeShortcutMode: string;
+  astrolabeQuickQuestion: string;
 };
+
+const BAZI_FORTUNE_SCOPES: readonly BaziFortuneScope[] = ['natal', 'dayun', 'year', 'month', 'day'];
+
+const ZIWEI_PROMPT_TOPICS = [
+  'destiny',
+  'relationship',
+  'relationship-push',
+  'relationship-decision',
+  'career-wealth',
+  'job-change',
+  'startup-partnership',
+  'investment-partnership',
+  'recent',
+  'family',
+  'home-move',
+  'settle-relocate',
+  'social',
+  'emotion',
+  'health',
+  'study',
+  'study-advance',
+  'exam-landing',
+  'reconciliation-decision',
+  'growth',
+  'talent',
+  'life',
+  'chat',
+] as const;
+
+const ZIWEI_PROMPT_SCOPES: readonly ZiweiScopeMode[] = [
+  'origin',
+  'decadal',
+  'yearly',
+  'monthly',
+  'daily',
+  'hourly',
+];
 
 export const UNKNOWN_TIME_INDEX = -1;
 
 export const defaultInputState: QueryInputState = {
   analysisMode: 'single',
+  chartType: 'bazi',
   name: '',
   gender: 'male',
   dateType: 'solar',
@@ -69,6 +120,7 @@ export const defaultInputState: QueryInputState = {
   birthMinute: '',
   birthPlace: '',
   birthLongitude: '',
+  birthLatitude: '',
   partnerName: '',
   partnerGender: 'female',
   partnerDateType: 'solar',
@@ -82,6 +134,7 @@ export const defaultInputState: QueryInputState = {
   partnerBirthMinute: '',
   partnerBirthPlace: '',
   partnerBirthLongitude: '',
+  partnerBirthLatitude: '',
 };
 
 export const defaultPromptState: QueryPromptState = {
@@ -89,67 +142,255 @@ export const defaultPromptState: QueryPromptState = {
   promptSource: 'bazi',
   baziPresetId: 'ai-mingge-zonglun',
   baziShortcutMode: '自定义',
+  baziQuestionScene: 'general',
   baziQuickQuestion: '',
   baziFortuneScope: 'natal',
   baziFortuneCycleIndex: '',
   baziFortuneYear: '',
   baziFortuneMonth: '',
   baziFortuneDay: '',
-  ziweiTopic: 'destiny',
+  ziweiTopic: 'chat',
   ziweiShortcutMode: '自定义',
   ziweiQuickQuestion: '',
   ziweiScope: 'origin',
   ziweiScopeDate: '',
+  astrolabeTopic: 'life',
+  astrolabeShortcutMode: '综合',
+  astrolabeQuickQuestion: '',
 };
 
+const INPUT_PARAM_KEYS: Record<keyof QueryInputState, string> = {
+  analysisMode: 'a',
+  chartType: 'c',
+  name: 'n',
+  gender: 'g',
+  dateType: 'dt',
+  year: 'y',
+  month: 'm',
+  day: 'd',
+  timeIndex: 'ti',
+  isLeapMonth: 'lm',
+  useTrueSolarTime: 'ts',
+  birthHour: 'bh',
+  birthMinute: 'bm',
+  birthPlace: 'bp',
+  birthLongitude: 'lo',
+  birthLatitude: 'la',
+  partnerName: 'pn',
+  partnerGender: 'pg',
+  partnerDateType: 'pdt',
+  partnerYear: 'py',
+  partnerMonth: 'pm',
+  partnerDay: 'pd',
+  partnerTimeIndex: 'pti',
+  partnerIsLeapMonth: 'plm',
+  partnerUseTrueSolarTime: 'pts',
+  partnerBirthHour: 'pbh',
+  partnerBirthMinute: 'pbm',
+  partnerBirthPlace: 'pbp',
+  partnerBirthLongitude: 'plo',
+  partnerBirthLatitude: 'pla',
+};
+
+const PROMPT_PARAM_KEYS: Record<keyof QueryPromptState, string> = {
+  tab: 't',
+  promptSource: 'ps',
+  baziPresetId: 'bid',
+  baziShortcutMode: 'bsm',
+  baziQuestionScene: 'bqs',
+  baziQuickQuestion: 'bq',
+  baziFortuneScope: 'bfs',
+  baziFortuneCycleIndex: 'bci',
+  baziFortuneYear: 'bfy',
+  baziFortuneMonth: 'bfm',
+  baziFortuneDay: 'bfd',
+  ziweiTopic: 'zt',
+  ziweiShortcutMode: 'zsm',
+  ziweiQuickQuestion: 'zq',
+  ziweiScope: 'zs',
+  ziweiScopeDate: 'zsd',
+  astrolabeTopic: 'at',
+  astrolabeShortcutMode: 'asm',
+  astrolabeQuickQuestion: 'aq',
+};
+
+const PARAM_KEY_ALIASES: Record<string, string> = {
+  ...INPUT_PARAM_KEYS,
+  ...PROMPT_PARAM_KEYS,
+};
+
+function toParamValue(value: string | number | boolean) {
+  return typeof value === 'boolean' ? (value ? '1' : '0') : String(value);
+}
+
+function setCompactParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | number | boolean,
+  fallback: string | number | boolean,
+) {
+  const nextValue = toParamValue(value);
+  if (!nextValue || nextValue === toParamValue(fallback)) {
+    return;
+  }
+
+  params.set(PARAM_KEY_ALIASES[key] ?? key, nextValue);
+}
+
 function appendInputStateParams(params: URLSearchParams, input: QueryInputState) {
-  params.set('analysisMode', input.analysisMode);
-  params.set('name', input.name);
-  params.set('gender', input.gender);
-  params.set('dateType', input.dateType);
-  params.set('year', input.year);
-  params.set('month', input.month);
-  params.set('day', input.day);
-  params.set('timeIndex', String(input.timeIndex));
-  params.set('isLeapMonth', input.isLeapMonth ? '1' : '0');
-  params.set('useTrueSolarTime', input.useTrueSolarTime ? '1' : '0');
-  params.set('birthHour', input.birthHour);
-  params.set('birthMinute', input.birthMinute);
-  params.set('birthPlace', input.birthPlace);
-  params.set('birthLongitude', input.birthLongitude);
-  params.set('partnerName', input.partnerName);
-  params.set('partnerGender', input.partnerGender);
-  params.set('partnerDateType', input.partnerDateType);
-  params.set('partnerYear', input.partnerYear);
-  params.set('partnerMonth', input.partnerMonth);
-  params.set('partnerDay', input.partnerDay);
-  params.set('partnerTimeIndex', String(input.partnerTimeIndex));
-  params.set('partnerIsLeapMonth', input.partnerIsLeapMonth ? '1' : '0');
-  params.set('partnerUseTrueSolarTime', input.partnerUseTrueSolarTime ? '1' : '0');
-  params.set('partnerBirthHour', input.partnerBirthHour);
-  params.set('partnerBirthMinute', input.partnerBirthMinute);
-  params.set('partnerBirthPlace', input.partnerBirthPlace);
-  params.set('partnerBirthLongitude', input.partnerBirthLongitude);
+  setCompactParam(params, 'analysisMode', input.analysisMode, defaultInputState.analysisMode);
+  setCompactParam(params, 'chartType', input.chartType, defaultInputState.chartType);
+  setCompactParam(params, 'name', input.name, defaultInputState.name);
+  setCompactParam(params, 'gender', input.gender, defaultInputState.gender);
+  setCompactParam(params, 'dateType', input.dateType, defaultInputState.dateType);
+  setCompactParam(params, 'year', input.year, defaultInputState.year);
+  setCompactParam(params, 'month', input.month, defaultInputState.month);
+  setCompactParam(params, 'day', input.day, defaultInputState.day);
+  setCompactParam(params, 'timeIndex', input.timeIndex, defaultInputState.timeIndex);
+  setCompactParam(params, 'isLeapMonth', input.isLeapMonth, defaultInputState.isLeapMonth);
+  setCompactParam(
+    params,
+    'useTrueSolarTime',
+    input.useTrueSolarTime,
+    defaultInputState.useTrueSolarTime,
+  );
+  setCompactParam(params, 'birthHour', input.birthHour, defaultInputState.birthHour);
+  setCompactParam(params, 'birthMinute', input.birthMinute, defaultInputState.birthMinute);
+  setCompactParam(params, 'birthPlace', input.birthPlace, defaultInputState.birthPlace);
+  setCompactParam(params, 'birthLongitude', input.birthLongitude, defaultInputState.birthLongitude);
+  setCompactParam(params, 'birthLatitude', input.birthLatitude, defaultInputState.birthLatitude);
+  setCompactParam(params, 'partnerName', input.partnerName, defaultInputState.partnerName);
+  setCompactParam(params, 'partnerGender', input.partnerGender, defaultInputState.partnerGender);
+  setCompactParam(
+    params,
+    'partnerDateType',
+    input.partnerDateType,
+    defaultInputState.partnerDateType,
+  );
+  setCompactParam(params, 'partnerYear', input.partnerYear, defaultInputState.partnerYear);
+  setCompactParam(params, 'partnerMonth', input.partnerMonth, defaultInputState.partnerMonth);
+  setCompactParam(params, 'partnerDay', input.partnerDay, defaultInputState.partnerDay);
+  setCompactParam(
+    params,
+    'partnerTimeIndex',
+    input.partnerTimeIndex,
+    defaultInputState.partnerTimeIndex,
+  );
+  setCompactParam(
+    params,
+    'partnerIsLeapMonth',
+    input.partnerIsLeapMonth,
+    defaultInputState.partnerIsLeapMonth,
+  );
+  setCompactParam(
+    params,
+    'partnerUseTrueSolarTime',
+    input.partnerUseTrueSolarTime,
+    defaultInputState.partnerUseTrueSolarTime,
+  );
+  setCompactParam(
+    params,
+    'partnerBirthHour',
+    input.partnerBirthHour,
+    defaultInputState.partnerBirthHour,
+  );
+  setCompactParam(
+    params,
+    'partnerBirthMinute',
+    input.partnerBirthMinute,
+    defaultInputState.partnerBirthMinute,
+  );
+  setCompactParam(
+    params,
+    'partnerBirthPlace',
+    input.partnerBirthPlace,
+    defaultInputState.partnerBirthPlace,
+  );
+  setCompactParam(
+    params,
+    'partnerBirthLongitude',
+    input.partnerBirthLongitude,
+    defaultInputState.partnerBirthLongitude,
+  );
+  setCompactParam(
+    params,
+    'partnerBirthLatitude',
+    input.partnerBirthLatitude,
+    defaultInputState.partnerBirthLatitude,
+  );
 }
 
 function appendPromptStateParams(params: URLSearchParams, prompt: QueryPromptState) {
-  params.set('tab', prompt.tab);
-  params.set('promptSource', prompt.promptSource);
-  params.set('baziPresetId', prompt.baziPresetId);
-  params.set('baziShortcutMode', prompt.baziShortcutMode);
-  params.set('baziFortuneScope', prompt.baziFortuneScope);
-  params.set('baziFortuneCycleIndex', prompt.baziFortuneCycleIndex);
-  params.set('baziFortuneYear', prompt.baziFortuneYear);
-  params.set('baziFortuneMonth', prompt.baziFortuneMonth);
-  params.set('baziFortuneDay', prompt.baziFortuneDay);
-  params.set('ziweiTopic', prompt.ziweiTopic);
-  params.set('ziweiShortcutMode', prompt.ziweiShortcutMode);
-  params.set('ziweiScope', prompt.ziweiScope);
-  params.set('ziweiScopeDate', prompt.ziweiScopeDate);
+  setCompactParam(params, 'tab', prompt.tab, defaultPromptState.tab);
+  setCompactParam(params, 'promptSource', prompt.promptSource, defaultPromptState.promptSource);
+  setCompactParam(params, 'baziPresetId', prompt.baziPresetId, defaultPromptState.baziPresetId);
+  setCompactParam(
+    params,
+    'baziShortcutMode',
+    prompt.baziShortcutMode,
+    defaultPromptState.baziShortcutMode,
+  );
+  setCompactParam(
+    params,
+    'baziFortuneScope',
+    prompt.baziFortuneScope,
+    defaultPromptState.baziFortuneScope,
+  );
+  setCompactParam(
+    params,
+    'baziFortuneCycleIndex',
+    prompt.baziFortuneCycleIndex,
+    defaultPromptState.baziFortuneCycleIndex,
+  );
+  setCompactParam(
+    params,
+    'baziFortuneYear',
+    prompt.baziFortuneYear,
+    defaultPromptState.baziFortuneYear,
+  );
+  setCompactParam(
+    params,
+    'baziFortuneMonth',
+    prompt.baziFortuneMonth,
+    defaultPromptState.baziFortuneMonth,
+  );
+  setCompactParam(
+    params,
+    'baziFortuneDay',
+    prompt.baziFortuneDay,
+    defaultPromptState.baziFortuneDay,
+  );
+  setCompactParam(params, 'ziweiTopic', prompt.ziweiTopic, defaultPromptState.ziweiTopic);
+  setCompactParam(
+    params,
+    'ziweiShortcutMode',
+    prompt.ziweiShortcutMode,
+    defaultPromptState.ziweiShortcutMode,
+  );
+  setCompactParam(params, 'ziweiScope', prompt.ziweiScope, defaultPromptState.ziweiScope);
+  setCompactParam(
+    params,
+    'ziweiScopeDate',
+    prompt.ziweiScopeDate,
+    defaultPromptState.ziweiScopeDate,
+  );
+  setCompactParam(
+    params,
+    'astrolabeTopic',
+    prompt.astrolabeTopic,
+    defaultPromptState.astrolabeTopic,
+  );
+  setCompactParam(
+    params,
+    'astrolabeShortcutMode',
+    prompt.astrolabeShortcutMode,
+    defaultPromptState.astrolabeShortcutMode,
+  );
 }
 
 function getString(params: URLSearchParams, key: string, fallback: string) {
-  return params.get(key) ?? fallback;
+  const shortKey = PARAM_KEY_ALIASES[key];
+  return (shortKey ? params.get(shortKey) : null) ?? params.get(key) ?? fallback;
 }
 
 function parseTimeIndex(value: string) {
@@ -161,12 +402,93 @@ function parseTimeIndex(value: string) {
   return Number.isInteger(parsed) && parsed >= UNKNOWN_TIME_INDEX ? parsed : '';
 }
 
+function parseBaziQuestionScene(value: string): BaziQuestionScene {
+  if (BAZI_QUESTION_SCENES.includes(value as BaziQuestionScene)) {
+    return value as BaziQuestionScene;
+  }
+  return 'general';
+}
+
+function parseBaziFortuneScope(value: string): BaziFortuneScope {
+  if (BAZI_FORTUNE_SCOPES.includes(value as BaziFortuneScope)) {
+    return value as BaziFortuneScope;
+  }
+  return defaultPromptState.baziFortuneScope;
+}
+
+function parseZiweiTopic(value: string) {
+  if (ZIWEI_PROMPT_TOPICS.includes(value as (typeof ZIWEI_PROMPT_TOPICS)[number])) {
+    return value;
+  }
+  return defaultPromptState.ziweiTopic;
+}
+
+function parseZiweiScope(value: string): ZiweiScopeMode {
+  if (ZIWEI_PROMPT_SCOPES.includes(value as ZiweiScopeMode)) {
+    return value as ZiweiScopeMode;
+  }
+  return defaultPromptState.ziweiScope;
+}
+
+function parseAstrolabeTopic(value: string): AstrolabePromptTopic {
+  if (ASTROLABE_PROMPT_TOPICS.includes(value as AstrolabePromptTopic)) {
+    return value as AstrolabePromptTopic;
+  }
+  return defaultPromptState.astrolabeTopic;
+}
+
+function normalizePromptState(prompt: QueryPromptState): QueryPromptState {
+  const normalized: QueryPromptState = { ...prompt };
+
+  if (normalized.ziweiShortcutMode === '自定义') {
+    normalized.ziweiTopic = 'chat';
+  }
+
+  if (normalized.ziweiScope === 'origin') {
+    normalized.ziweiScopeDate = '';
+  }
+
+  if (normalized.astrolabeShortcutMode === '自定义') {
+    normalized.astrolabeTopic = 'chat';
+  }
+
+  if (normalized.baziFortuneScope === 'natal') {
+    normalized.baziFortuneCycleIndex = '';
+    normalized.baziFortuneYear = '';
+    normalized.baziFortuneMonth = '';
+    normalized.baziFortuneDay = '';
+  }
+
+  if (normalized.baziFortuneScope === 'dayun') {
+    normalized.baziFortuneYear = '';
+    normalized.baziFortuneMonth = '';
+    normalized.baziFortuneDay = '';
+  }
+
+  if (normalized.baziFortuneScope === 'year') {
+    normalized.baziFortuneMonth = '';
+    normalized.baziFortuneDay = '';
+  }
+
+  if (normalized.baziFortuneScope === 'month') {
+    normalized.baziFortuneDay = '';
+  }
+
+  return normalized;
+}
+
 export function parseInputState(params: URLSearchParams): QueryInputState {
   return {
     analysisMode:
       getString(params, 'analysisMode', defaultInputState.analysisMode) === 'compatibility'
         ? 'compatibility'
         : 'single',
+    chartType:
+      getString(params, 'chartType', defaultInputState.chartType) === 'ziwei'
+        ? 'ziwei'
+        : getString(params, 'chartType', defaultInputState.chartType) === 'astrolabe'
+          ? 'astrolabe'
+          : 'bazi',
     name: getString(params, 'name', defaultInputState.name),
     gender: getString(params, 'gender', defaultInputState.gender) === 'female' ? 'female' : 'male',
     dateType:
@@ -181,6 +503,7 @@ export function parseInputState(params: URLSearchParams): QueryInputState {
     birthMinute: getString(params, 'birthMinute', defaultInputState.birthMinute),
     birthPlace: getString(params, 'birthPlace', defaultInputState.birthPlace),
     birthLongitude: getString(params, 'birthLongitude', defaultInputState.birthLongitude),
+    birthLatitude: getString(params, 'birthLatitude', defaultInputState.birthLatitude),
     partnerName: getString(params, 'partnerName', defaultInputState.partnerName),
     partnerGender:
       getString(params, 'partnerGender', defaultInputState.partnerGender) === 'male'
@@ -210,6 +533,11 @@ export function parseInputState(params: URLSearchParams): QueryInputState {
       'partnerBirthLongitude',
       defaultInputState.partnerBirthLongitude,
     ),
+    partnerBirthLatitude: getString(
+      params,
+      'partnerBirthLatitude',
+      defaultInputState.partnerBirthLatitude,
+    ),
   };
 }
 
@@ -223,21 +551,27 @@ export function buildInputSearch(params: URLSearchParams) {
 }
 
 export function parsePromptState(params: URLSearchParams): QueryPromptState {
-  return {
-    tab:
-      (getString(params, 'tab', defaultPromptState.tab) as ResultTabKey) || defaultPromptState.tab,
-    promptSource:
-      getString(params, 'promptSource', defaultPromptState.promptSource) === 'ziwei'
-        ? 'ziwei'
-        : 'bazi',
+  const rawTab = getString(params, 'tab', defaultPromptState.tab);
+  const tab: ResultTabKey =
+    rawTab === 'bazi' || rawTab === 'ziwei' || rawTab === 'astrolabe' || rawTab === 'prompt'
+      ? rawTab
+      : defaultPromptState.tab;
+  const rawPromptSource = getString(params, 'promptSource', defaultPromptState.promptSource);
+  const promptSource: PromptSourceKey =
+    rawPromptSource === 'ziwei' || rawPromptSource === 'astrolabe' ? rawPromptSource : 'bazi';
+
+  return normalizePromptState({
+    tab,
+    promptSource,
     baziPresetId: getString(params, 'baziPresetId', defaultPromptState.baziPresetId),
     baziShortcutMode: getString(params, 'baziShortcutMode', defaultPromptState.baziShortcutMode),
+    baziQuestionScene: parseBaziQuestionScene(
+      getString(params, 'baziQuestionScene', defaultPromptState.baziQuestionScene),
+    ),
     baziQuickQuestion: getString(params, 'baziQuickQuestion', defaultPromptState.baziQuickQuestion),
-    baziFortuneScope: getString(
-      params,
-      'baziFortuneScope',
-      defaultPromptState.baziFortuneScope,
-    ) as BaziFortuneScope,
+    baziFortuneScope: parseBaziFortuneScope(
+      getString(params, 'baziFortuneScope', defaultPromptState.baziFortuneScope),
+    ),
     baziFortuneCycleIndex: getString(
       params,
       'baziFortuneCycleIndex',
@@ -246,16 +580,29 @@ export function parsePromptState(params: URLSearchParams): QueryPromptState {
     baziFortuneYear: getString(params, 'baziFortuneYear', defaultPromptState.baziFortuneYear),
     baziFortuneMonth: getString(params, 'baziFortuneMonth', defaultPromptState.baziFortuneMonth),
     baziFortuneDay: getString(params, 'baziFortuneDay', defaultPromptState.baziFortuneDay),
-    ziweiTopic: getString(params, 'ziweiTopic', defaultPromptState.ziweiTopic),
+    ziweiTopic: parseZiweiTopic(getString(params, 'ziweiTopic', defaultPromptState.ziweiTopic)),
     ziweiShortcutMode: getString(params, 'ziweiShortcutMode', defaultPromptState.ziweiShortcutMode),
     ziweiQuickQuestion: getString(
       params,
       'ziweiQuickQuestion',
       defaultPromptState.ziweiQuickQuestion,
     ),
-    ziweiScope: getString(params, 'ziweiScope', defaultPromptState.ziweiScope) as ZiweiScopeMode,
+    ziweiScope: parseZiweiScope(getString(params, 'ziweiScope', defaultPromptState.ziweiScope)),
     ziweiScopeDate: getString(params, 'ziweiScopeDate', defaultPromptState.ziweiScopeDate),
-  };
+    astrolabeTopic: parseAstrolabeTopic(
+      getString(params, 'astrolabeTopic', defaultPromptState.astrolabeTopic),
+    ),
+    astrolabeShortcutMode: getString(
+      params,
+      'astrolabeShortcutMode',
+      defaultPromptState.astrolabeShortcutMode,
+    ),
+    astrolabeQuickQuestion: getString(
+      params,
+      'astrolabeQuickQuestion',
+      defaultPromptState.astrolabeQuickQuestion,
+    ),
+  });
 }
 
 export function buildResultSearch(
@@ -263,8 +610,9 @@ export function buildResultSearch(
   prompt: QueryPromptState = defaultPromptState,
 ) {
   const params = new URLSearchParams();
+  const normalizedPrompt = normalizePromptState(prompt);
   appendInputStateParams(params, input);
-  appendPromptStateParams(params, prompt);
+  appendPromptStateParams(params, normalizedPrompt);
 
   return params.toString();
 }

@@ -37,7 +37,7 @@ const modeGuides = [
 const promptUsageTips = [
   '不要只发一句“帮我看看”，直接把整段提示词完整发出。',
   '如果软件支持联网、附件或思考增强功能，先开启再发送。',
-  '拿到首轮回答后，再追问重点风险、时间点、行动建议。',
+  '项目主要负责生成完整提示词，后续追问可直接交给在线 AI 自带的对话能力。',
 ] as const;
 
 const commonQuestions = [

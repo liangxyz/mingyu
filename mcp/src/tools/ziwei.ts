@@ -5,10 +5,12 @@ import {
   calculateFullZiweiChart,
 } from '../../../src/lib/full-chart-engine/ziwei.js';
 import {
+  PROMPT_MODES,
   ZIWEI_PROMPT_SCOPES,
   ZIWEI_PROMPT_TOPICS,
   buildSerializableZiweiResult,
   buildZiweiPromptForRuntime,
+  type PromptMode,
   type ZiweiPromptScope,
   type ZiweiPromptTopic,
 } from '../../../src/lib/public-api/prompt-builders.js';
@@ -31,11 +33,17 @@ const ziweiPromptSchema = ziweiSchema.extend({
   promptTopic: z
     .enum(ZIWEI_PROMPT_TOPICS)
     .optional()
-    .describe('提示词主题：destiny=命局, relationship=感情, career-wealth=事业财运, life=人生, chat=自由问答'),
+    .describe(
+      '提示词主题：destiny=命局, relationship=感情, career-wealth=事业财运, family=六亲家庭, health=健康养护, study=学业成长, life=人生, chat=自由问答',
+    ),
   promptScope: z
     .enum(ZIWEI_PROMPT_SCOPES)
     .optional()
     .describe('提示词运限范围：origin=本命, decadal=大限, yearly=流年, monthly=流月, daily=流日, hourly=流时, age=年龄'),
+  promptMode: z
+    .enum(PROMPT_MODES)
+    .optional()
+    .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
 
 export function registerZiweiTool(server: McpServer) {
@@ -98,8 +106,9 @@ export function registerZiweiTool(server: McpServer) {
           prompt: buildZiweiPromptForRuntime({
             result,
             question: args.question,
-            topic: (args.promptTopic ?? 'chat') as ZiweiPromptTopic,
+            topic: args.promptTopic ? (args.promptTopic as ZiweiPromptTopic) : undefined,
             scope: (args.promptScope ?? 'origin') as ZiweiPromptScope,
+            mode: (args.promptMode ?? 'framework') as PromptMode,
           }),
         });
       } catch (error) {

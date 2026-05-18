@@ -1,6 +1,8 @@
 import type { DivinationDraft } from '@/lib/divination/engine';
 import type { DivinationSession } from '@/lib/divination/engine';
 import type { DivinationSummaryBlocks } from '@/lib/divination/summary';
+import type { AstrolabeData, XiaoliurenData, XiaoliurenPalaceDetail } from '@/types/divination';
+import { AstrolabeChart } from '@/components/AstrolabeChart';
 
 interface DivinationResultProps {
   isSubmitting: boolean;
@@ -12,6 +14,60 @@ interface DivinationResultProps {
   showShareButton: boolean;
   onCopy: () => void;
   onShare: () => void;
+}
+
+function XiaoliurenStageCard(props: { label: string; detail: XiaoliurenPalaceDetail }) {
+  const { label, detail } = props;
+
+  return (
+    <article className="xiaoliuren-stage-card">
+      <div className="xiaoliuren-stage-head">
+        <span>{label}</span>
+        <strong>{detail.name}</strong>
+      </div>
+      <p>{detail.meaning}</p>
+      <div className="xiaoliuren-keyword-row">
+        {detail.keywords.map((keyword) => (
+          <span className="result-soft-tag" key={`${detail.name}-${keyword}`}>
+            {keyword}
+          </span>
+        ))}
+      </div>
+      <small>建议：{detail.advice}</small>
+    </article>
+  );
+}
+
+function XiaoliurenBoard({ data }: { data: XiaoliurenData }) {
+  return (
+    <div className="divination-extra-panel xiaoliuren-board">
+      <div className="divination-extra-head">
+        <strong>小六壬三段推演</strong>
+        <span>
+          {data.methodLabel} · {data.hourLabel}
+        </span>
+      </div>
+
+      <div className="xiaoliuren-card-grid">
+        <XiaoliurenStageCard label="起因" detail={data.sequence.start} />
+        <XiaoliurenStageCard label="过程" detail={data.sequence.process} />
+        <XiaoliurenStageCard label="结果" detail={data.sequence.result} />
+      </div>
+
+      <div className="xiaoliuren-overview-grid">
+        <div className="xiaoliuren-overview-item">
+          <span>主判断</span>
+          <strong>{data.primary.name}</strong>
+          <p>{data.primary.tendency}</p>
+        </div>
+        <div className="xiaoliuren-overview-item">
+          <span>问事提醒</span>
+          <strong>{data.questionHint}</strong>
+          <p>适合把这个判断继续交给 AI 展开细拆。</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function DivinationResult({
@@ -100,6 +156,14 @@ export function DivinationResult({
             </div>
           ))}
         </div>
+
+        {session.method === 'astrolabe' ? (
+          <AstrolabeChart data={session.data as AstrolabeData} />
+        ) : null}
+
+        {session.method === 'xiaoliuren' ? (
+          <XiaoliurenBoard data={session.data as XiaoliurenData} />
+        ) : null}
       </section>
 
       <section className="panel panel-output divination-result-panel">

@@ -8,17 +8,20 @@ import {
 } from 'react';
 import type { PersonRole } from '@/lib/input-labels';
 import type { QueryInputState } from '@/lib/query-state';
+import { resolveBirthPlaceLatitude } from '@/utils/core/birthPlaceCoordinates';
 
 type BirthPlaceCascadeModule = typeof import('@/utils/core/birthPlaceCascade');
 
 const SELF_PLACE_KEYS = {
   birthPlace: 'birthPlace',
   birthLongitude: 'birthLongitude',
+  birthLatitude: 'birthLatitude',
 } as const;
 
 const PARTNER_PLACE_KEYS = {
   birthPlace: 'partnerBirthPlace',
   birthLongitude: 'partnerBirthLongitude',
+  birthLatitude: 'partnerBirthLatitude',
 } as const;
 
 function getPlaceFieldKey(role: PersonRole, key: keyof typeof SELF_PLACE_KEYS) {
@@ -212,8 +215,10 @@ export function useBirthPlace({ form, setForm }: UseBirthPlaceOptions) {
       const next = { ...current };
       const placeKey = getPlaceFieldKey(activeBirthPlaceTarget, 'birthPlace');
       const longitudeKey = getPlaceFieldKey(activeBirthPlaceTarget, 'birthLongitude');
+      const latitudeKey = getPlaceFieldKey(activeBirthPlaceTarget, 'birthLatitude');
       next[placeKey] = matched.district.displayName as never;
       next[longitudeKey] = String(matched.district.longitude) as never;
+      next[latitudeKey] = String(resolveBirthPlaceLatitude(matched.district.id)) as never;
       return next;
     });
     closeBirthPlaceModal();

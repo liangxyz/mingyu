@@ -128,6 +128,9 @@ export function InputPage() {
 
     function updateTutorialEntryMode() {
       frameId = 0;
+      if (!mainContentNode || !tutorialEntryNode) {
+        return;
+      }
       const mainContentHeight = mainContentNode.getBoundingClientRect().height;
       const tutorialEntryHeight = tutorialEntryNode.getBoundingClientRect().height;
       const shouldPin = mainContentHeight + tutorialEntryHeight + 56 <= window.innerHeight;

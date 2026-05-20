@@ -165,6 +165,11 @@ function createZiweiReportContext(payload: AnalysisPayloadV1, topic: string): Pr
       report_title: '关系去留报告',
       selected_topic: 'relationship-decision',
     },
+    children: {
+      report_type: 'children',
+      report_title: '子女亲缘报告',
+      selected_topic: 'children',
+    },
     'career-wealth': {
       report_type: 'career-wealth',
       report_title: '事业财运报告',
@@ -280,8 +285,8 @@ function buildZiweiTopicGuidanceSection(topic: string) {
     '先判断【问题】对应的宫位范围，再组织证据，不要只做星曜罗列。',
     '先看命宫、身宫、三方四正、对宫与四化，再结合当前运限、自化、飞化和重点宫位触发。',
     '优先使用【重点宫位摘要】和【关键证据摘要】组织推理，不要平均复述全盘。',
-    '资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定。',
-    '每个关键结论都要对应到宫位、星曜、四化、运限或现实建议；证据不足时要说明倾向和待确认处。',
+    '不得编造资料包没有给出的新盘面事实；允许基于资料包做紫微斗数推理，但必须标明来自宫位、星曜、四化、运限、三方四正、格局或现实补充信息。',
+    '每个关键结论都要区分主证、辅证、反证或限制，并对应到宫位、星曜、四化、运限或现实建议；证据不足时要说明倾向和待确认处。',
   ];
 
   const topicLines: Record<string, string[]> = {
@@ -304,6 +309,10 @@ function buildZiweiTopicGuidanceSection(topic: string) {
     'relationship-decision': [
       '关系去留先看夫妻宫、命宫、福德宫、迁移宫与当前运限牵动，再看桃花星曜和四化如何继续支撑或消耗这段关系。',
       '重点区分当前更适合继续投入、放慢观察、重新建立边界还是及时止损，并说明继续条件、止损信号和现实代价。',
+    ],
+    children: [
+      '子女亲缘先看子女宫、夫妻宫、命宫、福德宫、田宅宫与当前运限牵动。',
+      '重点区分子女缘分深浅、亲子互动模式、养育压力、教育陪伴重点；涉及子女数量和性别只能给倾向与证据限制，不作绝对断语。',
     ],
     'career-wealth': [
       '事业财运先看官禄宫、财帛宫、命宫、迁移宫、田宅宫与福德宫的联动。',
@@ -384,6 +393,60 @@ function buildZiweiTopicGuidanceSection(topic: string) {
     .join('\n');
 }
 
+function buildZiweiScopePriorityText(payload: AnalysisPayloadV1) {
+  const scope = payload.active_scope.scope;
+  const scopeLabel = payload.active_scope.label || '当前运限';
+  const dateText = payload.active_scope.solar_date || '未标注参考日期';
+  const isOrigin = scope === 'origin';
+
+  return [
+    `当前分析范围：${scopeLabel}（${dateText}）。`,
+    isOrigin
+      ? '当前为本命范围，只能判断长期结构、宫位主轴和人生底色；不得把问题中的年份、月份或日期当作已排出的运限证据。'
+      : '当前资料已写入用户选择的运限，必须优先围绕该范围作答，并说明本命底色如何被当前运限触发。',
+    '如果【问题】中的时间与【当前运限】不一致，开头先提醒不一致，再以已写入的【当前运限】为准。',
+    '应期判断必须说明来自本命宫位底色、大限阶段、流年触发、流月窗口还是流日短期触发；不得只给年份结论。',
+  ].join('\n');
+}
+
+function buildZiweiScopeInterpretationRules(payload: AnalysisPayloadV1) {
+  const scope = payload.active_scope.scope;
+  const scopeLabel = payload.active_scope.label || '当前运限';
+  const scopeRuleMap: Record<ScopeType, string> = {
+    origin:
+      '当前为本命范围：只判断宫位结构、星曜组合、格局层次、四化底色和长期人生主题；不得把问题中的年份、月份或日期当作已排出的运限证据。',
+    decadal:
+      '当前已选大限：以十年阶段环境、身份变化、资源压力、长期机会和大限命宫落点为主；不得把大限本身直接断成某个确定年份已经发生。',
+    yearly:
+      '当前已选流年：以该年年度触发、四化飞入、流年命宫落点和年度事件类别为主；必须承接大限背景，不能脱离大限单断吉凶。',
+    monthly:
+      '当前已选流月：以月内推进窗口、短期反复、流月落宫和月度四化触发为主；必须服从大限与流年，不得覆盖整年趋势。',
+    daily:
+      '当前已选流日：以当天执行、沟通、签约、出行、冲突和避险为主；只能作为短期触发，不能改写本命、大限或流年主线。',
+    hourly:
+      '当前已选流时：以数小时内的临场状态、沟通节奏和即时取舍为主；只能辅助流日判断，不得扩展为长期结论。',
+    age: '当前为年龄范围：只围绕资料包写入的虚岁、小限或对应年龄段判断；不能自动外推到未写入的其他年份、月份或日期。',
+  };
+
+  return [
+    `当前运限读法：${scopeLabel}。${scopeRuleMap[scope]}`,
+    '本命层：看命宫、身宫、十二宫结构、星曜庙旺陷、格局、三方四正、生年四化和自化，负责长期底色，不负责指定应期。',
+    '大限层：看十年阶段的主环境、角色变化、资源压力和机会方向；大限能定阶段强弱，不能替代流年给精确年份。',
+    '流年层：看年度命宫、流年四化、流年将前/岁前十二神与被引动宫位；流年必须承接大限，不能孤立下结论。',
+    '流月层：看月内窗口、推进节奏和短期反复；流月只能细化年度主题，不能覆盖全年判断。',
+    '流日/流时层：看当日或当时执行、沟通、出行、签约、冲突与避险；只作短期触发，不改写长期命局。',
+    '应期写法：先讲本命底色，再讲上层运限，最后讲当前所选层级的触发证据；缺少下层选择时，只能给条件窗口，不给绝对日期。',
+  ].join('\n');
+}
+
+function buildZiweiOutputRequirementText() {
+  return [
+    '先直接回答【问题】，再展开最关键的 2 到 4 个重点。',
+    '每个重点都要写明主证、辅证、反证或限制，以及应期条件；有【当前运限】触发时必须说明触发路径，本命范围下不得硬断具体年份。',
+    '证据不足或结论存在条件时要单独说明，不要为了给结论而编造盘面事实。',
+  ].join('\n');
+}
+
 export function buildCombinedZiweiPrompt(
   payload: AnalysisPayloadV1,
   topic: string,
@@ -407,21 +470,25 @@ export function buildCombinedZiweiPrompt(
       ? []
       : [
           '- 先直接回答【问题】，再展开最关键的 2 到 4 个重点。',
-          '- 每个重点都要写明盘面依据、触发机制与建议。',
+          '- 每个重点都要写明主证、辅证、反证或限制、触发机制与建议。',
           '- 优先说明宫位主线、四化命中、格局线索、自化迹象和三方四正呼应。',
         ]),
-    '- 资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定。',
+    '- 不得编造资料包没有给出的新盘面事实；允许基于资料包做紫微斗数推理，但必须标明证据来源。',
     '- 不要整段复述原始盘面信息。',
     '',
     `【当前时间】\n${formatPromptCurrentTime()}`,
     pack,
+    ...(isCustomQuestion ? [] : [`【分析对象优先级】\n${buildZiweiScopePriorityText(payload)}`]),
+    ...(isCustomQuestion
+      ? []
+      : [`【运限解读规则】\n${buildZiweiScopeInterpretationRules(payload)}`]),
     `【问题】\n${normalizedQuestion}`,
     ...(isCustomQuestion
       ? []
       : [
           `【分析框架】\n${buildZiweiTopicGuidanceSection(topic)}`,
           '【任务】\n结合【当前报告任务】、盘面结构与当前运限，优先从宫位主线、四化触发、格局线索、自化与三方四正呼应中提炼核心判断、关键依据和建议。',
-          '【输出要求】\n先直接回答【问题】，再展开最关键的 2 到 4 个重点；每个重点都要写明盘面依据、触发机制与建议；证据不足或结论存在条件时要单独说明。',
+          `【输出要求】\n${buildZiweiOutputRequirementText()}`,
         ]),
   ].join('\n');
 }
@@ -498,7 +565,7 @@ export function buildCombinedZiweiCompatibilityPrompt(params: {
     ZIWEI_COMPATIBILITY_ROLE,
     '【要求】',
     '- 只基于提供的双方盘面和问题作答。',
-    '- 资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定。',
+    '- 不得编造资料包没有给出的新盘面事实；允许基于双方资料包做紫微斗数推理，但必须标明来自宫位、星曜、四化、运限、三方四正或现实补充信息。',
     ...(isCustomQuestion ? [] : compatibilityRules),
     '- 不要整段复述双方原始盘面信息。',
     '',
@@ -514,7 +581,7 @@ export function buildCombinedZiweiCompatibilityPrompt(params: {
       ? []
       : [
           `【任务】\n${compatibilityTask}`,
-          '【输出要求】\n先直接回答【问题】，再展开最关键的 2 到 4 个重点；每个重点都要写明盘面依据、触发机制与建议；证据不足或结论存在条件时要单独说明。',
+          '【输出要求】\n先直接回答【问题】，再展开最关键的 2 到 4 个重点；每个重点都要写明双方盘面主证、辅证、反证或限制、触发机制与建议；证据不足或结论存在条件时要单独说明。',
         ]),
   ].join('\n');
 }

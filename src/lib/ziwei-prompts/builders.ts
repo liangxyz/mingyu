@@ -1,4 +1,6 @@
 import type { AnalysisPayloadV1, PalaceFact, StarFact } from '../../types/analysis';
+import { formatPromptEvidenceBundle } from '../prompt-evidence/format';
+import type { PromptEvidenceItem } from '../prompt-evidence/types';
 import { formatPalaceName, mapScopeLabel, normalizePalaceName } from './labels';
 import {
   collectMutagenStars,
@@ -281,6 +283,86 @@ export function buildScopeStructureSummary(payload: AnalysisPayloadV1) {
   }));
 
   return [...scopeLandings, ...activeMutagens];
+}
+
+export function buildScopeHitSummary(payload: AnalysisPayloadV1) {
+  if (isOriginScope(payload)) {
+    return [];
+  }
+
+  const currentPalace = getPalaceByIndex(payload, payload.active_scope.palace_index);
+  const scopeLabel = mapScopeLabel(payload.active_scope.scope);
+  const landingLines = payload.palaces.flatMap((palace) =>
+    palace.scope_hits.map((hit) => {
+      const dynamicName = palace.dynamic_scope_name
+        ? `，动态宫名：${palace.dynamic_scope_name}`
+        : '';
+      const majorStars = palace.major_stars.length
+        ? `，主星：${palace.major_stars.map(formatStarFact).join('、')}`
+        : '';
+
+      return `${hit}→本命${formatPalaceName(palace.name)}${dynamicName}${majorStars}`;
+    }),
+  );
+  const mutagenLines = payload.active_scope.mutagen_map.map(
+    (item) =>
+      `${item.star}化${item.mutagen}→${
+        item.palace_name ? formatPalaceName(item.palace_name) : '未定位宫位'
+      }`,
+  );
+  const focusLine = currentPalace
+    ? `${payload.active_scope.label || scopeLabel}当前落宫为本命${formatPalaceName(currentPalace.name)}。`
+    : `${payload.active_scope.label || scopeLabel}未写入明确落宫，只能引用已给出的运限四化与证据池。`;
+  const items: PromptEvidenceItem[] = [
+    {
+      level: '主证',
+      title: '所选运限落宫',
+      detail: focusLine,
+      source: '紫微运限选择器',
+      weight: 100,
+    },
+  ];
+
+  if (landingLines.length) {
+    items.push({
+      level: '主证',
+      title: '运限命中宫位',
+      detail: landingLines.slice(0, 6).join('；'),
+      source: '当前运限 scope_hits',
+      weight: 88,
+    });
+  }
+
+  if (mutagenLines.length) {
+    items.push({
+      level: '主证',
+      title: '当前运限四化飞入',
+      detail: mutagenLines.slice(0, 8).join('；'),
+      source: '当前运限 mutagen_map',
+      weight: 82,
+    });
+  }
+
+  items.push(
+    {
+      level: '应期',
+      title: '应期层级',
+      detail: `${scopeLabel}只负责${payload.active_scope.label || scopeLabel}这一层级的触发；下层未选择时，只能给条件窗口，不给绝对日期。`,
+      source: '运限解读规则',
+      weight: 42,
+    },
+    {
+      level: '限制',
+      title: '本命与运限边界',
+      detail: '本命宫位定长期底色，当前运限只说明阶段触发；不得把短期触发写成一生命定。',
+      source: '提示词规则',
+      weight: 20,
+    },
+  );
+
+  return formatPromptEvidenceBundle({
+    items,
+  });
 }
 
 export function buildPalaceIndex(payload: AnalysisPayloadV1) {

@@ -72,12 +72,19 @@ test('选择大运时会附带该大运下的全部流年', () => {
   assert.match(context.promptPayload.breakdownTitle ?? '', /流年/);
   assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /2008年/);
   assert.doesNotMatch(context.promptPayload.breakdownLines?.[0] ?? '', /童运/);
-  assert.match(context.promptPayload.summaryLines.join('\n'), /大运十神：天干甲为比肩，地支子主气为正印/);
+  assert.match(
+    context.promptPayload.summaryLines.join('\n'),
+    /大运十神：天干甲为比肩，地支子主气为正印/,
+  );
   assert.match(context.promptPayload.summaryLines.join('\n'), /大运触发：/);
   assert.match(context.promptPayload.summaryLines.join('\n'), /天干甲合月柱己/);
   assert.match(context.promptPayload.summaryLines.join('\n'), /地支子冲年柱午/);
   assert.match(context.promptPayload.summaryLines.join('\n'), /地支子合月柱丑/);
   assert.match(context.promptPayload.summaryLines.join('\n'), /地支子与日柱子伏吟/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【主证】用户已选择年限运限/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【主证】大运干支与十神/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【应期】应期边界/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【限制】断事层级限制/);
 });
 
 test('选择流年时会附带该流年下的全部流月', () => {
@@ -99,10 +106,16 @@ test('选择流年时会附带该流年下的全部流月', () => {
     /\d{4}-\d{2}-\d{2} 至 \d{4}-\d{2}-\d{2}/,
   );
   assert.doesNotMatch(context.promptPayload.summaryLines.join('\n'), /童运/);
-  assert.match(context.promptPayload.summaryLines.join('\n'), /流年十神：天干戊为偏财，地支子主气为正印/);
+  assert.match(
+    context.promptPayload.summaryLines.join('\n'),
+    /流年十神：天干戊为偏财，地支子主气为正印/,
+  );
   assert.match(context.promptPayload.summaryLines.join('\n'), /流年触发：/);
   assert.match(context.promptPayload.summaryLines.join('\n'), /地支子冲年柱午/);
   assert.match(context.promptPayload.summaryLines.join('\n'), /地支子合月柱丑/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【辅证】上层岁运背景/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【主证】流年干支与十神/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /未选择具体流月或流日/);
 });
 
 test('节令月会使用实际交节日期范围，而不是直接套用公历月份', () => {
@@ -138,8 +151,13 @@ test('选择流月时会附带该节令月下的全部流日', () => {
   assert.equal(context.dayBreakdown?.length, 31);
   assert.match(context.promptPayload.breakdownTitle ?? '', /流日/);
   assert.match(context.promptPayload.breakdownLines?.[0] ?? '', /2008-02-04/);
-  assert.match(context.promptPayload.summaryLines.join('\n'), /流月十神：天干甲为比肩，地支寅主气为比肩/);
+  assert.match(
+    context.promptPayload.summaryLines.join('\n'),
+    /流月十神：天干甲为比肩，地支寅主气为比肩/,
+  );
   assert.match(context.promptPayload.summaryLines.join('\n'), /流月触发：/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【主证】流月干支与十神/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /以节气月为准/);
 });
 
 test('选择流日时只保留该流日本身', () => {
@@ -169,6 +187,9 @@ test('选择流日时只保留该流日本身', () => {
     context.promptPayload.breakdownLines?.join('\n') ?? '',
     /2008-02-08 23:00-23:59/,
   );
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【主证】流日干支与十神/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /按子初换日/);
+  assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /不得改写长期命局或整年趋势/);
 });
 
 test('交运年份默认应归到后一步大运，而不是继续挂在童运或前一步运里', () => {

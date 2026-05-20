@@ -8,6 +8,9 @@ import type {
   AstrolabeData,
   DivinationData,
   LenormandData,
+  LiuyaoData,
+  MeihuaData,
+  TarotData,
   XiaoliurenData,
 } from '../../types/divination';
 import { resolveSsgwStoryContent } from './ssgw-content';
@@ -19,8 +22,8 @@ export interface DivinationSummaryBlocks {
   lines: string[];
 }
 
-function formatLiuyaoFocusSummary(data: DivinationData) {
-  if (!('yaosDetail' in data) || !data.yaosDetail?.length) {
+function formatLiuyaoFocusSummary(data: LiuyaoData) {
+  if (!data.yaosDetail?.length) {
     return '';
   }
 
@@ -109,27 +112,15 @@ function formatQimenSpecialTimeSummary(data: DivinationData) {
   return `时辰：${data.specialConditions.description}`;
 }
 
-function formatMeihuaSeasonSummary(data: DivinationData) {
-  if (!('analysis' in data)) {
-    return '四时：未知';
-  }
-
+function formatMeihuaSeasonSummary(data: MeihuaData) {
   return `四时：${data.analysis.season}季，体卦${data.analysis.tiSeasonState}，用卦${data.analysis.yongSeasonState}`;
 }
 
-function formatMeihuaRelationSummary(data: DivinationData) {
-  if (!('analysis' in data)) {
-    return '体用：未知';
-  }
-
+function formatMeihuaRelationSummary(data: MeihuaData) {
   return `体用：${data.analysis.tiYongRelation}；过程：${data.analysis.inter1Relation}、${data.analysis.inter2Relation}；结果：${data.analysis.changedRelation}`;
 }
 
-function formatMeihuaChangedSummary(data: DivinationData) {
-  if (!('changedTiGua' in data) || !('changedYongGua' in data) || !('analysis' in data)) {
-    return '';
-  }
-
+function formatMeihuaChangedSummary(data: MeihuaData) {
   if (!data.changedTiGua || !data.changedYongGua) {
     return '';
   }
@@ -137,11 +128,7 @@ function formatMeihuaChangedSummary(data: DivinationData) {
   return `变后：体卦${data.changedTiGua.name}（${data.changedTiGua.element}）；用卦${data.changedYongGua.name}（${data.changedYongGua.element}）；关系${data.analysis.changedTiYongRelation}`;
 }
 
-function formatMeihuaMethodSummary(data: DivinationData) {
-  if (!('calculation' in data)) {
-    return '起卦法：未知';
-  }
-
+function formatMeihuaMethodSummary(data: MeihuaData) {
   const methodLabelMap: Record<string, string> = {
     time: '年月日时起卦法',
     number: '数字起卦法',
@@ -159,23 +146,18 @@ function formatMeihuaMethodSummary(data: DivinationData) {
   return `起卦法：${label || '未知'}`;
 }
 
-function formatMeihuaExternalSummary(data: DivinationData) {
+function formatMeihuaExternalSummary(data: MeihuaData) {
   const isExternalMethod =
-    'calculation' in data &&
-    (data.calculation?.methodKey === 'external' || data.calculation?.method === '外应起卦法');
+    data.calculation?.methodKey === 'external' || data.calculation?.method === '外应起卦法';
 
-  if (!('calculation' in data) || !data.calculation?.externalSummary || !isExternalMethod) {
+  if (!data.calculation?.externalSummary || !isExternalMethod) {
     return '';
   }
 
   return `外应：${data.calculation.externalSummary}`;
 }
 
-function formatMeihuaFocusSummary(data: DivinationData) {
-  if (!('tiGua' in data) || !('yongGua' in data) || !('movingYao' in data)) {
-    return '';
-  }
-
+function formatMeihuaFocusSummary(data: MeihuaData) {
   return `体卦${data.tiGua.name}（${data.tiGua.element}）；用卦${data.yongGua.name}（${data.yongGua.element}）；动爻第${data.movingYao.position}爻`;
 }
 
@@ -195,8 +177,8 @@ function formatLiurenFocusSummary(data: DivinationData) {
   return `发用：初传${detailParts.join('，')}`;
 }
 
-function formatTarotFocusSummary(data: DivinationData) {
-  if (!('cards' in data) || !data.cards?.length) {
+function formatTarotFocusSummary(data: TarotData) {
+  if (!data.cards.length) {
     return '';
   }
 
@@ -218,43 +200,47 @@ export function getDivinationSummaryBlocks(
   data: DivinationData,
 ): DivinationSummaryBlocks {
   switch (method) {
-    case 'liuyao':
+    case 'liuyao': {
+      const liuyao = data as LiuyaoData;
       return {
         title: '六爻起卦结果',
         tags: [
-          `主卦：${'originalName' in data ? data.originalName : '未知'}`,
-          `变卦：${'changedName' in data ? data.changedName || '无' : '无'}`,
-          `互卦：${'interName' in data ? data.interName || '无' : '无'}`,
-          `动爻：${'changingYaos' in data ? data.changingYaos.map((item) => item.position).join('、') || '无' : '无'}`,
+          `主卦：${liuyao.originalName}`,
+          `变卦：${liuyao.changedName || '无'}`,
+          `互卦：${liuyao.interName || '无'}`,
+          `动爻：${liuyao.changingYaos?.map((item) => item.position).join('、') || '无'}`,
         ],
         lines: [
-          wrapMainEvidence(formatLiuyaoFocusSummary(data)),
-          `宫位：${'palace' in data ? `${data.palace.name}宫` : '未知'}`,
-          `特殊卦式：${'specialPattern' in data && data.specialPattern ? data.specialPattern : '常规卦'}`,
-          `空亡：${'voidBranches' in data && data.voidBranches?.length ? data.voidBranches.join('、') : '无'}`,
-          formatLiuyaoHiddenSpiritSummary(data),
+          wrapMainEvidence(formatLiuyaoFocusSummary(liuyao)),
+          `宫位：${liuyao.palace?.name ? `${liuyao.palace.name}宫` : '未知'}`,
+          `特殊卦式：${liuyao.specialPattern || '常规卦'}`,
+          `空亡：${liuyao.voidBranches?.length ? liuyao.voidBranches.join('、') : '无'}`,
+          formatLiuyaoHiddenSpiritSummary(liuyao),
         ].filter(Boolean),
       };
-    case 'meihua':
+    }
+    case 'meihua': {
+      const meihua = data as MeihuaData;
       return {
         title: '梅花起卦结果',
         tags: [
-          `主卦：${'originalName' in data ? data.originalName : '未知'}`,
-          `互卦：${'interName' in data ? data.interName || '无' : '无'}`,
-          `变卦：${'changedName' in data ? data.changedName || '无' : '无'}`,
-          `动爻：${'movingYao' in data ? `第${data.movingYao.position}爻` : '未知'}`,
+          `主卦：${meihua.originalName}`,
+          `互卦：${meihua.interName || '无'}`,
+          `变卦：${meihua.changedName || '无'}`,
+          `动爻：第${meihua.movingYao.position}爻`,
         ],
         lines: [
-          wrapMainEvidence(formatMeihuaFocusSummary(data)),
-          `体卦：${'tiGua' in data ? `${data.tiGua.name}（${data.tiGua.element}）` : '未知'}`,
-          `用卦：${'yongGua' in data ? `${data.yongGua.name}（${data.yongGua.element}）` : '未知'}`,
-          formatMeihuaSeasonSummary(data),
-          formatMeihuaRelationSummary(data),
-          formatMeihuaChangedSummary(data),
-          formatMeihuaMethodSummary(data),
-          formatMeihuaExternalSummary(data),
+          wrapMainEvidence(formatMeihuaFocusSummary(meihua)),
+          `体卦：${meihua.tiGua.name}（${meihua.tiGua.element}）`,
+          `用卦：${meihua.yongGua.name}（${meihua.yongGua.element}）`,
+          formatMeihuaSeasonSummary(meihua),
+          formatMeihuaRelationSummary(meihua),
+          formatMeihuaChangedSummary(meihua),
+          formatMeihuaMethodSummary(meihua),
+          formatMeihuaExternalSummary(meihua),
         ].filter(Boolean),
       };
+    }
     case 'xiaoliuren': {
       const xiaoliuren = data as XiaoliurenData;
       return {
@@ -320,23 +306,20 @@ export function getDivinationSummaryBlocks(
             : '',
         ].filter(Boolean),
       };
-    case 'tarot':
+    case 'tarot': {
+      const tarot = data as TarotData;
       return {
         title: '塔罗抽牌结果',
-        tags: [
-          `牌阵：${'spreadName' in data ? data.spreadName : '未知'}`,
-          `张数：${'cards' in data ? `${data.cards.length} 张` : '未知'}`,
-        ],
+        tags: [`牌阵：${tarot.spreadName}`, `张数：${tarot.cards.length} 张`],
         lines: [
-          wrapMainEvidence(formatTarotFocusSummary(data)),
-          ...('cards' in data
-            ? data.cards.map(
-                (card) =>
-                  `${card.position}：${card.name}${card.reversed ? '（逆位）' : '（正位）'}，关键词 ${card.keywords.join('、')}`,
-              )
-            : []),
+          wrapMainEvidence(formatTarotFocusSummary(tarot)),
+          ...tarot.cards.map(
+            (card) =>
+              `${card.position}：${card.name}${card.reversed ? '（逆位）' : '（正位）'}，关键词 ${card.keywords.join('、')}`,
+          ),
         ].filter(Boolean),
       };
+    }
     case 'ssgw': {
       const storyContent =
         'number' in data && 'title' in data && 'poem' in data

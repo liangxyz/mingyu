@@ -1,6 +1,7 @@
 export interface FortunePromptPayload {
   scopeLabel: string;
   summaryLines: string[];
+  evidenceLines?: string[];
   breakdownTitle?: string;
   breakdownLines?: string[];
 }

@@ -10,6 +10,7 @@ export const ASTROLABE_PROMPT_TOPICS = [
   'relationship-decision',
   'reconciliation-decision',
   'marriage',
+  'children',
   'family',
   'home-move',
   'settle-relocate',
@@ -147,6 +148,16 @@ const ASTROLABE_PROMPT_CONFIG: Record<AstrolabePromptTopic, AstrolabePromptConfi
     ],
     task: '请围绕婚姻需求、长期伴侣画像、承诺关系中的优势与风险，以及现实经营方式，提炼更适合的长期关系策略。',
     output: '重点写清长期伴侣需求、婚姻风险点、家庭议题和更适合的经营方式。',
+  },
+  children: {
+    defaultQuestion: '请先从子女缘分、亲子互动和教育陪伴重点开始分析。',
+    guidance: [
+      '优先看五宫、月亮、四宫、七宫及其守护星，再结合土星、木星和关键相位判断亲子议题。',
+      '区分子女缘分、养育压力、亲子互动和教育陪伴方式；不要把亲子议题泛写成家庭总论。',
+      '涉及子女数量、性别或生育细节时只能给象征倾向和证据限制，不作绝对断语。',
+    ],
+    task: '请围绕子女缘分、亲子互动、养育压力、教育陪伴重点，以及数量和性别判断的证据边界，给出更稳妥的亲子议题分析。',
+    output: '重点写清子女缘分、互动模式、养育压力、教育建议，以及哪些判断需要保守看待。',
   },
   family: {
     defaultQuestion: '请先从原生家庭、安全感来源和家庭边界开始分析。',
@@ -349,6 +360,12 @@ export const ASTROLABE_SHORTCUT_ACTIONS = [
     topic: 'marriage',
     question:
       '请重点分析我的婚姻需求、长期伴侣画像、承诺关系中的优势与风险，以及更适合经营关系的方式。',
+  },
+  {
+    label: '子女',
+    topic: 'children',
+    question:
+      '请重点分析我的子女缘分、亲子互动模式、养育压力、教育陪伴重点，以及数量和性别判断中需要保守看待的部分。',
   },
   {
     label: '家庭',

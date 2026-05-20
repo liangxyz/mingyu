@@ -193,7 +193,7 @@ function buildDayCandidate(
   const dayBranch = dayCycle.getEarthBranch();
   const recommends = normalizeTaboos(lunarDay.getRecommends());
   const avoids = normalizeTaboos(lunarDay.getAvoids());
-  const gods = lunarDay.getGods().map((item) => item.getName());
+  const gods = lunarDay.getGods().map((item: { getName(): string }) => item.getName());
   const scoring = scoreDay({
     topic,
     dayBranch: dayBranch.getName(),

@@ -18,6 +18,8 @@ export function mapTopicLabel(selectedTopic: string) {
       return '关系推进';
     case 'relationship-decision':
       return '关系去留';
+    case 'children':
+      return '子女亲缘';
     case 'career-wealth':
       return '事业财运';
     case 'job-change':
@@ -75,6 +77,8 @@ export function mapReportTypeLabel(reportType: string) {
       return '关系推进专题';
     case 'relationship-decision':
       return '关系去留专题';
+    case 'children':
+      return '子女亲缘专题';
     case 'career-wealth':
       return '事业财运专题';
     case 'job-change':

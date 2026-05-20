@@ -46,7 +46,7 @@ export function useZiweiCalculations(
     ziweiScope: string;
     ziweiScopeDate: string;
   },
-  isZiweiTabMounted: boolean,
+  _isZiweiTabMounted: boolean,
   isPromptTabMounted: boolean,
   primaryHasUnknownTime: boolean,
   partnerHasUnknownTime: boolean,

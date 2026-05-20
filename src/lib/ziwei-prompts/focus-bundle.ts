@@ -140,6 +140,26 @@ export function buildFocusTaskBundle(payload: AnalysisPayloadV1, reportContext: 
         ],
         avoid: ['围绕关系去留决策作答，区分关系底色与当前阶段触发。'],
       };
+    case 'children:children':
+      return {
+        focusSummary:
+          '只解读子女缘分、亲子互动、养育压力、教育陪伴重点，以及数量和性别判断的证据边界。',
+        focusPalaces: dedupePalaces([
+          childrenPalace,
+          spousePalace,
+          mingPalace,
+          fortunePalace,
+          housePalace,
+          healthPalace,
+          activePalace,
+        ]),
+        outputFocus: [
+          '优先判断子女缘分、亲子互动和养育压力。',
+          '说明哪些结论来自子女宫、夫妻宫、命宫、福德宫、田宅宫或当前运限触发。',
+          '涉及子女数量、性别或生育细节时只能给倾向、条件和待确认点，不要绝对化。',
+        ],
+        avoid: ['围绕子女亲缘议题作答，区分可确认主线与证据不足处。'],
+      };
     case 'career-wealth:career-wealth':
       return {
         focusSummary: '只解读事业路径、财运抓手、资源配置与执行节奏。',

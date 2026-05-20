@@ -7,6 +7,7 @@ export type BaziFortuneScope = 'natal' | 'dayun' | 'year' | 'month' | 'day';
 export type { BaziQuestionScene };
 export type { AstrolabePromptTopic };
 export type ZiweiScopeMode = 'origin' | 'decadal' | 'yearly' | 'monthly' | 'daily' | 'hourly';
+export type AstrolabeScopeMode = 'natal' | 'yearly' | 'monthly' | 'daily';
 export type AnalysisMode = 'single' | 'compatibility';
 export type ChartType = 'bazi' | 'ziwei' | 'astrolabe';
 
@@ -63,6 +64,8 @@ export type QueryPromptState = {
   astrolabeTopic: AstrolabePromptTopic;
   astrolabeShortcutMode: string;
   astrolabeQuickQuestion: string;
+  astrolabeScope: AstrolabeScopeMode;
+  astrolabeScopeDate: string;
 };
 
 const BAZI_FORTUNE_SCOPES: readonly BaziFortuneScope[] = ['natal', 'dayun', 'year', 'month', 'day'];
@@ -72,6 +75,7 @@ const ZIWEI_PROMPT_TOPICS = [
   'relationship',
   'relationship-push',
   'relationship-decision',
+  'children',
   'career-wealth',
   'job-change',
   'startup-partnership',
@@ -100,6 +104,13 @@ const ZIWEI_PROMPT_SCOPES: readonly ZiweiScopeMode[] = [
   'monthly',
   'daily',
   'hourly',
+];
+
+const ASTROLABE_PROMPT_SCOPES: readonly AstrolabeScopeMode[] = [
+  'natal',
+  'yearly',
+  'monthly',
+  'daily',
 ];
 
 export const UNKNOWN_TIME_INDEX = -1;
@@ -157,6 +168,8 @@ export const defaultPromptState: QueryPromptState = {
   astrolabeTopic: 'life',
   astrolabeShortcutMode: '综合',
   astrolabeQuickQuestion: '',
+  astrolabeScope: 'natal',
+  astrolabeScopeDate: '',
 };
 
 const INPUT_PARAM_KEYS: Record<keyof QueryInputState, string> = {
@@ -212,6 +225,8 @@ const PROMPT_PARAM_KEYS: Record<keyof QueryPromptState, string> = {
   astrolabeTopic: 'at',
   astrolabeShortcutMode: 'asm',
   astrolabeQuickQuestion: 'aq',
+  astrolabeScope: 'as',
+  astrolabeScopeDate: 'asd',
 };
 
 const PARAM_KEY_ALIASES: Record<string, string> = {
@@ -386,6 +401,18 @@ function appendPromptStateParams(params: URLSearchParams, prompt: QueryPromptSta
     prompt.astrolabeShortcutMode,
     defaultPromptState.astrolabeShortcutMode,
   );
+  setCompactParam(
+    params,
+    'astrolabeScope',
+    prompt.astrolabeScope,
+    defaultPromptState.astrolabeScope,
+  );
+  setCompactParam(
+    params,
+    'astrolabeScopeDate',
+    prompt.astrolabeScopeDate,
+    defaultPromptState.astrolabeScopeDate,
+  );
 }
 
 function getString(params: URLSearchParams, key: string, fallback: string) {
@@ -437,6 +464,13 @@ function parseAstrolabeTopic(value: string): AstrolabePromptTopic {
   return defaultPromptState.astrolabeTopic;
 }
 
+function parseAstrolabeScope(value: string): AstrolabeScopeMode {
+  if (ASTROLABE_PROMPT_SCOPES.includes(value as AstrolabeScopeMode)) {
+    return value as AstrolabeScopeMode;
+  }
+  return defaultPromptState.astrolabeScope;
+}
+
 function normalizePromptState(prompt: QueryPromptState): QueryPromptState {
   const normalized: QueryPromptState = { ...prompt };
 
@@ -450,6 +484,10 @@ function normalizePromptState(prompt: QueryPromptState): QueryPromptState {
 
   if (normalized.astrolabeShortcutMode === '自定义') {
     normalized.astrolabeTopic = 'chat';
+  }
+
+  if (normalized.astrolabeScope === 'natal') {
+    normalized.astrolabeScopeDate = '';
   }
 
   if (normalized.baziFortuneScope === 'natal') {
@@ -605,6 +643,14 @@ export function parsePromptState(params: URLSearchParams): QueryPromptState {
       params,
       'astrolabeQuickQuestion',
       defaultPromptState.astrolabeQuickQuestion,
+    ),
+    astrolabeScope: parseAstrolabeScope(
+      getString(params, 'astrolabeScope', defaultPromptState.astrolabeScope),
+    ),
+    astrolabeScopeDate: getString(
+      params,
+      'astrolabeScopeDate',
+      defaultPromptState.astrolabeScopeDate,
     ),
   });
 }

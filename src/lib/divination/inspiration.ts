@@ -632,7 +632,7 @@ export function isDivinationInspirationTabVisible(
 }
 
 export function getDivinationInspirationSections(
-  draft: Pick<
+  _draft: Pick<
     DivinationDraft,
     'method' | 'tarotSpread' | 'liuyaoTemplate' | 'liurenTemplate' | 'lenormandSpread'
   >,

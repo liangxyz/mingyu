@@ -88,6 +88,8 @@ export function getZiweiDefaultQuestion(
       return '请先从这段关系该继续投入、放手止损还是保持观察开始分析。';
     case 'reconciliation-decision':
       return '请先从这段旧关系现在还有没有复合空间，以及更适合争取、观察还是放下开始分析。';
+    case 'children':
+      return '请先从子女缘分、亲子互动和教育陪伴重点开始分析。';
     case 'career-wealth':
       return '请先从事业路径、财富方式和当前风险开始分析。';
     case 'job-change':

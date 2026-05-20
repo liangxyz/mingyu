@@ -46,6 +46,80 @@ const CONCRETE_DIVINATION_METHODS: Array<Exclude<DivinationMethodId, 'random'>> 
   'lenormand',
 ];
 
+function buildAstrolabeTransitScaleText(hasScopeText: boolean) {
+  return [
+    hasScopeText
+      ? '当前已写入【分析对象】：必须以用户选择的本命、流年、流月或流日作为本次回答主范围。'
+      : '当前未写入具体行运范围：只能按本命盘长期结构作答，不得自行指定流年、月份、日期或绝对应期。',
+    '本命盘：只定长期人格结构、人生主题、稳定倾向、天赋短板和长期调整方向，不能单独推出具体年份。',
+    '流年：看年度主题、阶段转向和全年最容易被触发的议题；外行星、木星、土星对本命太阳、月亮、上升、天顶及关键宫主星的相位是阶段主证。',
+    '流月：看一个月内的推进窗口、情绪波动、沟通节奏和短期机会；太阳、月亮、水星、金星、火星对本命点的触发是短期主证，必须承接流年背景。',
+    '流日：看当天或极短期的执行、会面、沟通、签约、出行和避险；只能作为临门触发，不改写本命结构或年度趋势。',
+    '应期写法：先讲本命底色，再讲所选行运层级如何触发；没有行运证据时只能给倾向和条件，不能给绝对日期。',
+  ].join('\n');
+}
+
+function buildDivinationTimingBoundaryText(method: Exclude<DivinationMethodId, 'random'>) {
+  switch (method) {
+    case 'liuyao':
+      return [
+        '六爻应期必须来自用神旺衰、世应生克、动爻变爻、冲合、空亡出空、伏神透出等卦内证据。',
+        '卦名、六神、直觉类象只能作辅助说明，不得单凭卦名或六神给具体年月日。',
+        '若资料包未给月建、日辰或目标期限，只能给“快慢、先后、待冲合填实”等条件式应期，不得硬断绝对日期。',
+      ].join('\n');
+    case 'meihua':
+      return [
+        '梅花应期必须来自体用生克、动爻数、卦数、互卦过程、变卦结果、四时旺衰和外应之间的互证。',
+        '体卦定自身承受力，用卦定外部事象，互卦看过程，变卦看结果；应期要说明落在哪一层证据。',
+        '外应只能作辅证，不能独立决定绝对应期；起卦资料不足时只能给阶段与条件，不得凭单一象意给日期。',
+      ].join('\n');
+    case 'xiaoliuren':
+      return [
+        '小六壬应期先看结果宫定主趋势，再用起因宫与过程宫判断推进节奏、阻力和转机。',
+        '大安偏稳，留连偏拖，速喜偏快，赤口偏冲突，小吉偏渐进，空亡偏落空；这些只能描述节奏倾向。',
+        '不得把六宫名称直接等同具体日期；若用户没有提供目标期限，只能给快慢、宜等宜动和触发条件。',
+      ].join('\n');
+    case 'qimen':
+      return [
+        '奇门应期必须来自用神宫、值符值使、门星神干、空亡、马星、伏吟反吟、门迫击刑、宫位方位与时令。',
+        '先判断用神宫能不能动、被谁制约、是否逢空逢冲，再给宜动、宜守或等待的时间窗口。',
+        '不得只因吉门就断必成，也不得只因凶格就断必败；吉凶必须回到宫位组合和问题用神。',
+      ].join('\n');
+    case 'liuren':
+      return [
+        '大六壬应期必须来自发用、三传递进、四课关系、空亡填实、冲合墓绝、课体与神煞互证。',
+        '初传看发端，中传看过程，末传看归结；三传能承接时才可给推进链路和阶段窗口。',
+        '神煞只作辅证，不能压过三传主线；资料不足时只能给触发条件，不得随口指定日期。',
+      ].join('\n');
+    case 'tarot':
+      return [
+        '塔罗时间判断只能来自牌阵位置、牌面节奏、正逆位状态、牌面组合和提问本身限定的时间范围。',
+        '单张牌不能独立推出绝对日期；只能说明“目前、近期、拖延、转折、先整理后推进”等节奏。',
+        '若问题没有限定期限，回答应给现实行动窗口与观察信号，不得把牌义硬翻译成某年某月某日。',
+      ].join('\n');
+    case 'lenormand':
+      return [
+        '雷诺曼时间判断必须来自牌位位置、邻近牌组合、现实事件链、人物与消息流向，以及提问范围。',
+        '核心牌看事件主轴，左右邻牌看触发与阻碍；日期只能在牌阵明确支持或用户限定范围内给出。',
+        '不得孤立牌义硬断日期；没有期限证据时，只能给事件先后顺序、推进节奏和可观察信号。',
+      ].join('\n');
+    case 'ssgw':
+      return [
+        '灵签应期必须来自签诗迟速、典故处境、签文宜忌、解签语气和问题本身限定的范围。',
+        '签诗通常更适合判断宜进宜守、可为不可为、待时或避险，不宜硬给精确日期。',
+        '若签文只见守待、周旋或云开月明之象，应写清“条件成熟后再动”，不得改写成绝对年月日。',
+      ].join('\n');
+    case 'almanac':
+      return [
+        '择日结论只能在候选日期范围内产生，不得推荐资料包范围外日期，也不得编造未给出的时辰吉凶。',
+        '首选、备选、慎用必须说明黄历宜忌、冲煞、神煞、星宿、执日、参与人八字适配和现实约束。',
+        '若候选日期整体都不理想，只能在范围内给相对较优和避险条件；现实刚性约束可以压过黄历分数，但必须说明取舍。',
+      ].join('\n');
+    case 'astrolabe':
+      return '';
+  }
+}
+
 export type DivinationDraft = {
   method: DivinationMethodId;
   question: string;
@@ -96,6 +170,7 @@ export type BuildDivinationPromptOptions = {
   xiaoliurenFocus?: NonNullable<DivinationDraft['xiaoliurenFocus']>;
   qimenFocus?: NonNullable<DivinationDraft['qimenFocus']>;
   astrolabeTopic?: AstrolabePromptTopic;
+  astrolabeScopeText?: string;
 };
 
 export function buildDivinationPrompt(
@@ -114,6 +189,7 @@ export function buildDivinationPrompt(
   const isAlmanac = method === 'almanac';
   const astrolabeTopic =
     method === 'astrolabe' ? (options.astrolabeTopic ?? (isCustomQuestion ? 'chat' : 'life')) : '';
+  const astrolabeScopeText = method === 'astrolabe' ? options.astrolabeScopeText?.trim() || '' : '';
   const normalizedQuestion =
     method === 'astrolabe'
       ? question.trim() || getAstrolabeDefaultQuestion(astrolabeTopic, { isCustomQuestion })
@@ -126,8 +202,21 @@ export function buildDivinationPrompt(
       ? '- 只基于提供的择日信息、补充信息与现实约束作答。'
       : '- 只基于提供的占卜信息与问题作答。',
     isAlmanac
-      ? '- 资料包里没有直接写出的现实约束、参与人信息或择日条件，不得自行补充假定。'
-      : '- 资料包里没有直接写出的卦象细节、盘局数据、牌位信息或签文条件，不得自行补算或假定。',
+      ? '- 不得编造资料包没有给出的现实约束、参与人信息或择日条件；允许基于候选日期、黄历、冲煞、神煞、星宿和参与人八字参考做择日推理。'
+      : '- 不得编造资料包没有给出的卦象细节、盘局数据、牌位信息或签文条件；允许基于资料包做本体系推理，但必须标明证据来源。',
+    ...(isCustomQuestion
+      ? []
+      : [
+          '- 每个关键判断都要区分主证、辅证、反证或限制；若证据不足，只能给倾向和条件，不得强行下绝对结论。',
+          '- 涉及应期、日期或时间窗口时，必须说明来自卦象、课传、盘局、牌阵、签诗或择日资料中的哪一类证据。',
+        ]),
+    ...(method === 'astrolabe'
+      ? [
+          '- 不要泛泛讲星座性格，必须把相关星体、宫位、守护星和相位连到问题。',
+          '- 本命盘只定长期结构；若【分析对象】提供流年、流月或流日，必须把所选时间段作为当前回答的主范围。',
+          '- 没有行运证据支持时，不得自行硬断具体年份、月份、日期或绝对应期。',
+        ]
+      : []),
     ...(isCustomQuestion
       ? []
       : isAlmanac
@@ -140,9 +229,6 @@ export function buildDivinationPrompt(
             '- 先直接回答【问题】，再讲主证据、条件限制和建议。',
             '- 优先抓最能决定判断方向的 2 到 4 个证据点，不要平均复述全部材料。',
             '- 依据必须尽量落到卦象、盘局、牌面或签文信息。',
-            ...(method === 'astrolabe'
-              ? ['- 不要泛泛讲星座性格，必须把相关星体、宫位、守护星和相位连到问题。']
-              : []),
           ]),
     '- 使用简体中文，不写空话，不重复抄写原始信息。',
     isCustomQuestion ? '' : buildMethodRequirementText(method),
@@ -153,6 +239,7 @@ export function buildDivinationPrompt(
   const outputRequirementText = isAlmanac
     ? [
         '先直接给出首选日期、备选日期与慎用日期，再展开最关键的 2 到 4 个筛选重点；每个重点都要写明择日依据、适用条件与现实建议。',
+        '每个筛选重点都要区分主证、辅证、反证或限制；若现实约束压过黄历分数，必须说明取舍。',
         '如果信息不足或存在不确定性，需要明确说明，不要强行下绝对判断。',
         '最后补一条最值得执行的提醒。',
         buildMethodOutputRequirementText(method),
@@ -161,12 +248,14 @@ export function buildDivinationPrompt(
       ? [
           '先直接回答【问题】，再按【断课模板】或主线顺序展开起因、过程、结果与行动建议。',
           '每一段都要写明对应的课传依据、触发条件与现实建议。',
+          '每一段都要区分主证、辅证、反证或限制；应期必须来自课传、空亡、三传演变或神煞触发，不得随口给日期。',
           '如果信息不足或存在不确定性，需要明确说明，不要强行下绝对判断。',
           '最后补一条最值得执行的提醒。',
           buildMethodOutputRequirementText(method),
         ].join('\n')
       : [
           '先直接回答【问题】，再展开最关键的 2 到 4 个重点；每个重点都要写明占卜依据、触发条件与现实建议。',
+          '每个重点都要区分主证、辅证、反证或限制；涉及应期时必须说明来自卦象、盘局、牌位、签诗或行运证据的哪一层。',
           '如果信息不足或存在不确定性，需要明确说明，不要强行下绝对判断。',
           '最后补一条最值得执行的提醒。',
           buildDivinationFocusOutputRequirementText(
@@ -176,6 +265,11 @@ export function buildDivinationPrompt(
             qimenFocus,
           ),
           ...(method === 'astrolabe' ? [buildAstrolabeTopicOutputRequirement(astrolabeTopic)] : []),
+          ...(method === 'astrolabe'
+            ? [
+                '星盘回答必须区分本命底色与行运触发：先讲本命结构如何形成长期倾向，再讲所选流年、流月或流日具体触发了哪些议题。',
+              ]
+            : []),
           buildMethodOutputRequirementText(method),
         ].join('\n');
   const liurenTemplateSection =
@@ -189,6 +283,17 @@ export function buildDivinationPrompt(
   const astrolabeGuidanceSection =
     method === 'astrolabe' && !isCustomQuestion
       ? buildSection('【分析框架】', buildAstrolabeTopicGuidanceSection(astrolabeTopic))
+      : '';
+  const astrolabeTransitScaleSection =
+    method === 'astrolabe' && !isCustomQuestion
+      ? buildSection(
+          '【行运时间尺度】',
+          buildAstrolabeTransitScaleText(Boolean(astrolabeScopeText)),
+        )
+      : '';
+  const timingBoundarySection =
+    method !== 'astrolabe' && !isCustomQuestion
+      ? buildSection('【应期与边界规则】', buildDivinationTimingBoundaryText(method))
       : '';
   const divinationFocusGuidanceSection = isCustomQuestion
     ? ''
@@ -206,7 +311,10 @@ export function buildDivinationPrompt(
     buildSection('【要求】', requirementText),
     buildSection('【当前时间】', timeInfo),
     supplementarySection ? buildSection('【补充信息】', supplementarySection) : '',
+    astrolabeScopeText ? buildSection('【分析对象】', astrolabeScopeText) : '',
+    astrolabeTransitScaleSection,
     buildSection('【占卜信息】', infoText),
+    timingBoundarySection,
     isAlmanac ? '' : buildSection('【问题】', normalizedQuestion),
     isCustomQuestion ? '' : astrolabeGuidanceSection,
     isCustomQuestion || astrolabeGuidanceSection ? '' : divinationFocusGuidanceSection,

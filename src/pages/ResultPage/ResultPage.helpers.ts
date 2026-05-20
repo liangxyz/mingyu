@@ -9,7 +9,10 @@ import type { AnalysisPayloadV1 } from '@/types/analysis';
 import type { PalaceFact } from '@/types/analysis';
 import type { BaziChartResult } from '@/utils/bazi/baziTypes';
 import type { BaziFortuneSelectionValue } from '@/utils/bazi/fortuneSelection';
-import { buildBaziQuestionGuidanceSection } from '@/utils/ai/baziQuestionScene';
+import {
+  buildBaziQuestionGuidanceSection,
+  resolveBaziQuestionScene,
+} from '@/utils/ai/baziQuestionScene';
 import { safeStorage } from '@/lib/safe-storage';
 import { ASTROLABE_SHORTCUT_ACTIONS } from '@/lib/astrolabe-prompts';
 import {
@@ -103,6 +106,7 @@ export function resolveBaziQuestionSceneByInspirationIntent(
   if (intent === 'relationship-decision') return 'relationship-decision';
   if (intent === 'investment-partnership') return 'investment-partnership';
   if (intent === 'reconciliation-decision') return 'reconciliation-decision';
+  if (intent === 'family-health') return 'parents';
   if (intent === 'home-move') return 'home-move';
   if (intent === 'settle-relocate') return 'settle-relocate';
   if (intent === 'study-advance') return 'study-advance';
@@ -134,6 +138,7 @@ export function resolveBaziPresetIdByInspirationIntent(intent?: QuestionInspirat
   if (intent === 'relationship-decision') return 'ai-relationship-decision';
   if (intent === 'investment-partnership') return 'ai-investment-partnership';
   if (intent === 'reconciliation-decision') return 'ai-reconciliation-decision';
+  if (intent === 'family-health') return 'ai-family';
   if (intent === 'home-move') return 'ai-home-move';
   if (intent === 'settle-relocate') return 'ai-settle-relocate';
   if (intent === 'study-advance') return 'ai-study-advance';
@@ -144,7 +149,8 @@ export function resolveBaziPresetIdByInspirationIntent(intent?: QuestionInspirat
 export function resolveZiweiTopicByInspirationCategory(category?: string) {
   if (category === '近期') return 'recent';
   if (category === '事业' || category === '财运') return 'career-wealth';
-  if (category === '婚恋' || category === '子女') return 'relationship';
+  if (category === '婚恋') return 'relationship';
+  if (category === '子女') return 'children';
   if (category === '六亲' || category === '家庭') return 'family';
   if (category === '人际') return 'social';
   if (category === '情绪') return 'emotion';
@@ -162,6 +168,7 @@ export function resolveZiweiTopicByInspirationIntent(intent?: QuestionInspiratio
   if (intent === 'relationship-decision') return 'relationship-decision';
   if (intent === 'investment-partnership') return 'investment-partnership';
   if (intent === 'reconciliation-decision') return 'reconciliation-decision';
+  if (intent === 'family-health') return 'family';
   if (intent === 'home-move') return 'home-move';
   if (intent === 'settle-relocate') return 'settle-relocate';
   if (intent === 'study-advance') return 'study-advance';
@@ -180,7 +187,7 @@ export function resolveAstrolabeTopicByInspirationCategory(
   if (category === '事业') return 'career';
   if (category === '财运') return 'wealth';
   if (category === '婚恋') return 'relationship';
-  if (category === '子女') return 'family';
+  if (category === '子女') return 'children';
   if (category === '六亲' || category === '家庭') return 'family';
   if (category === '人际') return 'social';
   if (category === '情绪') return 'emotion';
@@ -200,6 +207,7 @@ export function resolveAstrolabeTopicByInspirationIntent(
   if (intent === 'relationship-decision') return 'relationship-decision';
   if (intent === 'investment-partnership') return 'investment-partnership';
   if (intent === 'reconciliation-decision') return 'reconciliation-decision';
+  if (intent === 'family-health') return 'family';
   if (intent === 'home-move') return 'home-move';
   if (intent === 'settle-relocate') return 'settle-relocate';
   if (intent === 'study-advance') return 'study-advance';
@@ -330,8 +338,9 @@ export function resolveZiweiTopicByBaziQuestionScene(scene?: BaziQuestionScene) 
     case 'investment-partnership':
       return 'investment-partnership';
     case 'marriage':
-    case 'children':
       return 'relationship';
+    case 'children':
+      return 'children';
     case 'relationship-push':
       return 'relationship-push';
     case 'relationship-decision':
@@ -391,8 +400,9 @@ export function buildBaziZiweiEnhancedPrompt(params: {
   isCustomQuestion?: boolean;
 }) {
   const isCustomQuestion = Boolean(params.isCustomQuestion);
+  const questionScene = resolveBaziQuestionScene(params.questionScene);
   const normalizedQuestion =
-    params.question.trim() || getBaziDefaultQuestion(params.questionScene, { isCustomQuestion });
+    params.question.trim() || getBaziDefaultQuestion(questionScene, { isCustomQuestion });
   const baziText = formatBaziForPrompt(params.baziResult, null, 'general');
   const sourceLabels = [params.baziFortuneSummary, params.ziweiScopeSummary]
     .map((item) => item?.trim())
@@ -404,7 +414,8 @@ export function buildBaziZiweiEnhancedPrompt(params: {
     '- 只基于提供的八字排盘、紫微盘面和问题作答。',
     '- 先用八字判断长期底色、用神喜忌、结构强弱和当前触发，再用紫微校验对应宫位、四化、三方四正和运限呼应。',
     '- 两套体系结论一致时可以增强结论；出现分歧时必须指出哪一侧证据更强、另一侧对应的条件与待核验点。',
-    '- 资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定。',
+    '- 不得编造资料包没有给出的新盘面事实；允许基于资料包做传统命理推理，但必须标明来自八字原局、岁运、紫微宫位、四化、运限或现实补充信息。',
+    '- 年份、月份、日期或年龄只有写入【增强来源】或对应资料包后，才可作为当前年限运限证据。',
     '- 不要平均复述两套盘面资料，优先提炼最能回答【问题】的核心证据。',
     '- 使用简体中文，不写空话；证据不足处直接说明。',
     '',
@@ -417,11 +428,12 @@ export function buildBaziZiweiEnhancedPrompt(params: {
       ? []
       : [
           `【八字研判框架】\n${buildBaziQuestionGuidanceSection(
-            params.questionScene,
+            questionScene,
             Boolean(params.baziFortuneSummary),
           )}`,
+          '【分析对象优先级】\n如果【增强来源】已写入八字年限或紫微范围，必须优先围绕该对象分析；如果问题中的时间与增强来源不一致，开头先提醒不一致，再以已写入对象为准；应期判断必须说明来自本命底色、阶段运限、年度触发、月度窗口还是日时短期触发。',
           '【任务】\n先用八字判断命局主线、结构强弱、喜忌取用与当前触发，再用紫微校验对应宫位主轴、四化牵动、三方四正和运限落点，最后整合成一致结论、冲突点与现实建议。',
-          '【输出要求】\n先直接回答【问题】，再按“八字主线”“紫微校验”“综合结论与建议”展开；每部分都尽量写明依据、触发条件与建议；若两套体系存在冲突，单列“冲突点与待核验项”。',
+          '【输出要求】\n先直接回答【问题】，再按“八字主线”“紫微校验”“综合结论与建议”展开；每部分都要写明主证、辅证、反证或限制、触发条件与建议；若两套体系存在冲突，单列“冲突点与待核验项”。',
         ]),
   ]
     .filter(Boolean)
@@ -442,7 +454,7 @@ export function buildCompatibilityPromptWithUnknownTime(params: {
     '【要求】',
     '- 只基于提供的双方信息作答。',
     '- 其中带“时辰未知”的一方只能按三柱理解，不得自行补足时柱。',
-    '- 资料里没有直接写出的额外盘面事实，不得自行补算、脑补或假定。',
+    '- 不得编造资料里没有给出的新盘面事实；允许基于三柱和已知资料做保守推理，但必须标明证据来源。',
     '- 凡是明显依赖时柱、子女宫或更细时限的判断，都要标记为待确认。',
     ...(isCustomQuestion
       ? []

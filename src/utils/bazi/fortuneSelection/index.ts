@@ -2,6 +2,8 @@ import { getMonthDaysInfo, getYearInfo } from '../calendarTool';
 import { BASIC_MAPPINGS } from '../baziMappingsData';
 import type { BaziChartResult } from '../baziTypes';
 import { getTenGod, getTenGodForBranch } from '../baziUtils';
+import { formatPromptEvidenceBundle } from '../../../lib/prompt-evidence/format';
+import type { PromptEvidenceItem } from '../../../lib/prompt-evidence/types';
 import { getDayHourBreakdown } from './helpers/breakdown';
 import {
   formatCycleLabel,
@@ -87,6 +89,83 @@ function buildGanZhiTriggerSummary(
   });
 
   return `${scopeLabel}触发：${triggers.length ? triggers.join('；') : '未见明显合冲刑害破，重点看十神生克、原局喜忌与岁运层级。'}`;
+}
+
+function buildFortuneEvidenceLines(params: {
+  scope: FortuneSelectionContext['scope'];
+  scopeLabel: string;
+  cycleLabel: string;
+  cycleGanZhi: string;
+  selectedTitle: string;
+  selectedGanZhi?: string;
+  selectedTenGod?: string;
+  triggerSummary?: string;
+  timingText?: string;
+  parentText?: string;
+  limitText: string;
+}) {
+  const items: PromptEvidenceItem[] = [
+    {
+      level: '主证',
+      title: '用户已选择年限运限',
+      detail: `${params.scopeLabel}，所属大运为${params.cycleLabel}（${params.cycleGanZhi}）。`,
+      source: '年限选择器',
+      weight: 100,
+      tags: [params.scope],
+    },
+  ];
+
+  if (params.parentText) {
+    items.push({
+      level: '辅证',
+      title: '上层岁运背景',
+      detail: params.parentText,
+      source: '年限选择器',
+      weight: 86,
+    });
+  }
+
+  if (params.selectedGanZhi) {
+    items.push({
+      level: '主证',
+      title: params.selectedTitle,
+      detail: `${params.selectedGanZhi}；${params.selectedTenGod ?? '十神资料不足'}`,
+      source: '排盘计算',
+      weight: 82,
+    });
+  }
+
+  if (params.triggerSummary) {
+    items.push({
+      level: params.triggerSummary.includes('未见明显') ? '反证' : '主证',
+      title: '刑冲合害触发',
+      detail: params.triggerSummary,
+      source: '所选干支与原局四柱比对',
+      weight: params.triggerSummary.includes('未见明显') ? 58 : 78,
+    });
+  }
+
+  if (params.timingText) {
+    items.push({
+      level: '应期',
+      title: '应期边界',
+      detail: params.timingText,
+      source: '年限选择器',
+      weight: 64,
+    });
+  }
+
+  items.push({
+    level: '限制',
+    title: '断事层级限制',
+    detail: params.limitText,
+    source: '提示词规则',
+    weight: 20,
+  });
+
+  return formatPromptEvidenceBundle({
+    items,
+  });
 }
 
 export function normalizeFortuneSelection(
@@ -194,6 +273,8 @@ export function buildFortuneSelectionContext(
       ganZhi: item.ganZhi,
       age: item.age,
     }));
+    const cycleTenGod = formatGanZhiTenGod(result, cycle.ganZhi);
+    const cycleTriggerSummary = buildGanZhiTriggerSummary(result, cycle.ganZhi, '大运');
 
     return {
       ...baseContext,
@@ -205,14 +286,26 @@ export function buildFortuneSelectionContext(
         scopeLabel: `分析对象：${cycleLabel}`,
         summaryLines: [
           `大运干支：${cycle.ganZhi}`,
-          `大运十神：${formatGanZhiTenGod(result, cycle.ganZhi)}`,
-          buildGanZhiTriggerSummary(result, cycle.ganZhi, '大运'),
+          `大运十神：${cycleTenGod}`,
+          cycleTriggerSummary,
           `起运年份：${cycle.year}年`,
           `起运年龄：${cycle.age}岁`,
           cycle.isXiaoyun
             ? '类型：未起运，行童运'
             : `类型：${cycle.type === '小运' ? '童运' : cycle.type}`,
         ],
+        evidenceLines: buildFortuneEvidenceLines({
+          scope: 'dayun',
+          scopeLabel: `${cycleLabel}`,
+          cycleLabel,
+          cycleGanZhi: cycle.ganZhi,
+          selectedTitle: '大运干支与十神',
+          selectedGanZhi: cycle.ganZhi,
+          selectedTenGod: cycleTenGod,
+          triggerSummary: cycleTriggerSummary,
+          timingText: `${cycle.year}年起，约${cycle.age}岁交运；只作为十年阶段主题与强弱背景。`,
+          limitText: '大运不能替代流年给出精确年份；需要用户继续选择流年后才能断年度触发。',
+        }),
         breakdownTitle: '该大运包含的流年',
         breakdownLines: breakdown.map(
           (item) =>
@@ -238,6 +331,8 @@ export function buildFortuneSelectionContext(
       startTermName: item.startTermName,
       endTermName: item.endTermName,
     }));
+    const yearTenGod = formatGanZhiTenGod(result, yearItem.ganZhi);
+    const yearTriggerSummary = buildGanZhiTriggerSummary(result, yearItem.ganZhi, '流年');
 
     return {
       ...baseContext,
@@ -250,10 +345,23 @@ export function buildFortuneSelectionContext(
         summaryLines: [
           `所属大运：${cycleLabel}`,
           `流年干支：${yearItem.ganZhi}`,
-          `流年十神：${formatGanZhiTenGod(result, yearItem.ganZhi)}`,
-          buildGanZhiTriggerSummary(result, yearItem.ganZhi, '流年'),
+          `流年十神：${yearTenGod}`,
+          yearTriggerSummary,
           `对应年龄：${yearItem.age}岁`,
         ].filter(Boolean) as string[],
+        evidenceLines: buildFortuneEvidenceLines({
+          scope: 'year',
+          scopeLabel: `${yearItem.year}年流年`,
+          cycleLabel,
+          cycleGanZhi: cycle.ganZhi,
+          selectedTitle: '流年干支与十神',
+          selectedGanZhi: yearItem.ganZhi,
+          selectedTenGod: yearTenGod,
+          triggerSummary: yearTriggerSummary,
+          parentText: `所属大运：${cycleLabel}（${cycle.ganZhi}），年度判断必须承接该十年阶段。`,
+          timingText: `${yearItem.year}年（${yearItem.age}岁）为年度触发；流月列表只作月份窗口参考。`,
+          limitText: '未选择具体流月或流日时，不得把某月某日硬断成唯一应期。',
+        }),
         breakdownTitle: '该流年包含的流月',
         breakdownLines: breakdown.map(
           (item) =>
@@ -276,6 +384,8 @@ export function buildFortuneSelectionContext(
       endDateTime: item.endDateTime,
       boundaryNote: item.boundaryNote,
     }));
+    const monthTenGod = formatGanZhiTenGod(result, monthInfo.ganZhi);
+    const monthTriggerSummary = buildGanZhiTriggerSummary(result, monthInfo.ganZhi, '流月');
 
     return {
       ...baseContext,
@@ -305,11 +415,25 @@ export function buildFortuneSelectionContext(
           `所属大运：${cycleLabel}`,
           `所属流年：${yearItem.year}年 ${yearItem.ganZhi}`,
           `流月：${monthInfo.month} ${monthInfo.ganZhi}`,
-          `流月十神：${formatGanZhiTenGod(result, monthInfo.ganZhi)}`,
-          buildGanZhiTriggerSummary(result, monthInfo.ganZhi, '流月'),
+          `流月十神：${monthTenGod}`,
+          monthTriggerSummary,
           `日期范围：${monthInfo.startDate} 至 ${monthInfo.endDate}`,
           `交节时刻：${monthInfo.startTermName || ''} ${monthInfo.startDateTime || ''} 起，${monthInfo.endTermName || ''} ${monthInfo.endDateTime || ''} 交下节`,
         ],
+        evidenceLines: buildFortuneEvidenceLines({
+          scope: 'month',
+          scopeLabel: `${yearItem.year}年${monthInfo.month}流月`,
+          cycleLabel,
+          cycleGanZhi: cycle.ganZhi,
+          selectedTitle: '流月干支与十神',
+          selectedGanZhi: monthInfo.ganZhi,
+          selectedTenGod: monthTenGod,
+          triggerSummary: monthTriggerSummary,
+          parentText: `所属大运：${cycleLabel}（${cycle.ganZhi}）；所属流年：${yearItem.year}年${yearItem.ganZhi}。`,
+          timingText: `${monthInfo.startDate}至${monthInfo.endDate}，以节气月为准；${monthInfo.startTermName || ''} ${monthInfo.startDateTime || ''} 起，${monthInfo.endTermName || ''} ${monthInfo.endDateTime || ''} 交下节。`,
+          limitText:
+            '流月只细化年度主题，不能推翻本命、大运与流年主线；未选择流日时不硬给具体日期。',
+        }),
         breakdownTitle: '该流月包含的流日',
         breakdownLines: breakdown.map(
           (item) =>
@@ -329,6 +453,8 @@ export function buildFortuneSelectionContext(
   const previousDate = new Date(actualYear, actualMonth - 1, actualDay - 1);
   const ziChuStart = `${previousDate.getFullYear()}-${String(previousDate.getMonth() + 1).padStart(2, '0')}-${String(previousDate.getDate()).padStart(2, '0')} 23:00`;
   const ziChuEnd = `${actualDate} 22:59`;
+  const dayTenGod = formatGanZhiTenGod(result, dayInfo.ganZhi);
+  const dayTriggerSummary = buildGanZhiTriggerSummary(result, dayInfo.ganZhi, '流日');
 
   return {
     ...baseContext,
@@ -353,11 +479,24 @@ export function buildFortuneSelectionContext(
         `所属流年：${yearItem.year}年 ${yearItem.ganZhi}`,
         `所属流月：${monthInfo.month} ${monthInfo.ganZhi}`,
         `流日：${actualDate} ${dayInfo.ganZhi}`,
-        `流日十神：${formatGanZhiTenGod(result, dayInfo.ganZhi)}`,
-        buildGanZhiTriggerSummary(result, dayInfo.ganZhi, '流日'),
+        `流日十神：${dayTenGod}`,
+        dayTriggerSummary,
         `按子初换日：${ziChuStart} 至 ${ziChuEnd}`,
         ...(dayInfo.boundaryNote ? [`交节提示：${dayInfo.boundaryNote}`] : []),
       ],
+      evidenceLines: buildFortuneEvidenceLines({
+        scope: 'day',
+        scopeLabel: `${actualDate}流日`,
+        cycleLabel,
+        cycleGanZhi: cycle.ganZhi,
+        selectedTitle: '流日干支与十神',
+        selectedGanZhi: dayInfo.ganZhi,
+        selectedTenGod: dayTenGod,
+        triggerSummary: dayTriggerSummary,
+        parentText: `所属大运：${cycleLabel}（${cycle.ganZhi}）；所属流年：${yearItem.year}年${yearItem.ganZhi}；所属流月：${monthInfo.month}${monthInfo.ganZhi}。`,
+        timingText: `按子初换日：${ziChuStart}至${ziChuEnd}；流时列表只作当日内短时触发参考。`,
+        limitText: '流日只判断当日执行、沟通、避险和即时触发，不得改写长期命局或整年趋势。',
+      }),
       breakdownTitle: '该流日包含的流时',
       breakdownLines: hourBreakdown.map((item) =>
         `${item.label} ${item.timeRange || ''} ${item.ganZhi}`.trim(),

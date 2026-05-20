@@ -788,6 +788,10 @@ function buildDivinationPromptText(
       method === 'astrolabe'
         ? readEnum(input, 'astrolabeTopic', ASTROLABE_PROMPT_TOPICS, 'life')
         : undefined,
+    astrolabeScopeText:
+      method === 'astrolabe' && typeof input.astrolabeScopeText === 'string'
+        ? input.astrolabeScopeText
+        : undefined,
   });
 }
 

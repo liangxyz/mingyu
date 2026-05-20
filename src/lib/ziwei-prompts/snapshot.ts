@@ -3,6 +3,7 @@ import {
   buildEvidenceSummary,
   buildPalaceIndex,
   buildPalaceSummary,
+  buildScopeHitSummary,
   buildScopeStructureSummary,
 } from './builders';
 import { buildFocusTaskBundle } from './focus-bundle';
@@ -119,6 +120,7 @@ export function buildPromptContextSnapshot(params: {
         关联星曜: item.star_names,
         说明: item.description,
       })),
+    运限命中摘要: buildScopeHitSummary(payload),
     运限结构: buildScopeStructureSummary(payload).slice(0, 8),
     重点宫位摘要: focusPalaces.map((item) => buildPalaceSummary(payload, item)),
     关键证据摘要: buildEvidenceSummary(payload, focusPalaces, reportContext).slice(0, 6),
@@ -150,6 +152,9 @@ export function buildZiweiReadableSnapshot(params: {
     '',
     '【当前运限】',
     formatKeyValueBlock(snapshot.当前运限信息),
+    '',
+    '【运限命中摘要】',
+    formatObjectList(snapshot.运限命中摘要.map((line) => ({ 摘要: line }))),
     '',
     '【命盘格局】',
     formatObjectList(snapshot.命盘格局),

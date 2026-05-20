@@ -123,7 +123,10 @@ test('公开 API OpenAPI 文档应标明占卜提示词接口返回摘要', asyn
   assert.match(body.data.info.description, /小六壬/);
   assert.match(body.data.info.description, /雷诺曼/);
   assert.match(body.data.info.description, /星盘/);
-  assert.equal(body.data.paths['/divination/{method}/prompt'].post.summary, '起卦、抽牌或求签并生成 AI 解读提示词');
+  assert.equal(
+    body.data.paths['/divination/{method}/prompt'].post.summary,
+    '起卦、抽牌或求签并生成 AI 解读提示词',
+  );
   assert.match(
     body.data.paths['/divination/{method}/prompt'].post.responses['200'].description,
     /摘要/,
@@ -173,6 +176,10 @@ test('公开 API OpenAPI 文档应标明占卜提示词接口返回摘要', asyn
   assert.match(
     JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
     /relationship-decision/,
+  );
+  assert.match(
+    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
+    /children/,
   );
   assert.match(
     JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
@@ -501,10 +508,7 @@ test('八字公开 API 第二批专项会输出对应默认问题与任务主题
     question: '',
     topic: 'study-advance',
   });
-  assert.match(
-    studyPrompt,
-    /【问题】\n请先从我适不适合考证、读研进修或跨领域学习开始分析。/,
-  );
+  assert.match(studyPrompt, /【问题】\n请先从我适不适合考证、读研进修或跨领域学习开始分析。/);
   assert.match(
     studyPrompt,
     /【任务】\n围绕考证、读研进修、跨领域学习与当前岁运引动做整体分析，判断现在更适合冲刺、长期准备、换赛道学习还是暂缓，并说明投入产出、执行压力和现实代价。/,
@@ -703,10 +707,35 @@ test('紫微公开 API 新增专项主题应输出对应分析主题与框架', 
 
   assert.match(prompt, /分析主题：健康养护/);
   assert.match(prompt, /【问题】\n请先从身心压力、健康隐患和日常养护重点开始分析。/);
-  assert.match(
-    prompt,
-    /健康养护先看疾厄宫、福德宫、命宫、身宫、迁移宫和当前运限触发。/,
+  assert.match(prompt, /健康养护先看疾厄宫、福德宫、命宫、身宫、迁移宫和当前运限触发。/);
+});
+
+test('紫微公开 API 子女专项主题应输出对应分析主题与框架', async () => {
+  const runtime = await calculateFullZiweiChart(
+    buildZiweiChartInput({
+      name: '测试',
+      gender: 'female',
+      dateType: 'solar',
+      year: '1992',
+      month: '8',
+      day: '21',
+      timeIndex: 4,
+      isLeapMonth: false,
+      useTrueSolarTime: false,
+    }),
   );
+
+  const prompt = buildZiweiPromptForRuntime({
+    result: runtime,
+    question: '',
+    topic: 'children',
+    scope: 'origin',
+  });
+
+  assert.match(prompt, /分析主题：子女亲缘/);
+  assert.match(prompt, /【问题】\n请先从子女缘分、亲子互动和教育陪伴重点开始分析。/);
+  assert.match(prompt, /子女亲缘先看子女宫、夫妻宫、命宫、福德宫、田宅宫与当前运限牵动。/);
+  assert.match(prompt, /涉及子女数量和性别只能给倾向与证据限制/);
 });
 
 test('紫微公开 API 人际专项主题应输出对应分析主题与框架', async () => {
@@ -819,10 +848,7 @@ test('紫微公开 API 第二批专项主题应输出对应分析主题与框架
     startupPrompt,
     /【问题】\n请先从适不适合创业、单干还是合作，以及如何判断当前时机开始分析。/,
   );
-  assert.match(
-    startupPrompt,
-    /创业合作先看官禄宫、财帛宫、迁移宫、命宫、福德宫与兄弟宫/,
-  );
+  assert.match(startupPrompt, /创业合作先看官禄宫、财帛宫、迁移宫、命宫、福德宫与兄弟宫/);
 
   const relationshipPrompt = buildZiweiPromptForRuntime({
     result: runtime,
@@ -835,10 +861,7 @@ test('紫微公开 API 第二批专项主题应输出对应分析主题与框架
     relationshipPrompt,
     /【问题】\n请先从这段关系该继续投入、放手止损还是保持观察开始分析。/,
   );
-  assert.match(
-    relationshipPrompt,
-    /关系去留先看夫妻宫、命宫、福德宫、迁移宫与当前运限牵动/,
-  );
+  assert.match(relationshipPrompt, /关系去留先看夫妻宫、命宫、福德宫、迁移宫与当前运限牵动/);
 
   const homePrompt = buildZiweiPromptForRuntime({
     result: runtime,
@@ -851,10 +874,7 @@ test('紫微公开 API 第二批专项主题应输出对应分析主题与框架
     homePrompt,
     /【问题】\n请先从现在适不适合搬家、换城市、买房置业和居住调整开始分析。/,
   );
-  assert.match(
-    homePrompt,
-    /搬家置业先看田宅宫、迁移宫、财帛宫、福德宫、命宫与父母宫/,
-  );
+  assert.match(homePrompt, /搬家置业先看田宅宫、迁移宫、财帛宫、福德宫、命宫与父母宫/);
 
   const studyPrompt = buildZiweiPromptForRuntime({
     result: runtime,
@@ -863,14 +883,8 @@ test('紫微公开 API 第二批专项主题应输出对应分析主题与框架
     scope: 'origin',
   });
   assert.match(studyPrompt, /分析主题：考证进修/);
-  assert.match(
-    studyPrompt,
-    /【问题】\n请先从我适不适合考证、读研进修或跨领域学习开始分析。/,
-  );
-  assert.match(
-    studyPrompt,
-    /考证进修先看命宫、福德宫、官禄宫、父母宫、迁移宫和当前运限联动/,
-  );
+  assert.match(studyPrompt, /【问题】\n请先从我适不适合考证、读研进修或跨领域学习开始分析。/);
+  assert.match(studyPrompt, /考证进修先看命宫、福德宫、官禄宫、父母宫、迁移宫和当前运限联动/);
 });
 
 test('紫微公开 API 第三批专项主题应输出对应分析主题与框架', async () => {
@@ -931,10 +945,7 @@ test('紫微公开 API 第三批专项主题应输出对应分析主题与框架
     settlePrompt,
     /【问题】\n请先从我现在适不适合长期定居、换城市发展还是留在当前城市开始分析。/,
   );
-  assert.match(
-    settlePrompt,
-    /定居换城先看田宅宫、迁移宫、官禄宫、财帛宫、福德宫、命宫与父母宫/,
-  );
+  assert.match(settlePrompt, /定居换城先看田宅宫、迁移宫、官禄宫、财帛宫、福德宫、命宫与父母宫/);
 
   const examPrompt = buildZiweiPromptForRuntime({
     result: runtime,
@@ -947,10 +958,7 @@ test('紫微公开 API 第三批专项主题应输出对应分析主题与框架
     examPrompt,
     /【问题】\n请先从这次考试、面试或申请更适合冲刺、稳住发挥还是调整预期开始分析。/,
   );
-  assert.match(
-    examPrompt,
-    /考试上岸先看命宫、福德宫、官禄宫、父母宫、迁移宫与当前运限联动/,
-  );
+  assert.match(examPrompt, /考试上岸先看命宫、福德宫、官禄宫、父母宫、迁移宫与当前运限联动/);
 });
 
 test('公开 API 紫微未指定方向时应默认走综合框架而不是自由问答', async () => {
@@ -973,7 +981,10 @@ test('公开 API 紫微未指定方向时应默认走综合框架而不是自由
   assert.equal(body.ok, true);
   assert.match(body.data.prompt, /【分析背景】/);
   assert.match(body.data.prompt, /分析主题：人生解析/);
-  assert.match(body.data.prompt, /人生解析按“命身定位、长期课题、能力资源、关系模式、关键转折、当前阶段策略”展开。/);
+  assert.match(
+    body.data.prompt,
+    /人生解析按“命身定位、长期课题、能力资源、关系模式、关键转折、当前阶段策略”展开。/,
+  );
   assert.doesNotMatch(body.data.prompt, /自由问答先判断问题落在哪些宫位/);
 });
 

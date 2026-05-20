@@ -13,6 +13,7 @@ import {
   type QueryPromptState,
   type ResultTabKey,
 } from '@/lib/query-state';
+import { buildAstrolabeScopeContext } from '@/lib/astrolabe-scope';
 import { shouldShowPromptShareButton } from '@/lib/prompt-page-rules';
 import { PageTopbar } from '@/components/PageTopbar';
 import { QuestionInspirationModal } from '@/components/QuestionInspirationModal';
@@ -57,6 +58,7 @@ import { BaziChartBoard } from './components/BaziChartBoard';
 import { ThreePillarsBoard } from './components/ThreePillarsBoard';
 import { ZiweiBoard } from './components/ZiweiBoard';
 import { ZiweiScopeModal } from './components/ZiweiScopeModal';
+import { AstrolabeScopeModal } from './components/AstrolabeScopeModal';
 import { PromptShortcutPanel } from './components/PromptShortcutPanel';
 import { useQuestionInspiration } from './hooks/useQuestionInspiration';
 import { useBaziCalculations } from './hooks/useBaziCalculations';
@@ -103,6 +105,7 @@ export function ResultPage() {
     (promptState.promptSource === 'bazi' || promptState.promptSource === 'bazi-ziwei');
   const [isBaziFortuneModalOpen, setIsBaziFortuneModalOpen] = useState(false);
   const [isZiweiScopeModalOpen, setIsZiweiScopeModalOpen] = useState(false);
+  const [isAstrolabeScopeModalOpen, setIsAstrolabeScopeModalOpen] = useState(false);
   const inspiration = useQuestionInspiration();
   const viewportWidth = useViewportWidth(0);
   const [promptEngine, setPromptEngine] = useState<PromptEngineModule | null>(null);
@@ -356,6 +359,15 @@ export function ResultPage() {
     inputState.year,
     hasAstrolabeChart,
   ]);
+  const astrolabeScopeContext = useMemo(
+    () =>
+      buildAstrolabeScopeContext(
+        astrolabeCalculation.data,
+        promptState.astrolabeScope,
+        promptState.astrolabeScopeDate,
+      ),
+    [astrolabeCalculation.data, promptState.astrolabeScope, promptState.astrolabeScopeDate],
+  );
 
   const activeBaziQuestionScene = useMemo(() => {
     if (activeBaziShortcutMode === '自定义') {
@@ -589,10 +601,12 @@ export function ResultPage() {
       {
         isCustomQuestion: activeAstrolabeShortcutMode === '自定义',
         astrolabeTopic: promptState.astrolabeTopic,
+        astrolabeScopeText: astrolabeScopeContext.promptText,
       },
     );
   }, [
     activeAstrolabeShortcutMode,
+    astrolabeScopeContext.promptText,
     astrolabeCalculation.data,
     effectiveAstrolabeQuickQuestion,
     promptState.astrolabeTopic,
@@ -611,10 +625,12 @@ export function ResultPage() {
       {
         isCustomQuestion: activeAstrolabeShortcutMode === '自定义',
         astrolabeTopic: promptState.astrolabeTopic,
+        astrolabeScopeText: astrolabeScopeContext.promptText,
       },
     );
   }, [
     activeAstrolabeShortcutMode,
+    astrolabeScopeContext.promptText,
     astrolabeCalculation.data,
     deferredAstrolabeQuestion,
     promptState.astrolabeTopic,
@@ -677,6 +693,7 @@ export function ResultPage() {
           : previewZiweiPromptText;
   const isBaziFortuneSummaryLoading = shouldLoadBaziPromptModules && !baziFortuneSelectionModule;
   const baziFortuneSummaryText = baziFortuneContext?.displayText ?? '仅使用本命信息';
+  const astrolabeScopeSummaryText = astrolabeScopeContext.displayText;
   const showShareButton = shouldShowPromptShareButton({
     viewportWidth,
     hasNavigatorShare: typeof navigator !== 'undefined' && typeof navigator.share === 'function',
@@ -960,6 +977,26 @@ export function ResultPage() {
                           </button>
                         </div>
                       ) : null}
+
+                      {promptState.promptSource === 'astrolabe' ? (
+                        <div className="field-card">
+                          <div className="field-header">
+                            <span>年限选择</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="place-trigger"
+                            onClick={() => setIsAstrolabeScopeModalOpen(true)}
+                            disabled={!astrolabeCalculation.data}
+                          >
+                            {!astrolabeCalculation.data ? (
+                              <InlineSkeleton className="inline-skeleton inline-skeleton-medium" />
+                            ) : (
+                              <span>{astrolabeScopeSummaryText}</span>
+                            )}
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
 
                     {promptState.promptSource === 'bazi' ||
@@ -1111,6 +1148,21 @@ export function ResultPage() {
             updatePromptState({
               ziweiScope: scope,
               ziweiScopeDate: scope === 'origin' ? '' : dateStr,
+            })
+          }
+        />
+      ) : null}
+
+      {isAstrolabeScopeModalOpen && astrolabeCalculation.data ? (
+        <AstrolabeScopeModal
+          birthYear={inputState.year}
+          selectedScope={promptState.astrolabeScope}
+          selectedDateStr={promptState.astrolabeScopeDate}
+          onClose={() => setIsAstrolabeScopeModalOpen(false)}
+          onApply={(scope, dateStr) =>
+            updatePromptState({
+              astrolabeScope: scope,
+              astrolabeScopeDate: scope === 'natal' ? '' : dateStr,
             })
           }
         />

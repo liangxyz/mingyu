@@ -21,6 +21,7 @@ import {
   generateCompatibilityEnhancedSection,
 } from '../bazi/baziPromptEnhancement';
 import {
+  BAZI_QUESTION_SCENES,
   buildBaziQuestionGuidanceSection,
   resolveBaziQuestionScene,
   type BaziQuestionScene,
@@ -43,10 +44,11 @@ const BASE_SYSTEM_ROLE = '你是资深八字命理师，熟悉《渊海子平》
 
 const BASE_SYSTEM_RULES = [
   '只基于提供的命盘、岁运和问题作答',
-  '资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定',
+  '不得编造资料包没有给出的新盘面事实；允许基于资料包做传统八字推理，但必须标明来自原局、岁运、十神、合冲刑害、神煞旁证或现实补充信息',
   '判断喜忌：先旺衰月令→格局调候→取用路径十神→神煞；普通格局按扶抑，专旺从格按顺势；神煞不得单独推翻主体判断',
   '资料包中标注为“传统旁证”的内容只作辅助验证，不得盖过核心判断依据',
   '说清核心用神、辅助喜用与主忌，结论与推理不一致时必须指出冲突点',
+  '涉及年份、月份、日期或年龄时，只有写入【分析对象】的大运、流年、流月、流日才可作为当前岁运证据',
   '优先使用命盘中的核心判断依据组织推理，不要平均复述四柱资料',
   '信息不足时说明证据不足，不得强行给确定结论',
   '用通俗中文，不写套话，不复述无关背景',
@@ -55,7 +57,7 @@ const BASE_SYSTEM_RULES = [
 
 const COMPAT_SYSTEM_RULES = [
   '只基于提供的双方命盘、岁运和问题作答',
-  '资料包里没有直接写出的额外盘面事实，不得自行补算、脑补或假定',
+  '不得编造资料包没有给出的新盘面事实；允许基于双方资料包做传统八字推理，但必须标明来自原局、岁运、十神、合冲刑害、神煞旁证或现实补充信息',
   '双盘先分别判断旺衰、格局、调候和用忌，再汇总双方互动主线、互补点、冲突点、现实压力和建议',
   '判断喜忌仍按旺衰月令→格局调候→取用路径十神→神煞；普通格局按扶抑，专旺从格按顺势；神煞不得单独推翻主体判断',
   '资料包中标注为“传统旁证”的内容只作辅助验证，不得盖过核心判断依据',
@@ -101,12 +103,79 @@ function resolvePromptScene(promptId: string): PromptChartScene {
 function formatFortuneSelectionSection(ctx: FortuneSelectionContext | null | undefined): string {
   if (!ctx) return '';
   const { promptPayload } = ctx;
-  const lines = [promptPayload.scopeLabel, ...promptPayload.summaryLines];
+  const scopeBoundaryMap: Record<FortuneSelectionContext['scope'], string> = {
+    dayun:
+      '判断边界：大运只定十年阶段主题、环境压力与机会方向；若要精确到某年，需要用户再选择流年。',
+    year: '判断边界：流年定年度触发；可参考下列流月窗口，但不要把未被选择的流月、流日硬断成确定应期。',
+    month: '判断边界：流月定月份窗口、推进节奏和短期触发；不宜反推一生命局层面的定论。',
+    day: '判断边界：流日只看当日执行、沟通、触发和避险；不能把一天的波动说成长期命运。',
+  };
+  const lines = [
+    '来源：用户在年限选择器中选择。',
+    promptPayload.scopeLabel,
+    scopeBoundaryMap[ctx.scope],
+    '应期层级：本命定底色，大运定阶段，流年定年度触发，流月定月份窗口，流日定具体执行。',
+    ...promptPayload.summaryLines,
+  ];
   if (promptPayload.breakdownTitle && promptPayload.breakdownLines?.length) {
     lines.push(promptPayload.breakdownTitle);
     lines.push(...promptPayload.breakdownLines.map((line, i) => `${i + 1}. ${line}`));
   }
   return lines.join('\n');
+}
+
+function formatFortuneEvidenceSection(ctx: FortuneSelectionContext | null | undefined): string {
+  if (!ctx?.promptPayload.evidenceLines?.length) return '';
+
+  return [
+    '来源：年限选择器、排盘干支十神、所选岁运与原局四柱比对。',
+    ...ctx.promptPayload.evidenceLines,
+  ].join('\n');
+}
+
+function buildBaziScopePrioritySection(hasFortuneSelection: boolean): string {
+  return [
+    '当前年份、月份、日期或年龄只有写入【分析对象】后，才可作为当前岁运证据。',
+    hasFortuneSelection
+      ? '已写入【分析对象】时，必须优先围绕该大运、流年、流月或流日作答。'
+      : '当前没有写入具体年限运限时，只能按本命结构、长期趋势或当前资料范围判断，不得自行展开具体年份应期。',
+    '如果【问题】中的时间与【分析对象】不一致，开头先提醒不一致，再以已写入的【分析对象】为准。',
+    '应期判断必须说明证据来自本命底色、阶段运限、年度触发、月度窗口还是日时短期触发。',
+  ].join('\n');
+}
+
+function buildBaziFortuneInterpretationRules(scope: FortuneSelectionContext['scope']): string {
+  const selectedScopeRule: Record<FortuneSelectionContext['scope'], string> = {
+    dayun:
+      '当前已选大运：回答以十年阶段主题为主，只能在资料包给出的逐年列表中提示重点年份，不得把大运本身说成某个确定年份已经发生。',
+    year: '当前已选流年：回答以该年年度触发为主，必须承接所属大运背景；可引用资料包给出的流月列表判断月份窗口，但未被问题或证据选中的月份不能硬断为唯一应期。',
+    month:
+      '当前已选流月：回答以该月节气范围内的推进窗口、短期触发和风险控制为主；必须说明它如何承接大运与流年，不得用一个月推翻本命和整年主线。',
+    day: '当前已选流日：回答以当天执行、沟通、决策、避险和即时触发为主；必须服从所属流月、流年与大运，不得把一天的波动说成长期命运。',
+  };
+
+  return [
+    selectedScopeRule[scope],
+    '本命层：只定格局、旺衰、用忌、性格底色、长期能力与长期问题，不能单独推出具体年份。',
+    '大运层：看十年阶段的环境、身份、资源、压力和机会方向；大运能定阶段强弱，不能替代流年给出精确应期。',
+    '流年层：看年度触发、事件类别和该年更容易被引动的宫位/十神/合冲刑害；流年结论必须承接大运，不能脱离大运单独断吉凶。',
+    '流月层：看月份窗口、推进节奏、临门一脚和短期反复；流月只能细化年度主题，不能覆盖整年趋势。',
+    '流日层：看当日执行、沟通、签约、出行、冲突和避险；流日只作短期触发，不改写长期格局。',
+    '应期写法：先说明上层背景，再说明当前所选层级的触发证据；如果缺少下层选择，只能说“更容易在某类窗口出现”，不得给绝对日期。',
+  ].join('\n');
+}
+
+function buildBaziOutputRequirementText(kind: 'single' | 'fallback' = 'single') {
+  const firstLine =
+    kind === 'fallback'
+      ? '先直接回答【问题】，再补关键依据、触发条件与建议。'
+      : '先直接回答【问题】，再展开最关键的 2 到 4 个重点。';
+
+  return [
+    firstLine,
+    '每个重点都要写明主证、辅证、反证或限制，以及应期条件；有【分析对象】时必须说明所选年限如何触发，没有选择年限时不得强断具体年份。',
+    '证据不足处单独说明，不要为了给结论而编造盘面事实。',
+  ].join('\n');
 }
 
 function buildFortunePromptAddon(promptId: string, ctx: FortuneSelectionContext | null): string {
@@ -344,6 +413,7 @@ export function buildPromptFromConfig(
       ? formatBaziForPrompt(chartResult, selectedOption, resolvePromptScene(promptConfig.id))
       : '无法获取命盘数据。';
     const fortuneSection = formatFortuneSelectionSection(fortuneSelectionContext);
+    const fortuneEvidenceSection = formatFortuneEvidenceSection(fortuneSelectionContext);
     const fortuneAddon = buildFortunePromptAddon(promptConfig.id, fortuneSelectionContext);
     const task = [promptConfig.prompt, fortuneAddon].filter(Boolean).join(' ');
 
@@ -359,6 +429,19 @@ export function buildPromptFromConfig(
         buildPromptSection('当前时间', formatPromptCurrentTime()),
         buildPromptSection('排盘信息', [chartData, enhancedSection].filter(Boolean).join('\n')),
         fortuneSection ? buildPromptSection('分析对象', fortuneSection) : '',
+        fortuneEvidenceSection ? buildPromptSection('年限触发摘要', fortuneEvidenceSection) : '',
+        !isCustomQuestion && fortuneSelectionContext
+          ? buildPromptSection(
+              '年限解读规则',
+              buildBaziFortuneInterpretationRules(fortuneSelectionContext.scope),
+            )
+          : '',
+        isCustomQuestion
+          ? ''
+          : buildPromptSection(
+              '分析对象优先级',
+              buildBaziScopePrioritySection(Boolean(fortuneSection)),
+            ),
         buildPromptSection('问题', normalizedQuestion),
         isCustomQuestion
           ? ''
@@ -369,10 +452,7 @@ export function buildPromptFromConfig(
         isCustomQuestion ? '' : buildPromptSection('任务', task || '请直接判断重点。'),
         isCustomQuestion
           ? ''
-          : buildPromptSection(
-              '输出要求',
-              '先直接回答【问题】，再展开最关键的 2 到 4 个重点；每个重点都要写明命盘依据、触发条件与建议；证据不足处单独说明。',
-            ),
+          : buildPromptSection('输出要求', buildBaziOutputRequirementText('single')),
       ]),
     };
   }
@@ -387,6 +467,9 @@ export function buildPromptFromConfig(
     user: joinPromptSections([
       buildPromptSection('当前时间', formatPromptCurrentTime()),
       buildPromptSection('排盘信息', chartData),
+      isCustomQuestion
+        ? ''
+        : buildPromptSection('分析对象优先级', buildBaziScopePrioritySection(false)),
       buildPromptSection('问题', normalizedQuestion),
       isCustomQuestion
         ? ''
@@ -394,10 +477,7 @@ export function buildPromptFromConfig(
       isCustomQuestion ? '' : buildPromptSection('任务', '请直接判断重点。'),
       isCustomQuestion
         ? ''
-        : buildPromptSection(
-            '输出要求',
-            '先直接回答【问题】，再补关键依据、触发条件与建议；证据不足处单独说明。',
-          ),
+        : buildPromptSection('输出要求', buildBaziOutputRequirementText('fallback')),
     ]),
   };
 }
@@ -426,10 +506,15 @@ function getCompatibilityTask(compatType?: CompatType): string {
 }
 
 function getCompatibilityOutputRequirement(compatType?: CompatType): string {
-  if (compatType === 'children' || compatType === 'parents' || compatType === 'siblings') {
-    return '先直接回答【问题】，再展开最关键的 2 到 4 个重点，并分清证据强弱。';
-  }
-  return '先直接回答【问题】，再展开最关键的 2 到 4 个重点。';
+  const opening =
+    compatType === 'children' || compatType === 'parents' || compatType === 'siblings'
+      ? '先直接回答【问题】，再展开最关键的 2 到 4 个重点，并分清证据强弱。'
+      : '先直接回答【问题】，再展开最关键的 2 到 4 个重点。';
+
+  return [
+    opening,
+    '每个重点都要写明双方盘面主证、辅证、反证或限制、触发条件与现实建议；证据不足处单独说明。',
+  ].join('\n');
 }
 
 /**
@@ -470,10 +555,7 @@ export function getCompatibilityPrompt(
       isCustomQuestion ? '' : buildPromptSection('任务', getCompatibilityTask(compatType)),
       isCustomQuestion
         ? ''
-        : buildPromptSection(
-            '输出要求',
-            `${getCompatibilityOutputRequirement(compatType)} 每个重点都要写明双方盘面依据、触发条件与现实建议；证据不足处单独说明。`,
-          ),
+        : buildPromptSection('输出要求', getCompatibilityOutputRequirement(compatType)),
     ]),
   };
 }

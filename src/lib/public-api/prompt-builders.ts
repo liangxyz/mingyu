@@ -1,5 +1,6 @@
 import type { ScopeType } from '../../types/analysis';
 import type { BaziChartResult } from '../../utils/bazi/baziTypes';
+import type { FortuneSelectionContext } from '../../utils/bazi/fortuneSelection';
 import {
   BAZI_AI_PROMPTS,
   buildPromptFromConfig,
@@ -39,6 +40,7 @@ export const ZIWEI_PROMPT_TOPICS = [
   'relationship',
   'relationship-push',
   'relationship-decision',
+  'children',
   'career-wealth',
   'job-change',
   'startup-partnership',
@@ -118,13 +120,14 @@ export function buildBaziPromptForResult(params: {
   question?: string;
   topic?: BaziPromptTopic;
   mode?: PromptMode;
+  fortuneSelectionContext?: FortuneSelectionContext | null;
 }) {
   const option = resolveBaziPromptOption(params.topic ?? 'general');
   const prompt = buildPromptFromConfig(
     params.question ?? '',
     option,
     params.result,
-    null,
+    params.fortuneSelectionContext ?? null,
     params.topic ?? 'general',
     { isCustomQuestion: params.mode === 'custom' },
   );

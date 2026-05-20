@@ -29,6 +29,7 @@ export type QuestionInspirationIntent =
   | 'relationship-decision'
   | 'investment-partnership'
   | 'reconciliation-decision'
+  | 'family-health'
   | 'home-move'
   | 'settle-relocate'
   | 'study-advance'

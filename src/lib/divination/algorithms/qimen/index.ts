@@ -17,6 +17,7 @@ import { getQimenJuShu, getZhiFuZhiShi } from './helpers/jushu';
 import { getDunJiaStem } from './helpers/palace-utils';
 import { arrangeJiuGongGe } from './helpers/layout';
 import { buildPalaceInsights, buildPatternDetails, getQimenPatternTags } from './helpers/patterns';
+import type { QimenBranchPalace } from '../../../../types/divination.ts';
 
 const { diPanPalaces } = qimen;
 
@@ -60,7 +61,7 @@ export function generateQimen(customDate?: Date) {
   const voidBranches = getVoidBranches(ganzhi.hour);
   const voidPalaces = voidBranches
     .map((branch) => resolveQimenBranchPalace(branch, jiuGongGe))
-    .filter(Boolean);
+    .filter((item): item is QimenBranchPalace => Boolean(item));
   const horseBranch = getHorseBranch(hourZhi);
   const horsePalace = horseBranch ? resolveQimenBranchPalace(horseBranch, jiuGongGe) : null;
   const zhiFuLandingPalace = jiuGongGe.find((gong) => gong.tianPan.star === zhiFu)?.gong;

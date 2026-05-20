@@ -57,7 +57,7 @@ export function buildTaskText(method: Exclude<DivinationMethodId, 'random'>) {
 export function buildMethodRequirementText(method: Exclude<DivinationMethodId, 'random'>) {
   switch (method) {
     case 'liuyao':
-      return '- 优先看世应、动爻、变卦与空亡，再结合伏神、旺衰或神煞区分主证据与辅助证据。';
+      return '- 优先看世应、用神、动爻、变卦与空亡，再结合伏神、旺衰或神煞区分主证、辅证、反证和应期候选。';
     case 'meihua':
       return '- 解释顺序以体用为先，再看互卦过程、变卦结果与四时旺衰，不要只按卦名泛讲。';
     case 'xiaoliuren':
@@ -86,21 +86,21 @@ export function buildMethodOutputRequirementText(method: Exclude<DivinationMetho
     case 'liuyao':
       return '明确说明哪一项是本次判断的主轴，例如世应、动爻、变卦、用神、空亡或伏神。';
     case 'meihua':
-      return '把起因、过程、结果分别落到体用、互卦、变卦，不要混写。';
+      return '把起因、过程、结果分别落到体用、互卦、变卦，并说明主证、辅证、反证或限制，不要混写。';
     case 'xiaoliuren':
       return '每个重点都要交代对应宫位含义、现实映射和行动建议，并明确更适合推进、等待、调整还是止损。';
     case 'qimen':
-      return '若盘面支持，请明确写出宜动、宜守、宜避的方向、动作或时间窗口，并说明先看哪一宫。';
+      return '若盘面支持，请明确写出宜动、宜守、宜避的方向、动作或时间窗口，并说明先看哪一宫、哪一项是主证、哪一项只是辅证。';
     case 'liuren':
       return '若信息中有课体或神煞，要区分主线证据与辅助证据，避免堆名词。';
     case 'tarot':
-      return '每个重点都要交代牌位含义、牌面关系和建议。';
+      return '每个重点都要交代牌位含义、牌面关系、反向或冲突牌和建议。';
     case 'ssgw':
-      return '每个重点都要交代签诗原意、现实映射和行动提醒。';
+      return '每个重点都要交代签诗原意、现实映射、限制条件和行动提醒。';
     case 'almanac':
       return '请明确给出首选日期、备选日期、慎用日期，并逐条说明依据。';
     case 'lenormand':
-      return '每个重点都要交代牌面组合、现实含义和下一步动作。';
+      return '每个重点都要交代牌面组合、现实含义、相邻牌支持或冲突和下一步动作。';
     case 'astrolabe':
       return '每个重点都要交代对应星体/宫位/相位依据，避免只写心理鸡汤。';
     default:

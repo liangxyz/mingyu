@@ -1,4 +1,5 @@
 import type { BaziChartResult } from './baziTypes';
+import { getCurrentTimeDescription } from './calendarTool';
 import { getLuckCycleForDate } from './luckTiming';
 
 interface FormatBaziOptions {

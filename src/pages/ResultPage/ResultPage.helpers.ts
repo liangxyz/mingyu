@@ -590,12 +590,35 @@ export function formatMonthDayLabel(dateStr: string) {
 }
 
 export function parseZiweiDateParts(dateStr: string) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  if (!year || !month || !day) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  try {
+    const maxDay = daysInZiweiScopeMonth(year, month);
+    if (day < 1 || day > maxDay) {
+      return null;
+    }
+  } catch {
     return null;
   }
 
   return { year, month, day };
+}
+
+function daysInZiweiScopeMonth(year: number, month: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2200) {
+    throw new Error('年份需在 1900-2200 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 export function buildZiweiMonthAnchorDate(dateStr: string) {
@@ -658,12 +681,16 @@ export function findZiweiDayOptionDate(dayOptions: ZiweiDayOption[], dateStr: st
     return dayOptions[0]?.dateStr ?? '';
   }
 
-  return dayOptions.find((item) => item.day === parts.day)?.dateStr ?? dayOptions[0]?.dateStr ?? '';
+  return (
+    dayOptions.find((item) => item.dateStr === dateStr)?.dateStr ?? dayOptions[0]?.dateStr ?? ''
+  );
 }
 
 export function parseOptionalNumber(value: string) {
-  if (!value.trim()) return undefined;
-  const parsed = Number(value);
+  const text = value.trim();
+  if (!text) return undefined;
+  if (!/^[-+]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text)) return undefined;
+  const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 

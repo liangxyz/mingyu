@@ -18,6 +18,7 @@ export function buildDivinationPromptText(params: {
   liurenTemplate?: LiurenTemplateType;
   promptMode?: PromptMode;
   astrolabeTopic?: AstrolabePromptTopic;
+  astrolabeScopeText?: string;
 }) {
   return buildDivinationPrompt(
     params.method,
@@ -29,6 +30,7 @@ export function buildDivinationPromptText(params: {
       liuyaoTemplate: params.liuyaoTemplate,
       liurenTemplate: params.liurenTemplate,
       astrolabeTopic: params.astrolabeTopic,
+      astrolabeScopeText: params.astrolabeScopeText,
     },
   );
 }

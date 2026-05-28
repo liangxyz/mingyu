@@ -1,5 +1,6 @@
 import { SolarDay } from 'tyme4ts';
 import { baziCalculator } from '../../../utils/bazi/baziCalculator';
+import { getBirthDateValidationMessage } from '../../date-validation';
 import type {
   AlmanacData,
   AlmanacDayCandidate,
@@ -52,6 +53,9 @@ function parseDateText(value: string, fieldName: string) {
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
+  if (year < 1900 || year > 2100) {
+    throw new Error(`${fieldName}年份需在 1900-2100 之间`);
+  }
   const date = new Date(year, month - 1, day);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     throw new Error(`${fieldName}不是有效日期`);
@@ -79,17 +83,55 @@ function normalizeTaboos(items: Array<{ getName(): string }>) {
   return items.map((item) => item.getName()).filter(Boolean);
 }
 
+function shouldBuildParticipantProfile(item: AlmanacParticipantInput) {
+  return Boolean(item.year && item.month && item.day && item.timeIndex !== '');
+}
+
+function readParticipantInteger(value: string, label: string, min: number, max: number) {
+  const text = value.trim();
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`参与人${label}必须是 ${min}-${max} 的整数`);
+  }
+
+  const number = Number(text);
+  if (!Number.isInteger(number) || number < min || number > max) {
+    throw new Error(`参与人${label}必须是 ${min}-${max} 的整数`);
+  }
+  return number;
+}
+
+function readParticipantBirthInput(item: AlmanacParticipantInput) {
+  const year = readParticipantInteger(item.year, '出生年份', 1900, 2100);
+  const month = readParticipantInteger(item.month, '出生月份', 1, 12);
+  const day = readParticipantInteger(item.day, '出生日期', 1, item.dateType === 'lunar' ? 30 : 31);
+  const timeIndex = readParticipantInteger(item.timeIndex, '出生时辰', 0, 12);
+  const validationMessage = getBirthDateValidationMessage({
+    year,
+    month,
+    day,
+    dateType: item.dateType,
+    isLeapMonth: Boolean(item.isLeapMonth),
+  });
+
+  if (validationMessage) {
+    throw new Error(`参与人出生${validationMessage}`);
+  }
+
+  return { year, month, day, timeIndex };
+}
+
 function createParticipantProfiles(
   participants: AlmanacParticipantInput[],
 ): AlmanacParticipantProfile[] {
   return participants
-    .filter((item) => item.year && item.month && item.day && item.timeIndex !== '')
+    .filter(shouldBuildParticipantProfile)
     .map((item) => {
+      const birthInput = readParticipantBirthInput(item);
       const chart = baziCalculator.calculateBazi({
-        year: Number(item.year),
-        month: Number(item.month),
-        day: Number(item.day),
-        timeIndex: Number(item.timeIndex),
+        year: birthInput.year,
+        month: birthInput.month,
+        day: birthInput.day,
+        timeIndex: birthInput.timeIndex,
         gender: item.gender === '男' ? 'male' : item.gender === '女' ? 'female' : '',
         isLunar: item.dateType === 'lunar',
         isLeapMonth: Boolean(item.isLeapMonth),

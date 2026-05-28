@@ -2,6 +2,7 @@ import { resolveZiweiTrueSolarBirth } from '../ziwei/true-solar-input';
 import type { ChartInput } from '../../types/chart';
 import type { AnalysisPayloadV1, ScopeType } from '../../types/analysis';
 import type { IztroAstrolabe, IztroHoroscope } from '../../types/iztro';
+import { getBirthDateValidationMessage } from '../date-validation';
 import {
   buildAstrolabeFromInput,
   buildHoroscope,
@@ -25,6 +26,58 @@ export type ZiweiRuntime = {
   horoscope: IztroHoroscope;
   payloadByScope: Record<ScopeType, AnalysisPayloadV1>;
 };
+
+function readInteger(value: string | number, label: string) {
+  if (typeof value === 'number') {
+    if (!Number.isInteger(value)) {
+      throw new Error(`${label}必须是整数。`);
+    }
+    return value;
+  }
+
+  const text = value.trim();
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`${label}必须是整数。`);
+  }
+  return Number(text);
+}
+
+function readTimeIndex(value: number | '') {
+  const timeIndex = readInteger(value, '出生时辰');
+  if (timeIndex < 0 || timeIndex > 12) {
+    throw new Error('出生时辰需在 0-12 之间。');
+  }
+  return timeIndex;
+}
+
+function readZiweiBirthDate(input: {
+  year: string;
+  month: string;
+  day: string;
+  dateType: 'solar' | 'lunar';
+  isLeapMonth: boolean;
+}) {
+  const year = readInteger(input.year, '出生年份');
+  const month = readInteger(input.month, '出生月份');
+  const day = readInteger(input.day, '出生日期');
+  const validationMessage = getBirthDateValidationMessage({
+    year,
+    month,
+    day,
+    dateType: input.dateType,
+    isLeapMonth: input.isLeapMonth,
+  });
+
+  if (validationMessage) {
+    throw new Error(validationMessage);
+  }
+
+  return { year, month, day };
+}
+
+function formatZiweiBirthDate(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
 
 export function buildZiweiPayloadByScope(params: {
   astrolabe: IztroAstrolabe;
@@ -105,6 +158,8 @@ export function buildZiweiChartInput(input: {
     throw new Error('请选择出生时辰。');
   }
 
+  const birthDateParts = readZiweiBirthDate(input);
+  const birthTimeIndex = input.useTrueSolarTime ? 0 : readTimeIndex(input.timeIndex);
   const gender = input.gender === 'male' ? '男' : '女';
   const trueSolarBirth = input.useTrueSolarTime
     ? resolveZiweiTrueSolarBirth({
@@ -120,14 +175,14 @@ export function buildZiweiChartInput(input: {
     : null;
   const birthDate =
     trueSolarBirth?.birthDate ??
-    `${input.year}-${input.month.padStart(2, '0')}-${input.day.padStart(2, '0')}`;
+    formatZiweiBirthDate(birthDateParts.year, birthDateParts.month, birthDateParts.day);
 
   return {
     name: input.name,
     gender,
     dateType: input.useTrueSolarTime ? 'solar' : input.dateType,
     birthDate,
-    birthTimeIndex: trueSolarBirth?.birthTimeIndex ?? Number(input.timeIndex),
+    birthTimeIndex: trueSolarBirth?.birthTimeIndex ?? birthTimeIndex,
     isLeapMonth: input.isLeapMonth,
     fixLeap: true,
     astroType: 'earth',
@@ -460,6 +515,7 @@ export function buildCombinedZiweiPrompt(
   const pack = buildPortablePromptPack({
     payload,
     reportContext,
+    mode: 'task-book',
   });
 
   return [
@@ -506,10 +562,12 @@ export function buildCombinedZiweiCompatibilityPrompt(params: {
   const primaryPack = buildPortablePromptPack({
     payload: params.primaryPayload,
     reportContext: primaryContext,
+    mode: 'task-book',
   });
   const partnerPack = buildPortablePromptPack({
     payload: params.partnerPayload,
     reportContext: partnerContext,
+    mode: 'task-book',
   });
   const compatibilityTopic = params.topic || 'chat';
 

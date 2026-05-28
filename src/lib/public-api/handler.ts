@@ -2,6 +2,19 @@ import { baziCalculator } from '../../utils/bazi/baziCalculator';
 import type { Person } from '../../utils/bazi/baziTypes';
 import { getTimeIndexFromClock } from '../../utils/dateUtils';
 import { buildZiweiChartInput, calculateFullZiweiChart } from '../full-chart-engine/ziwei';
+import {
+  daysInSolarMonth,
+  getBirthDateValidationMessage,
+  isValidIsoDateTime,
+} from '../date-validation';
+import {
+  meihuaAnimalOptions,
+  meihuaColorOptions,
+  meihuaDirectionOptions,
+  meihuaObjectOptions,
+  meihuaPersonOptions,
+  meihuaSoundOptions,
+} from '../../config/meihua-omens';
 import { generateLiuyao } from '../divination/algorithms/liuyao';
 import { generateMeihua } from '../divination/algorithms/meihua';
 import { generateXiaoliuren } from '../divination/algorithms/xiaoliuren';
@@ -20,6 +33,7 @@ import type {
   AstrolabeBirthInput,
   DivinationData,
   LenormandSpreadType,
+  MeihuaExternalOmens,
   LiuyaoTemplateType,
   LiurenTemplateType,
   MeihuaSettings,
@@ -125,6 +139,119 @@ const ENDPOINTS = [
   'POST /api/v1/divination/astrolabe/prompt',
 ] as const;
 
+const DIVINATION_METHODS = [
+  'liuyao',
+  'meihua',
+  'xiaoliuren',
+  'qimen',
+  'liuren',
+  'tarot',
+  'ssgw',
+  'almanac',
+  'lenormand',
+  'astrolabe',
+] as const;
+
+function openApiJsonRequestBody(schemaRef: string, required = true) {
+  return {
+    required,
+    content: {
+      'application/json': { schema: { $ref: schemaRef } },
+    },
+  };
+}
+
+const DIVINATION_REQUEST_PROPERTIES = {
+  question: {
+    type: 'string',
+    description: '占卜问题。黄历择日接口中可不填；若填写，会作为择日补充信息处理。',
+  },
+  customDate: { type: 'string', format: 'date-time' },
+  method: { enum: ['time', 'number', 'random', 'external'] },
+  number: { type: 'integer', minimum: 1 },
+  externalOmens: {
+    type: 'object',
+    description: '梅花外应起卦信息。method 为 external 时至少提供两项可映射外应，并提供 count。',
+    properties: {
+      direction: { enum: ['东', '东南', '南', '西南', '西', '西北', '北', '东北'] },
+      count: { type: 'integer', minimum: 1 },
+      person: { enum: ['老父', '老妇', '长男', '长女', '中男', '中女', '少男', '少女'] },
+      animal: { enum: ['马', '牛', '龙', '鸡', '猪', '雉', '狗', '羊'] },
+      object: {
+        enum: [
+          '金玉圆器',
+          '布帛陶器',
+          '竹木乐器',
+          '绳索长木',
+          '水器液体',
+          '火电文书',
+          '石块门板',
+          '刀剪口器',
+        ],
+      },
+      sound: {
+        enum: [
+          '洪亮金石',
+          '沉厚低缓',
+          '雷鸣震动',
+          '风声呼啸',
+          '流水滴答',
+          '爆裂鸣叫',
+          '闷阻叩击',
+          '清脆笑语',
+        ],
+      },
+      color: { enum: ['金白', '土黄', '青碧', '青绿', '黑蓝', '赤紫', '棕黄', '银白'] },
+    },
+  },
+  xiaoliurenMethod: { enum: ['time', 'number', 'random'] },
+  xiaoliurenNumber: { type: 'integer', minimum: 1 },
+  spreadType: {
+    enum: ['single', 'three', 'love', 'career', 'decision', 'relationship', 'nine'],
+    description:
+      '塔罗支持 single、three、love、career、decision；雷诺曼支持 single、three、relationship、decision、nine。',
+  },
+  liuyaoTemplate: { enum: ['general', 'ganqing', 'shiye', 'caifu', 'guaishen'] },
+  liurenTemplate: { enum: ['general', 'ganqing', 'shiye', 'caifu'] },
+  topic: {
+    enum: ['marriage', 'move', 'opening', 'contract', 'travel', 'medical', 'study', 'custom'],
+  },
+  startDate: { type: 'string', format: 'date' },
+  endDate: { type: 'string', format: 'date' },
+  participants: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        gender: { enum: ['男', '女', ''] },
+        year: { type: 'integer', minimum: 1900, maximum: 2100 },
+        month: { type: 'integer', minimum: 1, maximum: 12 },
+        day: { type: 'integer', minimum: 1, maximum: 31 },
+        timeIndex: { type: 'integer', minimum: 0, maximum: 12 },
+        dateType: { enum: ['solar', 'lunar'] },
+        isLeapMonth: { type: 'boolean' },
+      },
+    },
+  },
+  gender: { enum: ['男', '女', ''] },
+  year: { type: 'integer', minimum: 1900, maximum: 2100 },
+  month: { type: 'integer', minimum: 1, maximum: 12 },
+  day: { type: 'integer', minimum: 1, maximum: 31 },
+  hour: { type: 'integer', minimum: 0, maximum: 23 },
+  minute: { type: 'integer', minimum: 0, maximum: 59 },
+  latitude: { type: 'number', minimum: -90, maximum: 90 },
+  longitude: { type: 'number', minimum: -180, maximum: 180 },
+  timezone: { type: 'number', minimum: -12, maximum: 14 },
+  locationName: { type: 'string' },
+  useTrueSolarTime: { type: 'boolean' },
+  astrolabeTopic: { enum: [...ASTROLABE_PROMPT_TOPICS] },
+  astrolabeScopeText: { type: 'string' },
+  promptMode: { enum: [...PROMPT_MODES] },
+  supplementaryInfo: { type: 'object' },
+};
+
 export function getPublicApiManifest() {
   return {
     name: 'AOV 命理与占卜公开 API',
@@ -169,92 +296,114 @@ export function getPublicApiOpenApiDocument() {
       '/bazi/calculate': {
         post: {
           summary: '八字排盘',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/BaziRequest' } },
-            },
-          },
+          requestBody: openApiJsonRequestBody('#/components/schemas/BaziRequest'),
           responses: { '200': { description: '八字命盘数据' } },
         },
       },
       '/bazi/prompt': {
         post: {
           summary: '八字排盘并生成 AI 解读提示词',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/BaziPromptRequest' } },
-            },
-          },
+          requestBody: openApiJsonRequestBody('#/components/schemas/BaziPromptRequest'),
           responses: { '200': { description: '八字命盘数据和结构化提示词' } },
         },
       },
       '/ziwei/calculate': {
         post: {
           summary: '紫微斗数排盘',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/ZiweiRequest' } },
-            },
-          },
+          requestBody: openApiJsonRequestBody('#/components/schemas/ZiweiRequest'),
           responses: { '200': { description: '紫微命盘数据' } },
         },
       },
       '/ziwei/prompt': {
         post: {
           summary: '紫微斗数排盘并生成 AI 解读提示词',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/ZiweiPromptRequest' } },
-            },
-          },
+          requestBody: openApiJsonRequestBody('#/components/schemas/ZiweiPromptRequest'),
           responses: { '200': { description: '紫微命盘数据和结构化提示词' } },
         },
       },
       '/divination/liuyao': {
-        post: { summary: '六爻起卦', responses: { '200': { description: '六爻卦盘' } } },
+        post: {
+          summary: '六爻起卦',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '六爻卦盘' } },
+        },
       },
       '/divination/meihua': {
-        post: { summary: '梅花易数起卦', responses: { '200': { description: '梅花易数卦盘' } } },
+        post: {
+          summary: '梅花易数起卦',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '梅花易数卦盘' } },
+        },
       },
       '/divination/xiaoliuren': {
-        post: { summary: '小六壬起课', responses: { '200': { description: '小六壬课盘' } } },
+        post: {
+          summary: '小六壬起课',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '小六壬课盘' } },
+        },
       },
       '/divination/qimen': {
-        post: { summary: '奇门遁甲排盘', responses: { '200': { description: '奇门盘' } } },
+        post: {
+          summary: '奇门遁甲排盘',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '奇门盘' } },
+        },
       },
       '/divination/liuren': {
-        post: { summary: '大六壬排盘', responses: { '200': { description: '大六壬课盘' } } },
+        post: {
+          summary: '大六壬排盘',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '大六壬课盘' } },
+        },
       },
       '/divination/tarot': {
-        post: { summary: '塔罗抽牌', responses: { '200': { description: '塔罗牌阵' } } },
+        post: {
+          summary: '塔罗抽牌',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '塔罗牌阵' } },
+        },
       },
       '/divination/ssgw': {
-        post: { summary: '三山国王灵签求签', responses: { '200': { description: '灵签结果' } } },
+        post: {
+          summary: '三山国王灵签求签',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '灵签结果' } },
+        },
       },
       '/divination/almanac': {
-        post: { summary: '黄历择日', responses: { '200': { description: '择日结果' } } },
+        post: {
+          summary: '黄历择日',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest'),
+          responses: { '200': { description: '择日结果' } },
+        },
       },
       '/divination/lenormand': {
-        post: { summary: '雷诺曼抽牌', responses: { '200': { description: '雷诺曼牌阵' } } },
+        post: {
+          summary: '雷诺曼抽牌',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
+          responses: { '200': { description: '雷诺曼牌阵' } },
+        },
       },
       '/divination/astrolabe': {
-        post: { summary: '星盘生成', responses: { '200': { description: '星盘结果' } } },
+        post: {
+          summary: '星盘生成',
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest'),
+          responses: { '200': { description: '星盘结果' } },
+        },
       },
       '/divination/{method}/prompt': {
         post: {
           summary: '起卦、抽牌或求签并生成 AI 解读提示词',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/DivinationPromptRequest' },
-              },
+          parameters: [
+            {
+              name: 'method',
+              in: 'path',
+              required: true,
+              schema: { enum: [...DIVINATION_METHODS] },
+              description: '占卜方法。',
             },
-          },
+          ],
+          requestBody: openApiJsonRequestBody('#/components/schemas/DivinationPromptRequest'),
           responses: { '200': { description: '占卜结果、统一摘要和结构化提示词' } },
         },
       },
@@ -326,49 +475,13 @@ export function getPublicApiOpenApiDocument() {
             },
           ],
         },
+        DivinationRequest: {
+          type: 'object',
+          properties: DIVINATION_REQUEST_PROPERTIES,
+        },
         DivinationPromptRequest: {
           type: 'object',
-          properties: {
-            question: {
-              type: 'string',
-              description: '占卜问题。黄历择日接口中可不填；若填写，会作为择日补充信息处理。',
-            },
-            customDate: { type: 'string' },
-            method: { enum: ['time', 'number', 'random', 'external'] },
-            number: { type: 'integer', minimum: 1 },
-            xiaoliurenMethod: { enum: ['time', 'number', 'random'] },
-            xiaoliurenNumber: { type: 'integer', minimum: 1 },
-            spreadType: { enum: ['single', 'three', 'love', 'career', 'decision'] },
-            liuyaoTemplate: { enum: ['general', 'ganqing', 'shiye', 'caifu', 'guaishen'] },
-            liurenTemplate: { enum: ['general', 'ganqing', 'shiye', 'caifu'] },
-            topic: {
-              enum: [
-                'marriage',
-                'move',
-                'opening',
-                'contract',
-                'travel',
-                'medical',
-                'study',
-                'custom',
-              ],
-            },
-            startDate: { type: 'string' },
-            endDate: { type: 'string' },
-            participants: { type: 'array' },
-            gender: { enum: ['男', '女', ''] },
-            year: { type: 'integer' },
-            month: { type: 'integer' },
-            day: { type: 'integer' },
-            hour: { type: 'integer' },
-            minute: { type: 'integer' },
-            latitude: { type: 'number' },
-            longitude: { type: 'number' },
-            timezone: { type: 'number' },
-            locationName: { type: 'string' },
-            promptMode: { enum: [...PROMPT_MODES] },
-            supplementaryInfo: { type: 'object' },
-          },
+          properties: DIVINATION_REQUEST_PROPERTIES,
         },
       },
     },
@@ -480,6 +593,8 @@ async function route(context: RouteContext) {
 
 function calculateBazi(input: JsonRecord) {
   const gender = readEnum(input, 'gender', ['male', 'female']);
+  const birthDate = readBirthDate(input);
+  const { dateType } = birthDate;
   const useTrueSolarTime = readBoolean(input, 'useTrueSolarTime', false);
   const birthHour = useTrueSolarTime ? readInteger(input, 'birthHour', 0, 23) : undefined;
   const birthMinute = useTrueSolarTime ? readInteger(input, 'birthMinute', 0, 59) : undefined;
@@ -492,11 +607,11 @@ function calculateBazi(input: JsonRecord) {
       : -1;
   const person: Person = {
     gender,
-    year: readInteger(input, 'year', 1900, 2100),
-    month: readInteger(input, 'month', 1, 12),
-    day: readInteger(input, 'day', 1, 31),
+    year: birthDate.year,
+    month: birthDate.month,
+    day: birthDate.day,
     timeIndex: useTrueSolarTime ? derivedTimeIndex : readInteger(input, 'timeIndex', 0, 12),
-    isLunar: readEnum(input, 'dateType', ['solar', 'lunar']) === 'lunar',
+    isLunar: dateType === 'lunar',
     isLeapMonth: readBoolean(input, 'isLeapMonth', false),
     useTrueSolarTime,
     birthHour,
@@ -527,22 +642,36 @@ function buildBaziPrompt(input: JsonRecord) {
 }
 
 async function calculateZiweiRuntime(input: JsonRecord) {
+  const birthDate = readBirthDate(input, { asString: true });
+  const { dateType } = birthDate;
+  const useTrueSolarTime = readBoolean(input, 'useTrueSolarTime', false);
+  const timeInput = useTrueSolarTime
+    ? {
+        timeIndex: '' as const,
+        birthHour: String(readIntegerLike(input, 'birthHour', 0, 23)),
+        birthMinute: String(readIntegerLike(input, 'birthMinute', 0, 59)),
+        birthLongitude: String(readNumberLike(input, 'birthLongitude', -180, 180)),
+      }
+    : {
+        timeIndex: readInteger(input, 'timeIndex', 0, 12),
+        birthHour: readString(input, 'birthHour', ''),
+        birthMinute: readString(input, 'birthMinute', ''),
+        birthLongitude: readString(input, 'birthLongitude', ''),
+      };
   return calculateFullZiweiChart(
     buildZiweiChartInput({
       name: readString(input, 'name', ''),
       gender: readEnum(input, 'gender', ['male', 'female']),
-      dateType: readEnum(input, 'dateType', ['solar', 'lunar']),
-      year: readRequiredString(input, 'year'),
-      month: readRequiredString(input, 'month'),
-      day: readRequiredString(input, 'day'),
-      timeIndex: readBoolean(input, 'useTrueSolarTime', false)
-        ? ''
-        : readInteger(input, 'timeIndex', 0, 12),
+      dateType,
+      year: String(birthDate.year),
+      month: String(birthDate.month),
+      day: String(birthDate.day),
+      timeIndex: timeInput.timeIndex,
       isLeapMonth: readBoolean(input, 'isLeapMonth', false),
-      useTrueSolarTime: readBoolean(input, 'useTrueSolarTime', false),
-      birthHour: readString(input, 'birthHour', ''),
-      birthMinute: readString(input, 'birthMinute', ''),
-      birthLongitude: readString(input, 'birthLongitude', ''),
+      useTrueSolarTime,
+      birthHour: timeInput.birthHour,
+      birthMinute: timeInput.birthMinute,
+      birthLongitude: timeInput.birthLongitude,
     }),
   );
 }
@@ -582,9 +711,7 @@ function calculateMeihua(input: JsonRecord) {
   const settings: MeihuaSettings = {
     method,
     ...(method === 'number' ? { number: readInteger(input, 'number', 1) } : {}),
-    ...(method === 'external' && isRecord(input.externalOmens)
-      ? { externalOmens: input.externalOmens as MeihuaSettings['externalOmens'] }
-      : {}),
+    ...(method === 'external' ? { externalOmens: readMeihuaExternalOmens(input) } : {}),
   };
 
   return generateMeihua(readCustomDate(input), settings);
@@ -664,6 +791,7 @@ function calculateSsgw(_input: JsonRecord) {
 }
 
 function calculateAlmanac(input: JsonRecord) {
+  const { startDate, endDate } = readAlmanacDateRange(input);
   return generateAlmanacSelection({
     topic: readEnum(input, 'topic', [
       'marriage',
@@ -675,8 +803,8 @@ function calculateAlmanac(input: JsonRecord) {
       'study',
       'custom',
     ]) as AlmanacTopic,
-    startDate: readRequiredString(input, 'startDate'),
-    endDate: readRequiredString(input, 'endDate'),
+    startDate,
+    endDate,
     participants: readAlmanacParticipants(input),
   });
 }
@@ -693,18 +821,20 @@ function calculateLenormand(input: JsonRecord) {
 }
 
 function calculateAstrolabe(input: JsonRecord) {
+  const birthDate = readBirthDate(input, { dateType: 'solar' });
   const astrolabeInput: AstrolabeBirthInput = {
     name: readString(input, 'name', ''),
     gender: readEnum(input, 'gender', ['男', '女', ''], ''),
-    year: String(readInteger(input, 'year', 1900, 2100)),
-    month: String(readInteger(input, 'month', 1, 12)),
-    day: String(readInteger(input, 'day', 1, 31)),
+    year: String(birthDate.year),
+    month: String(birthDate.month),
+    day: String(birthDate.day),
     hour: String(readInteger(input, 'hour', 0, 23)),
     minute: String(readInteger(input, 'minute', 0, 59)),
     latitude: String(readNumber(input, 'latitude', -90, 90)),
     longitude: String(readNumber(input, 'longitude', -180, 180)),
     timezone: String(readNumber(input, 'timezone', -12, 14)),
     locationName: readString(input, 'locationName', ''),
+    useTrueSolarTime: readBoolean(input, 'useTrueSolarTime', false),
   };
   return generateAstrolabe(astrolabeInput);
 }
@@ -796,12 +926,16 @@ function buildDivinationPromptText(
 }
 
 async function readJson(request: Request, optional = false): Promise<JsonRecord> {
-  if (optional && !request.headers.get('content-type') && request.body === null) {
+  if (optional && request.body === null) {
     return {};
   }
 
   try {
-    const value = await request.json();
+    const text = await request.text();
+    if (optional && !text.trim()) {
+      return {};
+    }
+    const value = JSON.parse(text);
     if (!isRecord(value)) {
       throw new ApiError(400, 'BAD_REQUEST', '请求体必须是 JSON 对象。');
     }
@@ -809,9 +943,6 @@ async function readJson(request: Request, optional = false): Promise<JsonRecord>
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
-    }
-    if (optional) {
-      return {};
     }
     throw new ApiError(400, 'BAD_REQUEST', '请求体必须是合法 JSON。');
   }
@@ -826,7 +957,7 @@ function readCustomDate(input: JsonRecord) {
     throw new ApiError(400, 'BAD_REQUEST', 'customDate 必须是 ISO 8601 时间字符串。');
   }
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime()) || !isValidIsoDateTime(value, date)) {
     throw new ApiError(400, 'BAD_REQUEST', 'customDate 不是有效时间。');
   }
   return date;
@@ -834,7 +965,7 @@ function readCustomDate(input: JsonRecord) {
 
 function readInteger(input: JsonRecord, key: string, min?: number, max?: number): number {
   const value = input[key];
-  if (typeof value !== 'number' || !Number.isInteger(value)) {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value)) {
     throw new ApiError(400, 'BAD_REQUEST', `${key} 必须是整数。`);
   }
   if (min !== undefined && value < min) {
@@ -890,6 +1021,170 @@ function readRequiredString(input: JsonRecord, key: string) {
   return value;
 }
 
+function readOptionalEnum<const T extends readonly string[]>(
+  input: JsonRecord,
+  key: string,
+  values: T,
+): T[number] | undefined {
+  const value = input[key];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value === 'string' && values.includes(value)) {
+    return value;
+  }
+  throw new ApiError(400, 'BAD_REQUEST', `${key} 必须是以下值之一：${values.join('、')}。`);
+}
+
+function optionNames<const T extends string>(options: ReadonlyArray<{ name: T }>): T[] {
+  return options.map((option) => option.name);
+}
+
+function readMeihuaExternalOmens(input: JsonRecord): MeihuaExternalOmens {
+  const value = input.externalOmens;
+  if (!isRecord(value)) {
+    throw new ApiError(400, 'BAD_REQUEST', 'externalOmens 必须是对象。');
+  }
+
+  const externalOmens: MeihuaExternalOmens = {
+    direction: readOptionalEnum(value, 'direction', optionNames(meihuaDirectionOptions)),
+    person: readOptionalEnum(value, 'person', optionNames(meihuaPersonOptions)),
+    animal: readOptionalEnum(value, 'animal', optionNames(meihuaAnimalOptions)),
+    object: readOptionalEnum(value, 'object', optionNames(meihuaObjectOptions)),
+    sound: readOptionalEnum(value, 'sound', optionNames(meihuaSoundOptions)),
+    color: readOptionalEnum(value, 'color', optionNames(meihuaColorOptions)),
+    count: readInteger(value, 'count', 1),
+  };
+
+  const mappedCount = [
+    externalOmens.direction,
+    externalOmens.person,
+    externalOmens.animal,
+    externalOmens.object,
+    externalOmens.sound,
+    externalOmens.color,
+  ].filter(Boolean).length;
+
+  if (mappedCount < 2) {
+    throw new ApiError(400, 'BAD_REQUEST', '外应起卦至少需要两项可映射的外应。');
+  }
+
+  return externalOmens;
+}
+
+function readDateOnly(input: JsonRecord, key: string) {
+  const value = readRequiredString(input, key);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 需要使用 YYYY-MM-DD 格式。`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < 1900 || year > 2100) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 年份需在 1900-2100 之间。`);
+  }
+  if (month < 1 || month > 12) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 不是有效日期。`);
+  }
+
+  const maxDay = daysInSolarMonth(year, month);
+  if (day < 1 || day > maxDay) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 不是有效日期。`);
+  }
+
+  return {
+    value,
+    date: new Date(Date.UTC(year, month - 1, day)),
+  };
+}
+
+function readAlmanacDateRange(input: JsonRecord) {
+  const start = readDateOnly(input, 'startDate');
+  const end = readDateOnly(input, 'endDate');
+  const diffDays = Math.round((end.date.getTime() - start.date.getTime()) / 86400000);
+
+  if (diffDays < 0) {
+    throw new ApiError(400, 'BAD_REQUEST', 'endDate 不能早于 startDate。');
+  }
+  if (diffDays > 30) {
+    throw new ApiError(400, 'BAD_REQUEST', '黄历择日一次最多比较 31 天，请缩小日期范围。');
+  }
+
+  return {
+    startDate: start.value,
+    endDate: end.value,
+  };
+}
+
+function readIntegerLike(input: JsonRecord, key: string, min?: number, max?: number): number {
+  const value = input[key];
+  if (typeof value === 'number') {
+    return readInteger(input, key, min, max);
+  }
+  if (typeof value !== 'string' || !value.trim() || !/^\d+$/.test(value.trim())) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 必须是整数。`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 必须是整数。`);
+  }
+  if (min !== undefined && parsed < min) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 不能小于 ${min}。`);
+  }
+  if (max !== undefined && parsed > max) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 不能大于 ${max}。`);
+  }
+  return parsed;
+}
+
+function readNumberLike(input: JsonRecord, key: string, min?: number, max?: number): number {
+  const value = input[key];
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^[-+]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(value.trim())
+        ? Number(value)
+        : Number.NaN;
+
+  if (!Number.isFinite(parsed)) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 必须是数字。`);
+  }
+  if (min !== undefined && parsed < min) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 不能小于 ${min}。`);
+  }
+  if (max !== undefined && parsed > max) {
+    throw new ApiError(400, 'BAD_REQUEST', `${key} 不能大于 ${max}。`);
+  }
+  return parsed;
+}
+
+function readBirthDate(
+  input: JsonRecord,
+  options: { dateType?: 'solar' | 'lunar'; asString?: boolean } = {},
+) {
+  const readPart = options.asString ? readIntegerLike : readInteger;
+  const year = readPart(input, 'year', 1900, 2100);
+  const month = readPart(input, 'month', 1, 12);
+  const dateType = options.dateType ?? readEnum(input, 'dateType', ['solar', 'lunar']);
+  const isLeapMonth = readBoolean(input, 'isLeapMonth', false);
+  const day = readPart(input, 'day', 1, dateType === 'lunar' ? 30 : 31);
+
+  const validationMessage = getBirthDateValidationMessage({
+    year,
+    month,
+    day,
+    dateType,
+    isLeapMonth,
+  });
+  if (validationMessage) {
+    throw new ApiError(400, 'BAD_REQUEST', validationMessage);
+  }
+
+  return { year, month, day, dateType };
+}
+
 function readAlmanacParticipants(input: JsonRecord): AlmanacParticipantInput[] {
   const value = input.participants;
   if (value === undefined) {
@@ -904,15 +1199,17 @@ function readAlmanacParticipants(input: JsonRecord): AlmanacParticipantInput[] {
       throw new ApiError(400, 'BAD_REQUEST', `participants[${index}] 必须是对象。`);
     }
 
+    const dateType = readEnum(item, 'dateType', ['solar', 'lunar']);
+    const birthDate = readBirthDate(item, { dateType });
     const participant: AlmanacParticipantInput = {
       id: readString(item, 'id', `participant-${index + 1}`),
       name: readString(item, 'name', ''),
       gender: readEnum(item, 'gender', ['男', '女', ''], ''),
-      year: String(readInteger(item, 'year', 1900, 2100)),
-      month: String(readInteger(item, 'month', 1, 12)),
-      day: String(readInteger(item, 'day', 1, 31)),
+      year: String(birthDate.year),
+      month: String(birthDate.month),
+      day: String(birthDate.day),
       timeIndex: String(readInteger(item, 'timeIndex', 0, 12)),
-      dateType: readEnum(item, 'dateType', ['solar', 'lunar']),
+      dateType,
       isLeapMonth: readBoolean(item, 'isLeapMonth', false),
     };
 
@@ -974,6 +1271,6 @@ function handleError(error: unknown) {
     return json(failure(error.code, error.message), error.status);
   }
 
-  const message = error instanceof Error ? error.message : '服务内部错误。';
-  return json(failure('INTERNAL_ERROR', message), 500);
+  console.error('公开 API 未处理异常', error);
+  return json(failure('INTERNAL_ERROR', '服务内部错误。'), 500);
 }

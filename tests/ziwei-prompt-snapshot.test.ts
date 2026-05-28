@@ -347,6 +347,9 @@ test('紫微完整提示词应补充运限解读规则', () => {
 
   assert.match(prompt, /【运限命中摘要】/);
   assert.match(prompt, /【主证】所选运限落宫/);
+  assert.doesNotMatch(prompt, /【运限结构】/);
+  assert.doesNotMatch(prompt, /【全盘宫位索引】/);
+  assert.doesNotMatch(prompt, /类型：运限落宫/);
   assert.match(prompt, /【分析对象优先级】/);
   assert.match(prompt, /【运限解读规则】/);
   assert.match(prompt, /当前已选流年：以该年年度触发、四化飞入、流年命宫落点和年度事件类别为主/);

@@ -100,7 +100,10 @@ function resolvePromptScene(promptId: string): PromptChartScene {
   return 'general';
 }
 
-function formatFortuneSelectionSection(ctx: FortuneSelectionContext | null | undefined): string {
+function formatFortuneSelectionSection(
+  ctx: FortuneSelectionContext | null | undefined,
+  options: { includeBreakdown?: boolean } = {},
+): string {
   if (!ctx) return '';
   const { promptPayload } = ctx;
   const scopeBoundaryMap: Record<FortuneSelectionContext['scope'], string> = {
@@ -111,13 +114,18 @@ function formatFortuneSelectionSection(ctx: FortuneSelectionContext | null | und
     day: '判断边界：流日只看当日执行、沟通、触发和避险；不能把一天的波动说成长期命运。',
   };
   const lines = [
-    '来源：用户在年限选择器中选择。',
     promptPayload.scopeLabel,
     scopeBoundaryMap[ctx.scope],
     '应期层级：本命定底色，大运定阶段，流年定年度触发，流月定月份窗口，流日定具体执行。',
+    '本次只按上面这个分析对象作答，不展开用户未选择的下级岁运。',
+    '关键资料：',
     ...promptPayload.summaryLines,
   ];
-  if (promptPayload.breakdownTitle && promptPayload.breakdownLines?.length) {
+  if (
+    options.includeBreakdown &&
+    promptPayload.breakdownTitle &&
+    promptPayload.breakdownLines?.length
+  ) {
     lines.push(promptPayload.breakdownTitle);
     lines.push(...promptPayload.breakdownLines.map((line, i) => `${i + 1}. ${line}`));
   }
@@ -127,10 +135,7 @@ function formatFortuneSelectionSection(ctx: FortuneSelectionContext | null | und
 function formatFortuneEvidenceSection(ctx: FortuneSelectionContext | null | undefined): string {
   if (!ctx?.promptPayload.evidenceLines?.length) return '';
 
-  return [
-    '来源：年限选择器、排盘干支十神、所选岁运与原局四柱比对。',
-    ...ctx.promptPayload.evidenceLines,
-  ].join('\n');
+  return ctx.promptPayload.evidenceLines.join('\n');
 }
 
 function buildBaziScopePrioritySection(hasFortuneSelection: boolean): string {
@@ -412,7 +417,9 @@ export function buildPromptFromConfig(
     const chartData = chartResult
       ? formatBaziForPrompt(chartResult, selectedOption, resolvePromptScene(promptConfig.id))
       : '无法获取命盘数据。';
-    const fortuneSection = formatFortuneSelectionSection(fortuneSelectionContext);
+    const fortuneSection = formatFortuneSelectionSection(fortuneSelectionContext, {
+      includeBreakdown: promptConfig.id === 'ai-fortune-detail',
+    });
     const fortuneEvidenceSection = formatFortuneEvidenceSection(fortuneSelectionContext);
     const fortuneAddon = buildFortunePromptAddon(promptConfig.id, fortuneSelectionContext);
     const task = [promptConfig.prompt, fortuneAddon].filter(Boolean).join(' ');

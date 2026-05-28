@@ -124,7 +124,10 @@ export function generateXiaoliuren(params?: {
   let resultSeed = lunarMonth + lunarDay + hourIndex - 2;
 
   if (method === 'number') {
-    const inputNumber = params?.number ?? 1;
+    const inputNumber = params?.number;
+    if (typeof inputNumber !== 'number' || !Number.isInteger(inputNumber) || inputNumber <= 0) {
+      throw new Error('小六壬数字起课必须提供正整数');
+    }
     startSeed = inputNumber;
     processSeed = inputNumber + lunarDay - 1;
     resultSeed = inputNumber + lunarDay + hourIndex - 2;

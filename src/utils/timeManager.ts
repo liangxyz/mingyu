@@ -78,6 +78,9 @@ export class TimeManager {
    */
   static getDivinationTime(customTime?: Date): DivinationTime {
     const targetTime = customTime || new Date();
+    if (!(targetTime instanceof Date) || Number.isNaN(targetTime.getTime())) {
+      throw new Error('自定义时间不是有效日期。');
+    }
     const timeInfo = this.getTimeInfo(targetTime);
     const ganzhi = this.getGanZhi(targetTime);
     const timestamp = targetTime.getTime();

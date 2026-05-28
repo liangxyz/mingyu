@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { baziCalculator } from '../../../src/utils/bazi/baziCalculator.js';
 import type { Person } from '../../../src/utils/bazi/baziTypes.js';
+import { getTimeIndexFromClock } from '../../../src/utils/dateUtils.js';
 import {
   BAZI_PROMPT_TOPICS,
   PROMPT_MODES,
@@ -15,15 +16,37 @@ import {
   createStructuredToolResult,
   getErrorMessage,
 } from '../tool-results.js';
+import {
+  assertMcpBirthDate,
+  readMcpIntegerLikeInRange,
+  readMcpNumberLikeInRange,
+} from './input-helpers.js';
 
 const baziSchema = z.object({
   gender: z.enum(['male', 'female']).describe('性别：male 为男，female 为女'),
-  year: z.number().int().min(1900).max(2100).describe('出生年'),
-  month: z.number().int().min(1).max(12).describe('出生月'),
-  day: z.number().int().min(1).max(31).describe('出生日'),
-  timeIndex: z.number().int().min(0).max(12).describe('时辰索引：0=早子时,1=丑时,...,12=晚子时'),
+  year: z.number().describe('出生年'),
+  month: z.number().describe('出生月'),
+  day: z.number().describe('出生日'),
+  timeIndex: z
+    .number()
+    .optional()
+    .describe('时辰索引：0=早子时,1=丑时,...,12=晚子时；未启用真太阳时时必填'),
   dateType: z.enum(['solar', 'lunar']).describe('日期类型：solar 为阳历，lunar 为农历'),
   isLeapMonth: z.boolean().optional().describe('是否为闰月（仅农历有效）'),
+  useTrueSolarTime: z.boolean().optional().describe('是否启用真太阳时校正'),
+  birthHour: z
+    .number()
+    .optional()
+    .describe('精准出生小时，启用真太阳时时必填'),
+  birthMinute: z
+    .number()
+    .optional()
+    .describe('精准出生分钟，启用真太阳时时必填'),
+  birthPlace: z.string().optional().describe('出生地名称，启用真太阳时时可选'),
+  birthLongitude: z
+    .number()
+    .optional()
+    .describe('出生地经度，启用真太阳时时必填'),
 });
 
 const baziPromptSchema = baziSchema.extend({
@@ -31,12 +54,80 @@ const baziPromptSchema = baziSchema.extend({
   promptTopic: z
     .enum(BAZI_PROMPT_TOPICS)
     .optional()
-    .describe('提示词主题：general=综合, career=事业, wealth=财运, marriage=婚恋, children=子女, health=健康'),
+    .describe(
+      '提示词主题：general=综合, career=事业, wealth=财运, marriage=婚恋, children=子女, health=健康',
+    ),
   promptMode: z
     .enum(PROMPT_MODES)
     .optional()
     .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
+
+function buildBaziPerson(args: z.infer<typeof baziSchema>): Person {
+  const useTrueSolarTime = args.useTrueSolarTime ?? false;
+  assertMcpBirthDate({
+    year: args.year,
+    month: args.month,
+    day: args.day,
+    dateType: args.dateType,
+    isLeapMonth: args.isLeapMonth ?? false,
+  });
+
+  if (useTrueSolarTime) {
+    if (
+      typeof args.birthHour !== 'number' ||
+      typeof args.birthMinute !== 'number' ||
+      typeof args.birthLongitude !== 'number'
+    ) {
+      throw new Error('真太阳时缺少精准时间或经度。');
+    }
+
+    const birthHour = readMcpIntegerLikeInRange(args.birthHour, 'birthHour', 0, 23);
+    const birthMinute = readMcpIntegerLikeInRange(args.birthMinute, 'birthMinute', 0, 59);
+    const birthLongitude = readMcpNumberLikeInRange(
+      args.birthLongitude,
+      'birthLongitude',
+      -180,
+      180,
+    );
+    const derivedTimeIndex = getTimeIndexFromClock(birthHour, birthMinute);
+    if (derivedTimeIndex < 0) {
+      throw new Error('birthHour 和 birthMinute 无法换算为有效时辰。');
+    }
+
+    return {
+      gender: args.gender,
+      year: args.year,
+      month: args.month,
+      day: args.day,
+      timeIndex: derivedTimeIndex,
+      isLunar: args.dateType === 'lunar',
+      isLeapMonth: args.isLeapMonth ?? false,
+      useTrueSolarTime,
+      birthHour,
+      birthMinute,
+      birthPlace: args.birthPlace ?? '',
+      birthLongitude,
+    };
+  }
+
+  if (typeof args.timeIndex !== 'number') {
+    throw new Error('请选择出生时辰。');
+  }
+
+  const timeIndex = readMcpIntegerLikeInRange(args.timeIndex, 'timeIndex', 0, 12);
+
+  return {
+    gender: args.gender,
+    year: args.year,
+    month: args.month,
+    day: args.day,
+    timeIndex,
+    isLunar: args.dateType === 'lunar',
+    isLeapMonth: args.isLeapMonth ?? false,
+    useTrueSolarTime,
+  };
+}
 
 export function registerBaziTool(server: McpServer) {
   server.registerTool(
@@ -47,17 +138,8 @@ export function registerBaziTool(server: McpServer) {
       outputSchema: resultOutputSchema,
     },
     async (args) => {
-      const person: Person = {
-        gender: args.gender,
-        year: args.year,
-        month: args.month,
-        day: args.day,
-        timeIndex: args.timeIndex,
-        isLunar: args.dateType === 'lunar',
-        isLeapMonth: args.isLeapMonth ?? false,
-      };
-
       try {
+        const person = buildBaziPerson(args);
         const result = baziCalculator.calculateBazi(person);
         return createStructuredToolResult({ result });
       } catch (error) {
@@ -69,22 +151,14 @@ export function registerBaziTool(server: McpServer) {
   server.registerTool(
     'bazi_prompt',
     {
-      description: '八字排盘并生成结构化 AI 解读提示词：一次调用返回命盘数据和可直接复制给 AI 的提示词',
+      description:
+        '八字排盘并生成结构化 AI 解读提示词：一次调用返回命盘数据和可直接复制给 AI 的提示词',
       inputSchema: baziPromptSchema.shape,
       outputSchema: promptOutputSchema,
     },
     async (args) => {
-      const person: Person = {
-        gender: args.gender,
-        year: args.year,
-        month: args.month,
-        day: args.day,
-        timeIndex: args.timeIndex,
-        isLunar: args.dateType === 'lunar',
-        isLeapMonth: args.isLeapMonth ?? false,
-      };
-
       try {
+        const person = buildBaziPerson(args);
         const result = baziCalculator.calculateBazi(person);
         return createStructuredToolResult({
           result,

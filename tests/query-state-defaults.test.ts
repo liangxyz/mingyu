@@ -36,6 +36,60 @@ test('空查询参数不应把空时辰解析成 0', () => {
   assert.equal(inputState.partnerTimeIndex, '');
 });
 
+test('地址栏非法时辰索引应清空而不是继续恢复', () => {
+  const inputState = parseInputState(new URLSearchParams('timeIndex=13&partnerTimeIndex=99'));
+
+  assert.equal(inputState.timeIndex, '');
+  assert.equal(inputState.partnerTimeIndex, '');
+});
+
+test('地址栏空白时辰索引不应被 Number 转成早子时', () => {
+  const inputState = parseInputState(new URLSearchParams('timeIndex=+&partnerTimeIndex=%20'));
+
+  assert.equal(inputState.timeIndex, '');
+  assert.equal(inputState.partnerTimeIndex, '');
+});
+
+test('地址栏非法出生日期和真太阳时字段应清空', () => {
+  const inputState = parseInputState(
+    new URLSearchParams({
+      dateType: 'solar',
+      year: '2024',
+      month: '02',
+      day: '31',
+      useTrueSolarTime: '1',
+      birthHour: '24',
+      birthMinute: '60',
+      birthLongitude: '181',
+      birthLatitude: '-91',
+      partnerDateType: 'lunar',
+      partnerYear: '1899',
+      partnerMonth: '13',
+      partnerDay: '31',
+      partnerUseTrueSolarTime: '1',
+      partnerBirthHour: '1.5',
+      partnerBirthMinute: '20',
+      partnerBirthLongitude: '116',
+      partnerBirthLatitude: '39.9',
+    }),
+  );
+
+  assert.equal(inputState.year, '2024');
+  assert.equal(inputState.month, '02');
+  assert.equal(inputState.day, '');
+  assert.equal(inputState.birthHour, '');
+  assert.equal(inputState.birthMinute, '');
+  assert.equal(inputState.birthLongitude, '');
+  assert.equal(inputState.birthLatitude, '');
+  assert.equal(inputState.partnerYear, '');
+  assert.equal(inputState.partnerMonth, '');
+  assert.equal(inputState.partnerDay, '');
+  assert.equal(inputState.partnerBirthHour, '');
+  assert.equal(inputState.partnerBirthMinute, '20');
+  assert.equal(inputState.partnerBirthLongitude, '116');
+  assert.equal(inputState.partnerBirthLatitude, '39.9');
+});
+
 test('结果页默认应直接打开提示词页', () => {
   assert.equal(defaultPromptState.tab, 'prompt');
 });
@@ -125,6 +179,34 @@ test('紫微提示词指定年限日期会写入并从地址栏恢复', () => {
   const parsed = parsePromptState(new URLSearchParams(search));
   assert.equal(parsed.ziweiScope, 'yearly');
   assert.equal(parsed.ziweiScopeDate, '2028-06-01');
+});
+
+test('紫微提示词范围日期非法时应清空日期参数', () => {
+  const invalidCases = ['2028-02-31', '2028-13-01', '2028-06', '1899-01-01'];
+
+  for (const dateStr of invalidCases) {
+    const parsed = parsePromptState(
+      new URLSearchParams({
+        ziweiScope: 'daily',
+        ziweiScopeDate: dateStr,
+      }),
+    );
+
+    assert.equal(parsed.ziweiScope, 'daily');
+    assert.equal(parsed.ziweiScopeDate, '');
+  }
+});
+
+test('紫微提示词范围日期应保留合法运限推算出的 2100 年以后日期', () => {
+  const parsed = parsePromptState(
+    new URLSearchParams({
+      ziweiScope: 'yearly',
+      ziweiScopeDate: '2101-02-28',
+    }),
+  );
+
+  assert.equal(parsed.ziweiScope, 'yearly');
+  assert.equal(parsed.ziweiScopeDate, '2101-02-28');
 });
 
 test('八字加紫微增强来源可从地址栏恢复', () => {
@@ -566,6 +648,66 @@ test('星盘提示词指定年限日期会写入并从地址栏恢复', () => {
   const parsed = parsePromptState(new URLSearchParams(search));
   assert.equal(parsed.astrolabeScope, 'monthly');
   assert.equal(parsed.astrolabeScopeDate, '2028-06');
+});
+
+test('星盘提示词范围日期应按范围校验并清空非法日期', () => {
+  assert.equal(
+    parsePromptState(new URLSearchParams({ astrolabeScope: 'yearly', astrolabeScopeDate: '2028' }))
+      .astrolabeScopeDate,
+    '2028',
+  );
+  assert.equal(
+    parsePromptState(
+      new URLSearchParams({ astrolabeScope: 'monthly', astrolabeScopeDate: '2028-06' }),
+    ).astrolabeScopeDate,
+    '2028-06',
+  );
+  assert.equal(
+    parsePromptState(
+      new URLSearchParams({ astrolabeScope: 'daily', astrolabeScopeDate: '2028-02-29' }),
+    ).astrolabeScopeDate,
+    '2028-02-29',
+  );
+
+  const invalidCases = [
+    ['yearly', '2028-06'],
+    ['monthly', '2028-02-31'],
+    ['daily', '2028-02-31'],
+    ['daily', '2028-06'],
+    ['daily', '1899-01-01'],
+  ] as const;
+
+  for (const [scope, dateStr] of invalidCases) {
+    const parsed = parsePromptState(
+      new URLSearchParams({
+        astrolabeScope: scope,
+        astrolabeScopeDate: dateStr,
+      }),
+    );
+
+    assert.equal(parsed.astrolabeScope, scope);
+    assert.equal(parsed.astrolabeScopeDate, '');
+  }
+});
+
+test('星盘提示词范围日期应保留 2100 年以后的合法行运日期', () => {
+  assert.equal(
+    parsePromptState(new URLSearchParams({ astrolabeScope: 'yearly', astrolabeScopeDate: '2101' }))
+      .astrolabeScopeDate,
+    '2101',
+  );
+  assert.equal(
+    parsePromptState(
+      new URLSearchParams({ astrolabeScope: 'monthly', astrolabeScopeDate: '2101-02' }),
+    ).astrolabeScopeDate,
+    '2101-02',
+  );
+  assert.equal(
+    parsePromptState(
+      new URLSearchParams({ astrolabeScope: 'daily', astrolabeScopeDate: '2101-02-28' }),
+    ).astrolabeScopeDate,
+    '2101-02-28',
+  );
 });
 
 test('结果页解析只认当前页面使用的新版运势参数', () => {

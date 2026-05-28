@@ -62,6 +62,24 @@ function formatSolarDateKey(year: number, month: number, day: number): string {
   return `${year}-${formatNumber(month)}-${formatNumber(day)}`;
 }
 
+function assertYear(year: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+    throw new Error('年份需在 1900-2100 之间。');
+  }
+}
+
+function assertBaziMonthIndex(month: number) {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('节令月序号需在 1-12 之间。');
+  }
+}
+
+function assertValidDate(date: Date, label: string) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new Error(`${label}不是有效日期。`);
+  }
+}
+
 function formatSolarDayKey(solarDay: {
   getYear(): number;
   getMonth(): number;
@@ -187,16 +205,16 @@ function buildBaziMonthInfoFromTerm(term: SolarTermInstance, index: number): Det
 }
 
 function getYearMonthsGanZhiDetailed(year: number): DetailedBaziMonthInfo[] {
+  assertYear(year);
   return Array.from({ length: 12 }, (_, offset) =>
     buildBaziMonthInfoFromTerm(SolarTerm.fromIndex(year, 3 + offset * 2), offset + 1),
   );
 }
 
 function getMonthDaysInfoDetailed(year: number, month: number): DetailedBaziMonthDayInfo[] {
+  assertYear(year);
+  assertBaziMonthIndex(month);
   const monthInfo = getYearMonthsGanZhiDetailed(year)[month - 1];
-  if (!monthInfo) {
-    return [];
-  }
 
   const termDateMap = buildTermDateMap([year - 1, year, year + 1, year + 2]);
   const firstDay = startOfLocalDay(monthInfo.startAt);
@@ -261,6 +279,7 @@ function getMonthDaysInfoDetailed(year: number, month: number): DetailedBaziMont
 }
 
 export function getCalendarInfo(date: Date = new Date()): CalendarInfo {
+  assertValidDate(date, '时间');
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -348,6 +367,8 @@ export function getBaziMonthIndexByDate(
   year: number,
   referenceDate: Date = new Date(),
 ): number | undefined {
+  assertYear(year);
+  assertValidDate(referenceDate, '参考时间');
   return getYearMonthsGanZhiDetailed(year).find(
     (item) =>
       referenceDate.getTime() >= item.startAt.getTime() &&
@@ -360,6 +381,9 @@ export function getBaziDayIndexByDate(
   monthIndex: number,
   referenceDate: Date = new Date(),
 ): number | undefined {
+  assertYear(year);
+  assertBaziMonthIndex(monthIndex);
+  assertValidDate(referenceDate, '参考时间');
   return getMonthDaysInfoDetailed(year, monthIndex).find(
     (item) =>
       referenceDate.getTime() >= item.startAt.getTime() &&
@@ -373,6 +397,7 @@ export function getYearInfo(year: number): {
   zodiac: string;
   months: BaziMonthInfo[];
 } {
+  assertYear(year);
   const midYear = SolarTime.fromYmdHms(year, 6, 15, 12, 0, 0);
   const eightChar = midYear.getLunarHour().getEightChar();
   const yearGanZhi = eightChar.getYear().getName();
@@ -390,6 +415,8 @@ export function getYearInfo(year: number): {
 }
 
 export function getMonthDaysInfo(year: number, month: number): BaziMonthDayInfo[] {
+  assertYear(year);
+  assertBaziMonthIndex(month);
   return getMonthDaysInfoDetailed(year, month).map(
     ({ startAt: _startAt, endAt: _endAt, ...item }) => item,
   );

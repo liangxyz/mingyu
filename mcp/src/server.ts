@@ -10,6 +10,9 @@ import { registerQimenTool } from './tools/qimen.js';
 import { registerLiurenTool } from './tools/liuren.js';
 import { registerTarotTool } from './tools/tarot.js';
 import { registerSsgwTool } from './tools/ssgw.js';
+import { registerAlmanacTool } from './tools/almanac.js';
+import { registerLenormandTool } from './tools/lenormand.js';
+import { registerAstrolabeTool } from './tools/astrolabe.js';
 
 const server = new McpServer(
   {
@@ -21,7 +24,7 @@ const server = new McpServer(
       tools: {},
     },
     instructions:
-      '命语 MCP Server：提供八字排盘、紫微斗数、六爻、梅花易数、奇门遁甲、大六壬、塔罗牌、灵签等命理占卜工具。AI 可调用排盘工具获取结构化数据，也可调用一站式提示词工具直接获得排盘结果和结构化 AI 解读提示词。',
+      '命语 MCP Server：提供八字排盘、紫微斗数、六爻、梅花易数、小六壬、奇门遁甲、大六壬、塔罗牌、雷诺曼、灵签、黄历择日、星盘等命理占卜工具。AI 可调用排盘工具获取结构化数据，也可调用一站式提示词工具直接获得排盘结果和结构化 AI 解读提示词。',
   },
 );
 
@@ -34,6 +37,9 @@ registerQimenTool(server);
 registerLiurenTool(server);
 registerTarotTool(server);
 registerSsgwTool(server);
+registerAlmanacTool(server);
+registerLenormandTool(server);
+registerAstrolabeTool(server);
 
 const transport = new StdioServerTransport();
 

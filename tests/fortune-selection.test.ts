@@ -6,6 +6,7 @@ import {
   buildFortuneSelectionContext,
   normalizeFortuneSelection,
 } from '../src/utils/bazi/fortuneSelection';
+import { getDayHourBreakdown } from '../src/utils/bazi/fortuneSelection/helpers/breakdown';
 import type { BaziChartResult } from '../src/utils/bazi/baziTypes';
 
 function createMockResult(): BaziChartResult {
@@ -190,6 +191,12 @@ test('选择流日时只保留该流日本身', () => {
   assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /【主证】流日干支与十神/);
   assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /按子初换日/);
   assert.match(context.promptPayload.evidenceLines?.join('\n') ?? '', /不得改写长期命局或整年趋势/);
+});
+
+test('流日时辰拆解应先拒绝无效日期', () => {
+  assert.throws(() => getDayHourBreakdown(2026, 2, 31), /日期需在 1-28 之间/);
+  assert.throws(() => getDayHourBreakdown(2026, 13, 1), /月份需在 1-12 之间/);
+  assert.throws(() => getDayHourBreakdown(1899, 1, 1), /年份需在 1900-2100 之间/);
 });
 
 test('交运年份默认应归到后一步大运，而不是继续挂在童运或前一步运里', () => {

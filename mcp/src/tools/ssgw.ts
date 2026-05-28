@@ -2,7 +2,11 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { drawRandomSign } from '../../../src/lib/divination/algorithms/ssgw.js';
 import { resultOutputSchema } from '../schemas.js';
-import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
+import {
+  createErrorToolResult,
+  createStructuredToolResult,
+  getErrorMessage,
+} from '../tool-results.js';
 import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-common.js';
 
 const ssgwSchema = z.object({});
@@ -13,7 +17,8 @@ export function registerSsgwTool(server: McpServer) {
   server.registerTool(
     'divine_ssgw',
     {
-      description: '三山国王灵签求签：模拟真实求签过程，从 100 签中随机抽取，含签题、签诗、典故故事及详细解签',
+      description:
+        '三山国王灵签求签：模拟真实求签过程，从 100 签中随机抽取，含签题、签诗、典故故事及详细解签',
       inputSchema: ssgwSchema.shape,
       outputSchema: resultOutputSchema,
     },
@@ -30,7 +35,8 @@ export function registerSsgwTool(server: McpServer) {
   server.registerTool(
     'ssgw_prompt',
     {
-      description: '三山国王灵签求签并生成结构化 AI 解读提示词：一次调用返回灵签结果和可直接复制给 AI 的提示词',
+      description:
+        '三山国王灵签求签并生成结构化 AI 解读提示词：一次调用返回灵签结果和可直接复制给 AI 的提示词',
       inputSchema: ssgwPromptSchema.shape,
       outputSchema: {
         result: z.unknown().describe('灵签结果'),

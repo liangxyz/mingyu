@@ -15,7 +15,16 @@ import {
   type ZiweiPromptTopic,
 } from '../../../src/lib/public-api/prompt-builders.js';
 import { ziweiOutputSchema } from '../schemas.js';
-import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
+import {
+  createErrorToolResult,
+  createStructuredToolResult,
+  getErrorMessage,
+} from '../tool-results.js';
+import {
+  assertMcpBirthDate,
+  readMcpIntegerLikeInRange,
+  readMcpNumberLikeInRange,
+} from './input-helpers.js';
 
 const ziweiSchema = z.object({
   name: z.string().optional().describe('姓名（可选）'),
@@ -24,8 +33,18 @@ const ziweiSchema = z.object({
   year: z.string().describe('出生年，如 1990'),
   month: z.string().describe('出生月，如 5'),
   day: z.string().describe('出生日，如 15'),
-  timeIndex: z.number().int().min(0).max(12).describe('时辰索引：0=早子时,1=丑时,...,12=晚子时'),
+  timeIndex: z
+    .number()
+    .int()
+    .min(0)
+    .max(12)
+    .optional()
+    .describe('时辰索引：0=早子时,1=丑时,...,12=晚子时；未启用真太阳时时必填'),
   isLeapMonth: z.boolean().optional().describe('是否为闰月（仅农历有效）'),
+  useTrueSolarTime: z.boolean().optional().describe('是否启用真太阳时校正'),
+  birthHour: z.string().optional().describe('精准出生小时，启用真太阳时时必填，如 1'),
+  birthMinute: z.string().optional().describe('精准出生分钟，启用真太阳时时必填，如 20'),
+  birthLongitude: z.string().optional().describe('出生地经度，启用真太阳时时必填，如 116.4074'),
 });
 
 const ziweiPromptSchema = ziweiSchema.extend({
@@ -39,12 +58,54 @@ const ziweiPromptSchema = ziweiSchema.extend({
   promptScope: z
     .enum(ZIWEI_PROMPT_SCOPES)
     .optional()
-    .describe('提示词运限范围：origin=本命, decadal=大限, yearly=流年, monthly=流月, daily=流日, hourly=流时, age=年龄'),
+    .describe(
+      '提示词运限范围：origin=本命, decadal=大限, yearly=流年, monthly=流月, daily=流日, hourly=流时, age=年龄',
+    ),
   promptMode: z
     .enum(PROMPT_MODES)
     .optional()
     .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
 });
+
+function buildMcpZiweiChartInput(args: z.infer<typeof ziweiSchema>) {
+  const useTrueSolarTime = args.useTrueSolarTime ?? false;
+  assertMcpBirthDate({
+    year: args.year,
+    month: args.month,
+    day: args.day,
+    dateType: args.dateType,
+    isLeapMonth: args.isLeapMonth ?? false,
+  });
+  if (!useTrueSolarTime && typeof args.timeIndex !== 'number') {
+    throw new Error('请选择出生时辰。');
+  }
+  const trueSolarTimeInput = useTrueSolarTime
+    ? {
+        timeIndex: '' as const,
+        birthHour: String(readMcpIntegerLikeInRange(args.birthHour, 'birthHour', 0, 23)),
+        birthMinute: String(readMcpIntegerLikeInRange(args.birthMinute, 'birthMinute', 0, 59)),
+        birthLongitude: String(
+          readMcpNumberLikeInRange(args.birthLongitude, 'birthLongitude', -180, 180),
+        ),
+      }
+    : null;
+  const timeIndex: number | '' = trueSolarTimeInput ? '' : args.timeIndex!;
+
+  return buildZiweiChartInput({
+    name: args.name || '',
+    gender: args.gender,
+    dateType: args.dateType,
+    year: args.year,
+    month: args.month,
+    day: args.day,
+    timeIndex,
+    isLeapMonth: args.isLeapMonth ?? false,
+    useTrueSolarTime,
+    birthHour: trueSolarTimeInput?.birthHour ?? args.birthHour ?? '',
+    birthMinute: trueSolarTimeInput?.birthMinute ?? args.birthMinute ?? '',
+    birthLongitude: trueSolarTimeInput?.birthLongitude ?? args.birthLongitude ?? '',
+  });
+}
 
 export function registerZiweiTool(server: McpServer) {
   server.registerTool(
@@ -56,17 +117,7 @@ export function registerZiweiTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const input = buildZiweiChartInput({
-          name: args.name || '',
-          gender: args.gender,
-          dateType: args.dateType,
-          year: args.year,
-          month: args.month,
-          day: args.day,
-          timeIndex: args.timeIndex,
-          isLeapMonth: args.isLeapMonth ?? false,
-          useTrueSolarTime: false,
-        });
+        const input = buildMcpZiweiChartInput(args);
 
         const result = await calculateFullZiweiChart(input);
         return createStructuredToolResult(buildSerializableZiweiResult(result));
@@ -79,7 +130,8 @@ export function registerZiweiTool(server: McpServer) {
   server.registerTool(
     'ziwei_prompt',
     {
-      description: '紫微斗数排盘并生成结构化 AI 解读提示词：一次调用返回命盘数据和可直接复制给 AI 的提示词',
+      description:
+        '紫微斗数排盘并生成结构化 AI 解读提示词：一次调用返回命盘数据和可直接复制给 AI 的提示词',
       inputSchema: ziweiPromptSchema.shape,
       outputSchema: {
         result: z.unknown().describe('紫微命盘数据'),
@@ -88,17 +140,7 @@ export function registerZiweiTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const input = buildZiweiChartInput({
-          name: args.name || '',
-          gender: args.gender,
-          dateType: args.dateType,
-          year: args.year,
-          month: args.month,
-          day: args.day,
-          timeIndex: args.timeIndex,
-          isLeapMonth: args.isLeapMonth ?? false,
-          useTrueSolarTime: false,
-        });
+        const input = buildMcpZiweiChartInput(args);
 
         const result = await calculateFullZiweiChart(input);
         return createStructuredToolResult({

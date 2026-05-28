@@ -38,7 +38,7 @@ description: 通过 aov.cc 公开 API 调用命理、占卜和一站式提示词
 
 1. 先读取 `GET /manifest` 或 `GET /openapi.json` 确认接口能力。
 2. 只需要结构化数据时，调用 `/calculate` 或 `/divination/{method}` 排盘接口。
-3. 需要 AI 解读提示词时，优先调用对应 `/prompt` 一站式接口，直接读取 `data.result` 和 `data.prompt`。
+3. 需要 AI 解读提示词时，优先调用对应 `/prompt` 一站式接口，直接读取 `data.result` 和 `data.prompt`；占卜类接口还会返回 `data.summary`。
 4. 向用户展示结果时，说明这是排盘和提示词数据，不替代医疗、法律、投资等专业建议。
 
 ## 常用接口
@@ -145,7 +145,7 @@ curl -X POST https://aov.cc/api/v1/divination/astrolabe \
 - `dateType`：使用 `solar`（阳历）或 `lunar`（农历）。
 - `timeIndex`：范围为 `0` 到 `12`，其中 `0` 为早子时，`1` 为丑时，...，`11` 为亥时，`12` 为晚子时。
 - `isLeapMonth`：布尔值，仅农历有效。
-- `useTrueSolarTime`：布尔值，启用真太阳时校正。开启后需提供 `birthHour`、`birthMinute`、`birthLongitude`，此时 `timeIndex` 由程序自动换算。
+- `useTrueSolarTime`：布尔值，启用真太阳时校正。八字和紫微开启后需提供 `birthHour`、`birthMinute`、`birthLongitude`，此时 `timeIndex` 由程序自动换算；星盘开启后使用 `hour`、`minute` 和 `longitude` 校正。
 
 八字 `promptTopic` 支持以下主题：
 `general`（综合）、`recent`（近期）、`career`（事业）、`job-change`（跳槽）、`startup-partnership`（创业合作）、`investment-partnership`（投资合作）、`wealth`（财运）、`marriage`（婚恋）、`relationship-push`（感情推进）、`relationship-decision`（关系去留）、`reconciliation-decision`（复合判断）、`children`（子女）、`family`（家庭）、`home-move`（搬家置业）、`settle-relocate`（定居换城）、`social`（人际合作）、`emotion`（情绪心理）、`health`（健康）、`parents`（父母）、`study`（学业）、`study-advance`（考证进修）、`exam-landing`（考试上岸）、`growth`（成长方向）、`talent`（天赋特质）。
@@ -159,13 +159,13 @@ curl -X POST https://aov.cc/api/v1/divination/astrolabe \
 
 占卜通用参数：
 
-- `customDate`：ISO 8601 时间字符串，不提供则使用当前时间。
+- `customDate`：带时区的 ISO 8601 时间字符串，例如 `2025-01-01T08:00:00+08:00`；不提供则使用当前时间。
 - `question`：所有 `/prompt` 接口的必填字段，黄历择日 `/prompt` 中可不填。
 - `supplementaryInfo`：对象类型，占卜补充信息。
 
 各占卜方法特有参数：
 
-- 梅花易数 `method`：`time`（时间起卦）、`number`（数字起卦）、`random`（随机起卦）、`external`（外应起卦）。`method` 为 `number` 时需提供 `number`（正整数）。
+- 梅花易数 `method`：`time`（时间起卦）、`number`（数字起卦）、`random`（随机起卦）、`external`（外应起卦）。`method` 为 `number` 时需提供 `number`（正整数）；`method` 为 `external` 时需提供 `externalOmens`，至少两项可映射外应，并提供 `count` 作为动爻数量，例如 `{"direction":"南","object":"火电文书","count":3}`。
 - 小六壬 `xiaoliurenMethod`：`time`、`number`、`random`。`number` 时需提供 `xiaoliurenNumber`（正整数）。
 - 塔罗 `spreadType`：`single`（单牌指引）、`three`（时间流）、`love`（爱情）、`career`（事业）、`decision`（选择）。
 - 六爻 `liuyaoTemplate`：`general`（通用）、`ganqing`（感情）、`shiye`（事业）、`caifu`（财运）、`guaishen`（鬼神怪异）。
@@ -173,4 +173,4 @@ curl -X POST https://aov.cc/api/v1/divination/astrolabe \
 - 黄历择日 `topic`：`marriage`（嫁娶）、`move`（搬家）、`opening`（开业）、`contract`（签约）、`travel`（出行）、`medical`（求医）、`study`（求学）、`custom`（自定义）。
 - 黄历择日 `startDate`、`endDate`：日期范围字符串。`participants`：参与者数组，每人包含 `id`、`name`、`gender`、`year`、`month`、`day`、`timeIndex`、`dateType`、`isLeapMonth`。
 - 雷诺曼 `spreadType`：`single`、`three`、`relationship`、`decision`、`nine`。
-- 星盘 `year`、`month`、`day`、`hour`、`minute`：出生时间。`latitude`、`longitude`：经纬度。`timezone`：时区偏移。`locationName`：地点名称。
+- 星盘 `year`、`month`、`day`、`hour`、`minute`：出生时间。`latitude`、`longitude`：经纬度。`timezone`：时区偏移。`locationName`：地点名称。可传 `useTrueSolarTime` 启用真太阳时校正；提示词接口可传 `astrolabeTopic` 和 `astrolabeScopeText`，用于写入本命、流年、流月或流日分析对象。

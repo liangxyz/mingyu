@@ -37,18 +37,66 @@ import { buildZiweiChartInput, calculateFullZiweiChart } from '../src/lib/full-c
 test('parseZiweiDateParts 正确解析合法日期', () => {
   assert.deepEqual(parseZiweiDateParts('2024-05-13'), { year: 2024, month: 5, day: 13 });
   assert.deepEqual(parseZiweiDateParts('1990-12-01'), { year: 1990, month: 12, day: 1 });
+  assert.deepEqual(parseZiweiDateParts('2101-02-28'), { year: 2101, month: 2, day: 28 });
+});
+
+test('八字排盘入口应拒绝空白数字文本而不是宽松转成 0', () => {
+  assert.throws(
+    () =>
+      buildPersonFromInput({
+        gender: 'male',
+        dateType: 'solar',
+        year: ' ',
+        month: '5',
+        day: '15',
+        timeIndex: 1,
+        isLeapMonth: false,
+        useTrueSolarTime: false,
+        birthHour: '',
+        birthMinute: '',
+        birthPlace: '',
+        birthLongitude: '',
+      }),
+    /出生年份必须是整数/,
+  );
+
+  assert.throws(
+    () =>
+      buildPersonFromInput({
+        gender: 'male',
+        dateType: 'solar',
+        year: '1990',
+        month: '5',
+        day: '15',
+        timeIndex: ' ' as unknown as number,
+        isLeapMonth: false,
+        useTrueSolarTime: false,
+        birthHour: '',
+        birthMinute: '',
+        birthPlace: '',
+        birthLongitude: '',
+      }),
+    /出生时辰必须是整数/,
+  );
 });
 
 test('parseZiweiDateParts 对非法日期返回 null', () => {
   assert.equal(parseZiweiDateParts(''), null);
   assert.equal(parseZiweiDateParts('invalid'), null);
   assert.equal(parseZiweiDateParts('2024--01'), null);
+  assert.equal(parseZiweiDateParts('2024-2-01'), null);
+  assert.equal(parseZiweiDateParts('2024-13-01'), null);
+  assert.equal(parseZiweiDateParts('2024-02-31'), null);
+  assert.equal(parseZiweiDateParts('1899-01-01'), null);
+  assert.equal(parseZiweiDateParts('2201-01-01'), null);
 });
 
 test('buildZiweiMonthAnchorDate 返回月中日期', () => {
   assert.equal(buildZiweiMonthAnchorDate('2024-05-13'), '2024-05-15');
   assert.equal(buildZiweiMonthAnchorDate('2024-01-01'), '2024-01-15');
+  assert.equal(buildZiweiMonthAnchorDate('2101-02-28'), '2101-02-15');
   assert.equal(buildZiweiMonthAnchorDate('invalid'), '');
+  assert.equal(buildZiweiMonthAnchorDate('2024-02-31'), '');
 });
 
 test('findZiweiDecadalIndexByDate 按日期范围查找大限索引', () => {
@@ -71,9 +119,11 @@ test('findZiweiYearOptionDate 按年份匹配', () => {
     { year: 2022, dateStr: '2022-01-01' },
     { year: 2023, dateStr: '2023-01-01' },
     { year: 2024, dateStr: '2024-01-01' },
+    { year: 2101, dateStr: '2101-02-28' },
   ];
 
   assert.equal(findZiweiYearOptionDate(options, '2023-06-15'), '2023-01-01');
+  assert.equal(findZiweiYearOptionDate(options, '2101-05-15'), '2101-02-28');
   assert.equal(findZiweiYearOptionDate(options, 'invalid'), '2022-01-01');
   assert.equal(findZiweiYearOptionDate([], '2023-01-01'), '');
 });
@@ -83,10 +133,12 @@ test('findZiweiMonthOptionDate 按年月匹配', () => {
     { dateStr: '2023-01-01', label: '1月' },
     { dateStr: '2023-05-01', label: '5月' },
     { dateStr: '2024-03-01', label: '3月' },
+    { dateStr: '2101-02-15', label: '2月' },
   ] as Parameters<typeof findZiweiMonthOptionDate>[0];
 
   assert.equal(findZiweiMonthOptionDate(options, '2023-05-15'), '2023-05-01');
   assert.equal(findZiweiMonthOptionDate(options, '2024-03-10'), '2024-03-01');
+  assert.equal(findZiweiMonthOptionDate(options, '2101-02-28'), '2101-02-15');
   assert.equal(findZiweiMonthOptionDate(options, 'invalid'), '2023-01-01');
 });
 
@@ -94,10 +146,13 @@ test('findZiweiDayOptionDate 按日匹配', () => {
   const options = [
     { day: 1, dateStr: '2024-05-01' },
     { day: 15, dateStr: '2024-05-15' },
+    { day: 28, dateStr: '2101-02-28' },
   ];
 
   assert.equal(findZiweiDayOptionDate(options, '2024-05-15'), '2024-05-15');
+  assert.equal(findZiweiDayOptionDate(options, '2101-02-28'), '2101-02-28');
   assert.equal(findZiweiDayOptionDate(options, '2024-05-20'), '2024-05-01');
+  assert.equal(findZiweiDayOptionDate(options, '2024-06-15'), '2024-05-01');
   assert.equal(findZiweiDayOptionDate(options, 'invalid'), '2024-05-01');
 });
 
@@ -165,6 +220,8 @@ test('joinMultilineText 把顿号换成换行', () => {
 test('parseOptionalNumber 解析可选数字', () => {
   assert.equal(parseOptionalNumber('42'), 42);
   assert.equal(parseOptionalNumber('0'), 0);
+  assert.equal(parseOptionalNumber('0x10'), undefined);
+  assert.equal(parseOptionalNumber('1e2'), undefined);
   assert.equal(parseOptionalNumber(''), undefined);
   assert.equal(parseOptionalNumber('  '), undefined);
   assert.equal(parseOptionalNumber('invalid'), undefined);

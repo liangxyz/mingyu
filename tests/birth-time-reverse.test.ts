@@ -179,6 +179,48 @@ test('反推时辰在没有补充线索时不应假定存在已补充资料', ()
   assert.doesNotMatch(prompt, /控制在 4 到 6 个问题/);
 });
 
+test('反推时辰三柱生成应先拒绝无效出生日期', () => {
+  const invalidCases: Array<[Parameters<typeof buildThreePillarsProfile>[0], RegExp]> = [
+    [
+      {
+        gender: 'male',
+        dateType: 'solar',
+        year: '0000',
+        month: '1',
+        day: '1',
+        isLeapMonth: false,
+      },
+      /出生年份需在 1900-2100 之间/,
+    ],
+    [
+      {
+        gender: 'male',
+        dateType: 'solar',
+        year: '2026',
+        month: '2',
+        day: '31',
+        isLeapMonth: false,
+      },
+      /日期需在 1-28 之间/,
+    ],
+    [
+      {
+        gender: 'female',
+        dateType: 'lunar',
+        year: '1998',
+        month: '13',
+        day: '1',
+        isLeapMonth: false,
+      },
+      /出生月份需在 1-12 之间/,
+    ],
+  ];
+
+  for (const [input, messagePattern] of invalidCases) {
+    assert.throws(() => buildThreePillarsProfile(input), messagePattern);
+  }
+});
+
 test('未知时辰自定义基础提示词会明确只按三柱作保守判断，且不强塞问题框架', () => {
   const profile = buildThreePillarsProfile({
     gender: 'female',

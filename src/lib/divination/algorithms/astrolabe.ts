@@ -5,6 +5,7 @@ import type {
   AstrolabeData,
   AstrolabePoint,
 } from '../../../types/divination';
+import { daysInSolarMonth } from '../../date-validation';
 import { calculateTrueSolarTime } from '../../../utils/bazi/trueSolarTime';
 
 const PLANET_LABELS: Record<string, string> = {
@@ -51,11 +52,28 @@ const ASPECT_LABELS: Record<string, string> = {
 };
 
 function requireNumber(value: string, label: string) {
-  const number = Number(value);
+  const text = value.trim();
+  if (!/^[-+]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text)) {
+    throw new Error(`星盘需要填写有效的${label}`);
+  }
+
+  const number = Number(text);
   if (!Number.isFinite(number)) {
     throw new Error(`星盘需要填写有效的${label}`);
   }
   return number;
+}
+
+function assertIntegerRange(value: number, label: string, min: number, max: number) {
+  if (!Number.isInteger(value) || value < min || value > max) {
+    throw new Error(`${label}需在 ${min}-${max} 之间。`);
+  }
+}
+
+function assertNumberRange(value: number, label: string, min: number, max: number) {
+  if (value < min || value > max) {
+    throw new Error(`${label}需在 ${min} 到 ${max} 之间。`);
+  }
 }
 
 function formatPosition(signName: string, degree: number, minute: number) {
@@ -129,6 +147,16 @@ function localTimestamp(input: AstrolabeBirthInput) {
   const day = requireNumber(input.day, '出生日期');
   const hour = requireNumber(input.hour, '出生小时');
   const minute = requireNumber(input.minute, '出生分钟');
+
+  assertIntegerRange(year, '出生年份', 1900, 2100);
+  assertIntegerRange(month, '出生月份', 1, 12);
+  const maxDay = daysInSolarMonth(year, month);
+  if (!Number.isInteger(day) || day < 1 || day > maxDay) {
+    throw new Error(`日期需在 1-${maxDay} 之间。`);
+  }
+  assertIntegerRange(hour, '出生小时', 0, 23);
+  assertIntegerRange(minute, '出生分钟', 0, 59);
+
   return { year, month, day, hour, minute };
 }
 
@@ -147,6 +175,9 @@ export function generateAstrolabe(input: AstrolabeBirthInput): AstrolabeData {
   const latitude = requireNumber(input.latitude, '出生地纬度');
   const longitude = requireNumber(input.longitude, '出生地经度');
   const timezone = requireNumber(input.timezone, '时区');
+  assertNumberRange(latitude, '出生地纬度', -90, 90);
+  assertNumberRange(longitude, '出生地经度', -180, 180);
+  assertNumberRange(timezone, '时区', -12, 14);
   const trueSolarResult = input.useTrueSolarTime
     ? calculateTrueSolarTime(standardBirth, longitude)
     : null;

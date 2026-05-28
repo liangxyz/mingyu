@@ -12,6 +12,7 @@ import type {
   XiaoliurenDivinationMethod,
 } from '../../../types/divination';
 import type { DivinationMethodId } from '../config';
+import { daysInSolarMonth } from '../../date-validation';
 import {
   buildAstrolabeTopicGuidanceSection,
   buildAstrolabeTopicOutputRequirement,
@@ -328,7 +329,7 @@ export function buildDivinationPrompt(
 }
 
 function buildSupplementaryInfo(draft: DivinationDraft): SupplementaryInfo | undefined {
-  const birthYear = draft.birthYear.trim() ? Number(draft.birthYear) : undefined;
+  const birthYear = draft.birthYear.trim() ? readOptionalPositiveIntegerText(draft.birthYear) : undefined;
   const hasBirthYear = typeof birthYear === 'number' && Number.isFinite(birthYear);
 
   const info: SupplementaryInfo = {};
@@ -343,7 +344,7 @@ function buildSupplementaryInfo(draft: DivinationDraft): SupplementaryInfo | und
     info.meihuaSettings = {
       method: draft.meihuaMethod,
       ...(draft.meihuaMethod === 'number' && draft.meihuaNumber.trim()
-        ? { number: Number(draft.meihuaNumber) }
+        ? { number: readPositiveIntegerText(draft.meihuaNumber, '数字起卦') }
         : {}),
     };
   }
@@ -360,23 +361,18 @@ function validateDraft(draft: DivinationDraft) {
   }
 
   if (draft.method === 'meihua' && draft.meihuaMethod === 'number') {
-    const number = Number(draft.meihuaNumber);
-    if (!Number.isInteger(number) || number <= 0) {
-      throw new Error('数字起卦需要填写正整数');
-    }
+    readPositiveIntegerText(draft.meihuaNumber, '数字起卦');
   }
 
   if (draft.method === 'xiaoliuren' && draft.xiaoliurenMethod === 'number') {
-    const number = Number(draft.xiaoliurenNumber);
-    if (!Number.isInteger(number) || number <= 0) {
-      throw new Error('小六壬数字起课需要填写正整数');
-    }
+    readPositiveIntegerText(draft.xiaoliurenNumber, '小六壬数字起课');
   }
 
   if (draft.method === 'almanac') {
     if (!draft.almanacStartDate || !draft.almanacEndDate) {
       throw new Error('黄历择日需要选择开始日期和结束日期');
     }
+    validateDateRange(draft.almanacStartDate, draft.almanacEndDate);
   }
 
   if (draft.method === 'astrolabe') {
@@ -393,7 +389,120 @@ function validateDraft(draft: DivinationDraft) {
     if (requiredFields.some((value) => !value.trim())) {
       throw new Error('星盘需要填写出生时间、经纬度和时区');
     }
+    validateAstrolabeDraft(draft);
   }
+}
+
+function readIntegerText(value: string, label: string) {
+  const text = value.trim();
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`${label}必须是整数`);
+  }
+  return Number(text);
+}
+
+function readOptionalPositiveIntegerText(value: string) {
+  const text = value.trim();
+  if (!/^\d+$/.test(text)) {
+    return undefined;
+  }
+  const number = Number(text);
+  return Number.isSafeInteger(number) && number > 0 ? number : undefined;
+}
+
+function readPositiveIntegerText(value: string, label: string) {
+  const text = value.trim();
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`${label}需要填写正整数`);
+  }
+  const number = Number(text);
+  if (!Number.isSafeInteger(number) || number <= 0) {
+    throw new Error(`${label}需要填写正整数`);
+  }
+  return number;
+}
+
+function readNumberText(value: string, label: string) {
+  const text = value.trim();
+  if (!/^[-+]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text)) {
+    throw new Error(`${label}必须是数字`);
+  }
+  const number = Number(text);
+  if (!Number.isFinite(number)) {
+    throw new Error(`${label}必须是数字`);
+  }
+  return number;
+}
+
+function assertNumberRange(value: number, label: string, min: number, max: number) {
+  if (value < min) {
+    throw new Error(`${label}不能小于 ${min}`);
+  }
+  if (value > max) {
+    throw new Error(`${label}不能大于 ${max}`);
+  }
+}
+
+function readDateText(value: string, fieldName: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    throw new Error(`${fieldName} 需要使用 YYYY-MM-DD 格式`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < 1900 || year > 2100) {
+    throw new Error(`${fieldName} 年份需在 1900-2100 之间`);
+  }
+  if (month < 1 || month > 12) {
+    throw new Error(`${fieldName} 不是有效日期`);
+  }
+
+  const maxDay = daysInSolarMonth(year, month);
+  if (day < 1 || day > maxDay) {
+    throw new Error(`${fieldName} 不是有效日期`);
+  }
+
+  return {
+    date: new Date(Date.UTC(year, month - 1, day)),
+  };
+}
+
+function validateDateRange(startDate: string, endDate: string) {
+  const start = readDateText(startDate, 'startDate');
+  const end = readDateText(endDate, 'endDate');
+  const diffDays = Math.round((end.date.getTime() - start.date.getTime()) / 86400000);
+
+  if (diffDays < 0) {
+    throw new Error('endDate 不能早于 startDate');
+  }
+  if (diffDays > 30) {
+    throw new Error('黄历择日一次最多比较 31 天，请缩小日期范围');
+  }
+}
+
+function validateAstrolabeDraft(draft: DivinationDraft) {
+  const year = readIntegerText(draft.astrolabeYear, '出生年份');
+  const month = readIntegerText(draft.astrolabeMonth, '出生月份');
+  const day = readIntegerText(draft.astrolabeDay, '出生日期');
+  assertNumberRange(year, '出生年份', 1900, 2100);
+  assertNumberRange(month, '出生月份', 1, 12);
+  const maxDay = daysInSolarMonth(year, month);
+  if (day < 1 || day > maxDay) {
+    throw new Error(`日期需在 1-${maxDay} 之间`);
+  }
+
+  const hour = readIntegerText(draft.astrolabeHour, '出生小时');
+  const minute = readIntegerText(draft.astrolabeMinute, '出生分钟');
+  const latitude = readNumberText(draft.astrolabeLatitude, '出生地纬度');
+  const longitude = readNumberText(draft.astrolabeLongitude, '出生地经度');
+  const timezone = readNumberText(draft.astrolabeTimezone, '时区');
+  assertNumberRange(hour, '出生小时', 0, 23);
+  assertNumberRange(minute, '出生分钟', 0, 59);
+  assertNumberRange(latitude, '出生地纬度', -90, 90);
+  assertNumberRange(longitude, '出生地经度', -180, 180);
+  assertNumberRange(timezone, '时区', -12, 14);
 }
 
 function buildAlmanacSessionTitle(data: AlmanacData) {
@@ -437,7 +546,7 @@ export async function generateDivinationSession(
       data = module.generateXiaoliuren({
         method: draft.xiaoliurenMethod,
         ...(draft.xiaoliurenMethod === 'number' && draft.xiaoliurenNumber.trim()
-          ? { number: Number(draft.xiaoliurenNumber) }
+          ? { number: readPositiveIntegerText(draft.xiaoliurenNumber, '小六壬数字起课') }
           : {}),
       });
       break;

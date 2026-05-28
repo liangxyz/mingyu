@@ -2,6 +2,7 @@ import { SolarTerm, SolarTime } from 'tyme4ts';
 import { MONTH_COMMANDER } from './baziDefinitions';
 import { getTenGod, getTenGodForBranch } from './baziUtils';
 import type { BaziChartResult, SeasonInfo, ShenShaResult } from './baziTypes';
+import { daysInSolarMonth } from '../../lib/date-validation';
 
 type SolarTermInstance = ReturnType<typeof SolarTerm.fromIndex>;
 type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>;
@@ -34,7 +35,25 @@ interface LiuriInfo {
   tenGodZhi: string;
 }
 
+function assertSolarDate(year: number, month: number, day: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+    throw new Error('年份需在 1900-2100 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+  if (!Number.isInteger(day) || day < 1) {
+    throw new Error('日期不能小于 1。');
+  }
+
+  const maxDay = daysInSolarMonth(year, month);
+  if (day > maxDay) {
+    throw new Error(`日期需在 1-${maxDay} 之间。`);
+  }
+}
+
 function createUtcDate(year: number, month: number, day: number): Date {
+  assertSolarDate(year, month, day);
   return new Date(Date.UTC(year, month - 1, day));
 }
 
@@ -43,7 +62,16 @@ function formatLocalDateTime(time: SolarTimeInstance): string {
 }
 
 function parseDateKey(dateKey: string): { year: number; month: number; day: number } {
-  const [year, month, day] = dateKey.split('-').map(Number);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) {
+    throw new Error('日期格式需为 YYYY-MM-DD。');
+  }
+
+  const [, yearText, monthText, dayText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  assertSolarDate(year, month, day);
   return { year, month, day };
 }
 
@@ -92,6 +120,13 @@ function collectSolarTermsInMonth(
 }
 
 export function calculateLiuyue(year: number, month: number, dayMaster: string): LiuyueInfo {
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+    throw new Error('年份需在 1900-2100 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+
   const solarTermsInMonth = collectSolarTermsInMonth(year, month);
   const firstJie = solarTermsInMonth.find(({ term }) => term.isJie());
   const nextMonth = getNextMonth(year, month);
@@ -132,6 +167,7 @@ export function calculateLiuri(
   day: number,
   dayMaster: string,
 ): LiuriInfo {
+  assertSolarDate(year, month, day);
   const solarTime = SolarTime.fromYmdHms(year, month, day, 12, 0, 0);
   const dayPillar = solarTime.getLunarHour().getEightChar().getDay();
   const gan = dayPillar.getHeavenStem().getName();
@@ -160,6 +196,10 @@ export function calculateLiuriRange(
   const currentDate = createUtcDate(start.year, start.month, start.day);
   const endDateUtc = createUtcDate(end.year, end.month, end.day);
   const result: LiuriInfo[] = [];
+
+  if (currentDate.getTime() > endDateUtc.getTime()) {
+    throw new Error('开始日期不能晚于结束日期。');
+  }
 
   while (currentDate.getTime() <= endDateUtc.getTime()) {
     result.push(

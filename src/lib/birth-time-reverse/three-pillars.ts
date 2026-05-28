@@ -5,6 +5,7 @@ import {
   getTenGodForBranch,
   getWuxing,
 } from '../../utils/bazi/baziUtils';
+import { getBirthDateValidationMessage } from '../date-validation';
 
 export type BirthBaseInput = {
   gender: 'male' | 'female';
@@ -46,17 +47,41 @@ export type ThreePillarsProfile = {
   promptText: string;
 };
 
-function normalizeNumber(value: string, fallback: string) {
-  return value.trim() || fallback;
+function readBirthInteger(value: string, label: string) {
+  const text = value.trim();
+  if (!text) {
+    throw new Error('请先填写完整的出生年月日。');
+  }
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`${label}必须是整数。`);
+  }
+  return Number(text);
 }
 
 function createBaseTime(input: BirthBaseInput) {
-  const year = Number(normalizeNumber(input.year, '0'));
-  const month = Number(normalizeNumber(input.month, '0'));
-  const day = Number(normalizeNumber(input.day, '0'));
+  const year = readBirthInteger(input.year, '出生年份');
+  const month = readBirthInteger(input.month, '出生月份');
+  const day = readBirthInteger(input.day, '出生日期');
 
-  if (!year || !month || !day) {
-    throw new Error('请先填写完整的出生年月日。');
+  if (year < 1900 || year > 2100) {
+    throw new Error('出生年份需在 1900-2100 之间。');
+  }
+  if (month < 1 || month > 12) {
+    throw new Error('出生月份需在 1-12 之间。');
+  }
+  if (day < 1) {
+    throw new Error('出生日期不能小于 1。');
+  }
+
+  const validationMessage = getBirthDateValidationMessage({
+    year,
+    month,
+    day,
+    dateType: input.dateType,
+    isLeapMonth: input.isLeapMonth,
+  });
+  if (validationMessage) {
+    throw new Error(validationMessage);
   }
 
   if (input.dateType === 'lunar') {

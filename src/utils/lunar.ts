@@ -113,10 +113,29 @@ export class LunarUtil {
     return 0;
   }
 
+  private static assertValidDate(date: Date): void {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      throw new Error('时间不是有效日期。');
+    }
+  }
+
+  private static assertSolarYear(year: number): void {
+    if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+      throw new Error('年份需在 1900-2100 之间。');
+    }
+  }
+
+  private static assertSolarMonth(month: number): void {
+    if (!Number.isInteger(month) || month < 1 || month > 12) {
+      throw new Error('月份需在 1-12 之间。');
+    }
+  }
+
   /**
    * 获取指定时间的完整信息
    */
   static getTimeInfo(date: Date): TimeInfo {
+    this.assertValidDate(date);
     try {
       const solar = SolarDay.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
       const lunar = solar.getLunarDay();
@@ -176,6 +195,7 @@ export class LunarUtil {
    */
   static getGanZhi(date?: Date): GanZhiInfo {
     const targetDate = date || new Date();
+    this.assertValidDate(targetDate);
     try {
       const solar = SolarDay.fromYmd(
         targetDate.getFullYear(),
@@ -209,6 +229,7 @@ export class LunarUtil {
    */
   static getLunar(date?: Date): LunarInfo {
     const targetDate = date || new Date();
+    this.assertValidDate(targetDate);
     try {
       const solar = SolarDay.fromYmd(
         targetDate.getFullYear(),
@@ -370,6 +391,8 @@ export class LunarUtil {
     year: number,
     month: number,
   ): { date: string; ganZhi: string; lunarDate: string }[] {
+    this.assertSolarYear(year);
+    this.assertSolarMonth(month);
     const daysInMonth = new Date(year, month, 0).getDate();
     const result = [];
     let firstError: unknown = null;
@@ -400,6 +423,7 @@ export class LunarUtil {
    * 获取指定公历年份每月的干支
    */
   static getGanZhiForYear(year: number): { month: number; ganZhi: string }[] {
+    this.assertSolarYear(year);
     const result = [];
     let firstError: unknown = null;
     for (let month = 1; month <= 12; month++) {

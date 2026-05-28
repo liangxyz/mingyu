@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { resultOutputSchema } from '../schemas.js';
-import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
+import {
+  createErrorToolResult,
+  createStructuredToolResult,
+  getErrorMessage,
+} from '../tool-results.js';
 import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-common.js';
 import { buildTarotSpread } from './divination-common.js';
 
@@ -35,7 +39,8 @@ export function registerTarotTool(server: McpServer) {
   server.registerTool(
     'tarot_prompt',
     {
-      description: '塔罗抽牌并生成结构化 AI 解读提示词：一次调用返回牌阵数据和可直接复制给 AI 的提示词',
+      description:
+        '塔罗抽牌并生成结构化 AI 解读提示词：一次调用返回牌阵数据和可直接复制给 AI 的提示词',
       inputSchema: tarotPromptSchema.shape,
       outputSchema: {
         result: z.unknown().describe('塔罗牌阵数据'),

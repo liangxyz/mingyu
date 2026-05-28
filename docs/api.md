@@ -41,31 +41,39 @@
 
 ## 接口列表
 
-| 接口 | 说明 |
-| --- | --- |
-| `GET /health` | 健康检查 |
-| `GET /manifest` | 获取 API 元数据 |
-| `GET /openapi.json` | 获取 OpenAPI 文档 |
-| `POST /bazi/calculate` | 八字排盘 |
-| `POST /bazi/prompt` | 八字排盘并生成 AI 解读提示词 |
-| `POST /ziwei/calculate` | 紫微斗数排盘 |
-| `POST /ziwei/prompt` | 紫微斗数排盘并生成 AI 解读提示词 |
-| `POST /divination/liuyao` | 六爻起卦 |
-| `POST /divination/liuyao/prompt` | 六爻起卦并生成 AI 解读提示词 |
-| `POST /divination/meihua` | 梅花易数起卦 |
-| `POST /divination/meihua/prompt` | 梅花易数起卦并生成 AI 解读提示词 |
-| `POST /divination/qimen` | 奇门遁甲排盘 |
-| `POST /divination/qimen/prompt` | 奇门遁甲排盘并生成 AI 解读提示词 |
-| `POST /divination/liuren` | 大六壬排盘 |
-| `POST /divination/liuren/prompt` | 大六壬排盘并生成 AI 解读提示词 |
-| `POST /divination/tarot` | 塔罗抽牌 |
-| `POST /divination/tarot/prompt` | 塔罗抽牌并生成 AI 解读提示词 |
-| `POST /divination/ssgw` | 三山国王灵签求签 |
-| `POST /divination/ssgw/prompt` | 三山国王灵签求签并生成 AI 解读提示词 |
+| 接口                                 | 说明                                 |
+| ------------------------------------ | ------------------------------------ |
+| `GET /health`                        | 健康检查                             |
+| `GET /manifest`                      | 获取 API 元数据                      |
+| `GET /openapi.json`                  | 获取 OpenAPI 文档                    |
+| `POST /bazi/calculate`               | 八字排盘                             |
+| `POST /bazi/prompt`                  | 八字排盘并生成 AI 解读提示词         |
+| `POST /ziwei/calculate`              | 紫微斗数排盘                         |
+| `POST /ziwei/prompt`                 | 紫微斗数排盘并生成 AI 解读提示词     |
+| `POST /divination/liuyao`            | 六爻起卦                             |
+| `POST /divination/liuyao/prompt`     | 六爻起卦并生成 AI 解读提示词         |
+| `POST /divination/meihua`            | 梅花易数起卦                         |
+| `POST /divination/meihua/prompt`     | 梅花易数起卦并生成 AI 解读提示词     |
+| `POST /divination/xiaoliuren`        | 小六壬起课                           |
+| `POST /divination/xiaoliuren/prompt` | 小六壬起课并生成 AI 解读提示词       |
+| `POST /divination/qimen`             | 奇门遁甲排盘                         |
+| `POST /divination/qimen/prompt`      | 奇门遁甲排盘并生成 AI 解读提示词     |
+| `POST /divination/liuren`            | 大六壬排盘                           |
+| `POST /divination/liuren/prompt`     | 大六壬排盘并生成 AI 解读提示词       |
+| `POST /divination/tarot`             | 塔罗抽牌                             |
+| `POST /divination/tarot/prompt`      | 塔罗抽牌并生成 AI 解读提示词         |
+| `POST /divination/ssgw`              | 三山国王灵签求签                     |
+| `POST /divination/ssgw/prompt`       | 三山国王灵签求签并生成 AI 解读提示词 |
+| `POST /divination/almanac`           | 黄历择日                             |
+| `POST /divination/almanac/prompt`    | 黄历择日并生成 AI 解读提示词         |
+| `POST /divination/lenormand`         | 雷诺曼抽牌                           |
+| `POST /divination/lenormand/prompt`  | 雷诺曼抽牌并生成 AI 解读提示词       |
+| `POST /divination/astrolabe`         | 星盘生成                             |
+| `POST /divination/astrolabe/prompt`  | 星盘生成并生成 AI 解读提示词         |
 
 ## 请求示例
 
-`/calculate` 和 `/divination/{method}` 接口只返回排盘、卦盘、牌阵或灵签数据。需要可直接发送给 AI 的完整提示词时，使用对应的 `/prompt` 一站式接口，返回结构为 `data.result` 和 `data.prompt`。
+`/calculate` 和 `/divination/{method}` 接口只返回排盘、卦盘、牌阵或灵签数据。需要可直接发送给 AI 的完整提示词时，使用对应的 `/prompt` 一站式接口，八字和紫微返回 `data.result`、`data.prompt`，占卜类还会额外返回 `data.summary`。
 
 八字排盘并生成提示词：
 
@@ -96,13 +104,19 @@ curl -X POST https://aov.cc/api/v1/divination/tarot/prompt \
 - `gender` 使用 `male` 或 `female`。
 - `dateType` 使用 `solar` 或 `lunar`。
 - `timeIndex` 范围为 `0` 到 `12`，其中 `0` 为早子时，`12` 为晚子时。
-- `question` 是所有 `/prompt` 接口的必填字段。
-- 八字 `promptTopic` 支持 `general`、`career`、`wealth`、`marriage`、`children`、`health`。
-- 紫微 `promptTopic` 支持 `destiny`、`relationship`、`career-wealth`、`life`、`chat`。
+- `question` 是所有 `/prompt` 接口的必填字段，黄历择日 `/prompt` 可不填。
+- 八字 `promptTopic` 支持 `general`、`career`、`wealth`、`marriage`、`children`、`health`、`relationship-push`、`relationship-decision`、`job-change`、`startup-partnership`、`investment-partnership`、`recent`、`home-move`、`settle-relocate`、`study-advance`、`exam-landing`、`reconciliation-decision`、`emotion`、`talent`、`growth`、`social`。
+- 紫微 `promptTopic` 支持 `destiny`、`relationship`、`relationship-push`、`relationship-decision`、`children`、`career-wealth`、`job-change`、`startup-partnership`、`investment-partnership`、`recent`、`family`、`home-move`、`settle-relocate`、`social`、`emotion`、`health`、`study`、`study-advance`、`exam-landing`、`reconciliation-decision`、`growth`、`talent`、`life`、`chat`。
 - 紫微 `promptScope` 支持 `origin`、`decadal`、`yearly`、`monthly`、`daily`、`hourly`、`age`。
-- `customDate` 使用 ISO 8601 时间字符串。
-- 梅花易数 `method` 支持 `time`、`number`、`random`、`external`。
+- `promptMode` 支持 `framework`（内置完整框架，默认）和 `custom`（只围绕用户问题自由作答）。
+- `customDate` 使用带时区的 ISO 8601 时间字符串，例如 `2025-01-01T08:00:00+08:00` 或 `2025-01-01T00:00:00Z`。
+- 梅花易数 `method` 支持 `time`、`number`、`random`、`external`。数字起卦使用 `number`；外应起卦使用 `externalOmens`，至少提供两项可映射外应，并提供 `count` 作为动爻数量，例如 `{"direction":"南","object":"火电文书","count":3}`。
+- 小六壬 `xiaoliurenMethod` 支持 `time`、`number`、`random`，数字起课时使用 `xiaoliurenNumber`。
 - 塔罗 `spreadType` 支持 `single`、`three`、`love`、`career`、`decision`。
-- 大六壬 `template` 支持 `general`、`ganqing`、`shiye`、`caifu`。
+- 六爻 `liuyaoTemplate` 支持 `general`、`ganqing`、`shiye`、`caifu`、`guaishen`。
+- 大六壬 `liurenTemplate` 支持 `general`、`ganqing`、`shiye`、`caifu`。
+- 黄历择日 `topic` 支持 `marriage`、`move`、`opening`、`contract`、`travel`、`medical`、`study`、`custom`，并使用 `startDate`、`endDate` 和可选 `participants`。
+- 雷诺曼 `spreadType` 支持 `single`、`three`、`relationship`、`decision`、`nine`。
+- 星盘需要 `year`、`month`、`day`、`hour`、`minute`、`latitude`、`longitude`、`timezone`，可传 `useTrueSolarTime` 启用真太阳时校正，提示词接口可使用 `astrolabeTopic` 和 `astrolabeScopeText`。
 
 更完整的字段结构以 [OpenAPI](https://aov.cc/api/v1/openapi.json) 为准。

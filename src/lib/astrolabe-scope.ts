@@ -137,8 +137,18 @@ function parseDateParts(dateStr: string) {
   if (month !== undefined && (!Number.isInteger(month) || month < 1 || month > 12)) {
     return null;
   }
-  if (day !== undefined && (!Number.isInteger(day) || day < 1 || day > 31)) {
-    return null;
+  if (day !== undefined) {
+    if (month === undefined || !Number.isInteger(day) || day < 1) {
+      return null;
+    }
+
+    try {
+      if (day > daysInAstrolabeScopeMonth(year, month)) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
   }
 
   return { year, month, day };
@@ -154,7 +164,18 @@ function getCurrentLocalDate() {
 }
 
 function daysInMonth(year: number, month: number) {
-  return new Date(year, month, 0).getDate();
+  return daysInAstrolabeScopeMonth(year, month);
+}
+
+function daysInAstrolabeScopeMonth(year: number, month: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2200) {
+    throw new Error('年份需在 1900-2200 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 function normalizeTargetDate(scope: AstrolabeScopeMode, dateStr: string) {

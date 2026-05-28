@@ -8,6 +8,9 @@ const astrolabeScopeLabelMap: Record<AstrolabeScopeMode, string> = {
   daily: '流日',
 };
 
+const ASTROLABE_SCOPE_MIN_YEAR = 1900;
+const ASTROLABE_SCOPE_MAX_YEAR = 2200;
+
 function getCurrentDateParts() {
   const now = new Date();
   return {
@@ -26,24 +29,56 @@ function parseDateParts(dateStr: string) {
   const year = Number(matched[1]);
   const month = matched[2] ? Number(matched[2]) : undefined;
   const day = matched[3] ? Number(matched[3]) : undefined;
-  if (!Number.isInteger(year)) {
+  if (
+    !Number.isInteger(year) ||
+    year < ASTROLABE_SCOPE_MIN_YEAR ||
+    year > ASTROLABE_SCOPE_MAX_YEAR
+  ) {
     return null;
+  }
+  if (month !== undefined && (!Number.isInteger(month) || month < 1 || month > 12)) {
+    return null;
+  }
+  if (day !== undefined) {
+    if (
+      month === undefined ||
+      !Number.isInteger(day) ||
+      day < 1 ||
+      day > daysInMonth(year, month)
+    ) {
+      return null;
+    }
   }
 
   return {
     year,
-    month: month && month >= 1 && month <= 12 ? month : undefined,
-    day: day && day >= 1 && day <= 31 ? day : undefined,
+    month,
+    day,
   };
 }
 
 function daysInMonth(year: number, month: number) {
+  if (
+    !Number.isInteger(year) ||
+    year < ASTROLABE_SCOPE_MIN_YEAR ||
+    year > ASTROLABE_SCOPE_MAX_YEAR
+  ) {
+    return 31;
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    return 31;
+  }
+
   return new Date(year, month, 0).getDate();
 }
 
 function normalizeBirthYear(value: string) {
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 1900 && parsed <= 2200 ? parsed : null;
+  return Number.isInteger(parsed) &&
+    parsed >= ASTROLABE_SCOPE_MIN_YEAR &&
+    parsed <= ASTROLABE_SCOPE_MAX_YEAR
+    ? parsed
+    : null;
 }
 
 function formatDateByScope(scope: AstrolabeScopeMode, year: number, month: number, day: number) {
@@ -88,9 +123,12 @@ export function AstrolabeScopeModal(props: {
   const yearOptions = useMemo(() => {
     const normalizedBirthYear = normalizeBirthYear(birthYear);
     const startYear = normalizedBirthYear ?? current.year - 30;
-    const endYear = Math.max(current.year + 10, startYear);
+    const endYear = Math.min(
+      ASTROLABE_SCOPE_MAX_YEAR,
+      Math.max(current.year + 10, startYear, draftYear),
+    );
     return Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
-  }, [birthYear, current.year]);
+  }, [birthYear, current.year, draftYear]);
   const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, index) => index + 1), []);
   const dayOptions = useMemo(
     () => Array.from({ length: daysInMonth(draftYear, draftMonth) }, (_, index) => index + 1),

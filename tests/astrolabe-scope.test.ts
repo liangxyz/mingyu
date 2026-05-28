@@ -63,6 +63,24 @@ test('星盘流月与流日沿用同一选择器语义并写明应期层级', ()
   assert.match(dayContext.promptText, /不能把没有行运证据支持的年份、月份或日期硬说成确定应期/);
 });
 
+test('星盘范围日期不存在时不应夹到另一天', () => {
+  const invalidDayContext = buildAstrolabeScopeContext(astrolabeData, 'daily', '2028-02-31');
+  const invalidMonthContext = buildAstrolabeScopeContext(astrolabeData, 'monthly', '2028-13');
+
+  assert.notEqual(invalidDayContext.dateStr, '2028-02-29');
+  assert.notEqual(invalidMonthContext.dateStr, '2028-12');
+});
+
+test('星盘行运范围应支持 2100 年以后的有效年份', () => {
+  const yearlyContext = buildAstrolabeScopeContext(astrolabeData, 'yearly', '2101');
+  const monthlyContext = buildAstrolabeScopeContext(astrolabeData, 'monthly', '2101-02');
+  const dailyContext = buildAstrolabeScopeContext(astrolabeData, 'daily', '2101-02-28');
+
+  assert.equal(yearlyContext.dateStr, '2101');
+  assert.equal(monthlyContext.dateStr, '2101-02');
+  assert.equal(dailyContext.dateStr, '2101-02-28');
+});
+
 test('星盘资料缺少经度时应退回保守提示而不是报错', () => {
   const incompleteData = {
     ...astrolabeData,

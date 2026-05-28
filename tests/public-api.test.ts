@@ -127,6 +127,28 @@ test('公开 API OpenAPI 文档应标明占卜提示词接口返回摘要', asyn
     body.data.paths['/divination/{method}/prompt'].post.summary,
     '起卦、抽牌或求签并生成 AI 解读提示词',
   );
+  assert.deepEqual(body.data.paths['/divination/{method}/prompt'].post.parameters, [
+    {
+      name: 'method',
+      in: 'path',
+      required: true,
+      schema: {
+        enum: [
+          'liuyao',
+          'meihua',
+          'xiaoliuren',
+          'qimen',
+          'liuren',
+          'tarot',
+          'ssgw',
+          'almanac',
+          'lenormand',
+          'astrolabe',
+        ],
+      },
+      description: '占卜方法。',
+    },
+  ]);
   assert.match(
     body.data.paths['/divination/{method}/prompt'].post.responses['200'].description,
     /摘要/,
@@ -135,12 +157,41 @@ test('公开 API OpenAPI 文档应标明占卜提示词接口返回摘要', asyn
   assert.ok(body.data.paths['/divination/xiaoliuren']);
   assert.ok(body.data.paths['/divination/lenormand']);
   assert.ok(body.data.paths['/divination/astrolabe']);
+  for (const path of [
+    '/divination/liuyao',
+    '/divination/meihua',
+    '/divination/xiaoliuren',
+    '/divination/qimen',
+    '/divination/liuren',
+    '/divination/tarot',
+    '/divination/ssgw',
+    '/divination/almanac',
+    '/divination/lenormand',
+    '/divination/astrolabe',
+  ]) {
+    assert.ok(body.data.paths[path].post.requestBody, `${path} 应声明请求体`);
+    assert.equal(
+      body.data.paths[path].post.requestBody.content['application/json'].schema.$ref,
+      '#/components/schemas/DivinationRequest',
+      `${path} 应复用占卜请求 schema`,
+    );
+  }
   assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.topic);
   assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.xiaoliurenMethod);
   assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.participants);
   assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.latitude);
   assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.liuyaoTemplate);
   assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.liurenTemplate);
+  assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.externalOmens);
+  assert.match(
+    JSON.stringify(body.data.components.schemas.DivinationPromptRequest.properties.spreadType),
+    /nine/,
+  );
+  assert.match(
+    JSON.stringify(body.data.components.schemas.DivinationPromptRequest.properties.externalOmens),
+    /火电文书/,
+  );
+  assert.ok(body.data.components.schemas.DivinationPromptRequest.properties.astrolabeTopic);
   assert.equal(
     Boolean(body.data.components.schemas.DivinationPromptRequest.properties.template),
     false,
@@ -149,6 +200,53 @@ test('公开 API OpenAPI 文档应标明占卜提示词接口返回摘要', asyn
     JSON.stringify(body.data.components.schemas.DivinationPromptRequest.properties.liuyaoTemplate),
     /guaishen/,
   );
+  const divinationRequestProperties = body.data.components.schemas.DivinationRequest.properties;
+  assert.equal(divinationRequestProperties.customDate.format, 'date-time');
+  assert.deepEqual(divinationRequestProperties.year, {
+    type: 'integer',
+    minimum: 1900,
+    maximum: 2100,
+  });
+  assert.deepEqual(divinationRequestProperties.month, {
+    type: 'integer',
+    minimum: 1,
+    maximum: 12,
+  });
+  assert.deepEqual(divinationRequestProperties.hour, {
+    type: 'integer',
+    minimum: 0,
+    maximum: 23,
+  });
+  assert.deepEqual(divinationRequestProperties.minute, {
+    type: 'integer',
+    minimum: 0,
+    maximum: 59,
+  });
+  assert.deepEqual(divinationRequestProperties.latitude, {
+    type: 'number',
+    minimum: -90,
+    maximum: 90,
+  });
+  assert.deepEqual(divinationRequestProperties.longitude, {
+    type: 'number',
+    minimum: -180,
+    maximum: 180,
+  });
+  assert.deepEqual(divinationRequestProperties.timezone, {
+    type: 'number',
+    minimum: -12,
+    maximum: 14,
+  });
+  assert.deepEqual(divinationRequestProperties.useTrueSolarTime, { type: 'boolean' });
+  assert.equal(divinationRequestProperties.startDate.format, 'date');
+  assert.equal(divinationRequestProperties.endDate.format, 'date');
+  assert.equal(divinationRequestProperties.participants.items.type, 'object');
+  assert.deepEqual(divinationRequestProperties.participants.items.properties.timeIndex, {
+    type: 'integer',
+    minimum: 0,
+    maximum: 12,
+  });
+  assert.equal(divinationRequestProperties.participants.items.properties.dateType.enum.length, 2);
   assert.match(
     JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
     /family/,
@@ -333,6 +431,47 @@ test('公开 API 八字排盘应支持真太阳时精确时分和经度', async 
   assert.equal(body.data.timing.correctedTime.hour, corrected.hour);
   assert.equal(body.data.timing.correctedTime.minute, corrected.minute);
   assert.equal(body.data.timing.birthPlace, '新疆喀什');
+});
+
+test('公开 API 八字公历日期不存在时应返回参数错误', async () => {
+  const { response, body } = await callApi('bazi/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gender: 'male',
+      year: 2024,
+      month: 2,
+      day: 31,
+      timeIndex: 0,
+      dateType: 'solar',
+    }),
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.ok, false);
+  assert.equal(body.error.code, 'BAD_REQUEST');
+  assert.match(body.error.message, /日期需在 1-29 之间/);
+});
+
+test('公开 API 八字农历闰月不存在时应返回参数错误', async () => {
+  const { response, body } = await callApi('bazi/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gender: 'male',
+      year: 2024,
+      month: 1,
+      day: 1,
+      timeIndex: 0,
+      dateType: 'lunar',
+      isLeapMonth: true,
+    }),
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.ok, false);
+  assert.equal(body.error.code, 'BAD_REQUEST');
+  assert.match(body.error.message, /农历日期不存在/);
 });
 
 test('公开 API 八字提示词接口应一次返回排盘和提示词', async () => {
@@ -1026,6 +1165,112 @@ test('公开 API 紫微排盘应支持真太阳时精确时分和经度', async 
   assert.equal(body.data.basicInfo.birth_time_range, timeIndexRangeMap[expectedTimeIndex]);
 });
 
+test('公开 API 紫微真太阳时参数缺失或越界时应返回 400', async () => {
+  for (const payload of [
+    {
+      name: '测试',
+      gender: 'male',
+      dateType: 'solar',
+      year: '1990',
+      month: '4',
+      day: '15',
+      useTrueSolarTime: true,
+      birthHour: '1',
+      birthMinute: '20',
+    },
+    {
+      name: '测试',
+      gender: 'male',
+      dateType: 'solar',
+      year: '1990',
+      month: '4',
+      day: '15',
+      useTrueSolarTime: true,
+      birthHour: '24',
+      birthMinute: '20',
+      birthLongitude: '73.5',
+    },
+    {
+      name: '测试',
+      gender: 'male',
+      dateType: 'solar',
+      year: '1990',
+      month: '4',
+      day: '15',
+      useTrueSolarTime: true,
+      birthHour: '1',
+      birthMinute: '60',
+      birthLongitude: '73.5',
+    },
+    {
+      name: '测试',
+      gender: 'male',
+      dateType: 'solar',
+      year: '1990',
+      month: '4',
+      day: '15',
+      useTrueSolarTime: true,
+      birthHour: '1',
+      birthMinute: '20',
+      birthLongitude: '181',
+    },
+  ]) {
+    const { response, body } = await callApi('ziwei/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    assert.equal(response.status, 400, JSON.stringify(payload));
+    assert.equal(body.ok, false);
+    assert.equal(body.error.code, 'BAD_REQUEST');
+    assert.doesNotMatch(body.error.message, /内部错误/);
+  }
+});
+
+test('公开 API 紫微公历日期不存在时应返回参数错误', async () => {
+  const { response, body } = await callApi('ziwei/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: '测试',
+      gender: 'male',
+      dateType: 'solar',
+      year: '2024',
+      month: '2',
+      day: '31',
+      timeIndex: 0,
+    }),
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.ok, false);
+  assert.equal(body.error.code, 'BAD_REQUEST');
+  assert.match(body.error.message, /日期需在 1-29 之间/);
+});
+
+test('公开 API 紫微农历闰月不存在时应返回参数错误', async () => {
+  const { response, body } = await callApi('ziwei/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: '测试',
+      gender: 'male',
+      dateType: 'lunar',
+      year: '2024',
+      month: '1',
+      day: '1',
+      timeIndex: 0,
+      isLeapMonth: true,
+    }),
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.ok, false);
+  assert.equal(body.error.code, 'BAD_REQUEST');
+  assert.match(body.error.message, /农历日期不存在/);
+});
+
 test('公开 API 紫微自定义提示词不强塞分析框架', async () => {
   const { response, body } = await callApi('ziwei/prompt', {
     method: 'POST',
@@ -1077,6 +1322,86 @@ test('公开 API 单牌塔罗接口应返回结构化牌面', async () => {
   assert.equal(body.data.spreadType, 'single');
   assert.equal(body.data.cards.length, 1);
   assert.equal(typeof body.data.cards[0].name, 'string');
+});
+
+test('公开 API 可选请求体接口无请求体时仍应使用默认参数', async () => {
+  const { response, body } = await callApi('divination/tarot', {
+    method: 'POST',
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.data.spreadType, 'single');
+  assert.equal(body.data.cards.length, 1);
+});
+
+test('公开 API 可选请求体接口只有 JSON 请求头但无请求体时仍应使用默认参数', async () => {
+  const { response, body } = await callApi('divination/tarot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.data.spreadType, 'single');
+  assert.equal(body.data.cards.length, 1);
+});
+
+test('公开 API 可选请求体接口收到空字符串请求体时仍应使用默认参数', async () => {
+  const { response, body } = await callApi('divination/tarot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '',
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.data.spreadType, 'single');
+  assert.equal(body.data.cards.length, 1);
+});
+
+test('公开 API 可选请求体接口收到非法 JSON 时应返回参数错误', async () => {
+  const { response, body } = await callApi('divination/tarot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{bad',
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.ok, false);
+  assert.equal(body.error.code, 'BAD_REQUEST');
+  assert.match(body.error.message, /合法 JSON/);
+});
+
+test('公开 API customDate 不应接受非 ISO 或会被 JS 自动进位的无效日期', async () => {
+  const paths = [
+    'divination/liuyao',
+    'divination/meihua',
+    'divination/xiaoliuren',
+    'divination/qimen',
+    'divination/liuren',
+  ];
+  const invalidValues = [
+    'May 1 2025 08:00:00',
+    '2025-01-01T08:00:00',
+    '2025-02-30T08:00:00+08:00',
+    '2025-01-01T24:00:00+00:00',
+  ];
+
+  for (const path of paths) {
+    for (const customDate of invalidValues) {
+      const { response, body } = await callApi(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customDate }),
+      });
+
+      assert.equal(response.status, 400, `${path} 应拒绝无效日期 ${customDate}`);
+      assert.equal(body.ok, false);
+      assert.equal(body.error.code, 'BAD_REQUEST');
+      assert.equal(body.error.message, 'customDate 不是有效时间。');
+    }
+  }
 });
 
 test('公开 API 黄历择日、小六壬、雷诺曼和星盘接口应返回结构化结果', async () => {
@@ -1149,6 +1474,69 @@ test('公开 API 黄历择日、小六壬、雷诺曼和星盘接口应返回结
   assert.ok(astrolabe.body.data.planets.length >= 10);
   assert.ok(astrolabe.body.data.aspects.length >= 1);
   assert.match(astrolabe.body.data.birth.location, /北京/);
+});
+
+test('公开 API 数字起卦起课应拒绝超出安全整数范围的数字', async () => {
+  const unsafeInteger = Number.MAX_SAFE_INTEGER + 1;
+  const cases: Array<[string, Record<string, unknown>, string]> = [
+    ['divination/meihua', { method: 'number', number: unsafeInteger }, 'number 必须是整数。'],
+    [
+      'divination/xiaoliuren',
+      { xiaoliurenMethod: 'number', xiaoliurenNumber: unsafeInteger },
+      'xiaoliurenNumber 必须是整数。',
+    ],
+  ];
+
+  for (const [path, body, message] of cases) {
+    const result = await callApi(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    assert.equal(result.response.status, 400);
+    assert.equal(result.body.ok, false);
+    assert.equal(result.body.error.message, message);
+  }
+});
+
+test('公开 API 星盘应支持真太阳时校正', async () => {
+  const corrected = calculateTrueSolarTime(
+    {
+      year: 1995,
+      month: 5,
+      day: 20,
+      hour: 1,
+      minute: 20,
+    },
+    73.5,
+  ).correctedTime;
+  const { response, body } = await callApi('divination/astrolabe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: '本人',
+      gender: '女',
+      year: 1995,
+      month: 5,
+      day: 20,
+      hour: 1,
+      minute: 20,
+      latitude: 39.9042,
+      longitude: 73.5,
+      timezone: 8,
+      locationName: '喀什',
+      useTrueSolarTime: true,
+    }),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.data.birth.isTrueSolarTime, true);
+  assert.equal(
+    body.data.birth.trueSolarDateTime,
+    `${corrected.year}-${String(corrected.month).padStart(2, '0')}-${String(corrected.day).padStart(2, '0')} ${String(corrected.hour).padStart(2, '0')}:${String(corrected.minute).padStart(2, '0')}`,
+  );
 });
 
 test('公开 API 各占卜提示词接口应一次返回占卜结果、摘要和提示词', async () => {
@@ -1261,4 +1649,82 @@ test('公开 API 参数错误应返回统一错误结构', async () => {
   assert.equal(body.ok, false);
   assert.equal(body.error.code, 'BAD_REQUEST');
   assert.match(body.error.message, /year/);
+});
+
+test('公开 API 梅花外应参数错误应返回 400 而不是内部错误', async () => {
+  for (const payload of [
+    { method: 'external' },
+    { method: 'external', externalOmens: { direction: '南', count: 3 } },
+    { method: 'external', externalOmens: { direction: '无效方位', object: '火电文书', count: 3 } },
+  ]) {
+    const { response, body } = await callApi('divination/meihua', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    assert.equal(response.status, 400, JSON.stringify(payload));
+    assert.equal(body.ok, false);
+    assert.equal(body.error.code, 'BAD_REQUEST');
+    assert.doesNotMatch(body.error.message, /内部错误/);
+  }
+});
+
+test('公开 API 黄历日期参数错误应返回 400 而不是内部错误', async () => {
+  for (const payload of [
+    { topic: 'move', startDate: '2026/06/01', endDate: '2026-06-05' },
+    { topic: 'move', startDate: '2026-06-31', endDate: '2026-07-02' },
+    { topic: 'move', startDate: '0000-01-01', endDate: '0000-01-02' },
+    { topic: 'move', startDate: '9999-01-01', endDate: '9999-01-02' },
+    { topic: 'move', startDate: '2026-06-05', endDate: '2026-06-01' },
+    { topic: 'move', startDate: '2026-06-01', endDate: '2026-07-10' },
+  ]) {
+    const { response, body } = await callApi('divination/almanac', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    assert.equal(response.status, 400, JSON.stringify(payload));
+    assert.equal(body.ok, false);
+    assert.equal(body.error.code, 'BAD_REQUEST');
+    assert.doesNotMatch(body.error.message, /内部错误/);
+  }
+});
+
+test('公开 API 未知异常不应向调用方暴露内部错误细节', async () => {
+  const originalCalculateBazi = baziCalculator.calculateBazi.bind(baziCalculator);
+  const originalConsoleError = console.error;
+  const errorLogs: unknown[][] = [];
+  baziCalculator.calculateBazi = () => {
+    throw new Error('internal stack detail');
+  };
+  console.error = (...args: unknown[]) => {
+    errorLogs.push(args);
+  };
+
+  try {
+    const { response, body } = await callApi('bazi/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gender: 'male',
+        year: 1990,
+        month: 1,
+        day: 1,
+        timeIndex: 0,
+        dateType: 'solar',
+      }),
+    });
+
+    assert.equal(response.status, 500);
+    assert.equal(body.ok, false);
+    assert.equal(body.error.code, 'INTERNAL_ERROR');
+    assert.equal(body.error.message, '服务内部错误。');
+    assert.doesNotMatch(body.error.message, /internal stack detail/i);
+    assert.equal(errorLogs.length, 1);
+  } finally {
+    baziCalculator.calculateBazi = originalCalculateBazi;
+    console.error = originalConsoleError;
+  }
 });

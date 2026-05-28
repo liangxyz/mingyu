@@ -63,10 +63,19 @@ function buildHiddenPalaces(astrolabe: IztroAstrolabe): HiddenPalaces | undefine
   return result;
 }
 
+function normalizeSolarDateText(value: string) {
+  const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value.trim());
+  if (!match) {
+    return value;
+  }
+
+  return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+}
+
 export function buildBasicInfo(astrolabe: IztroAstrolabe): BasicInfo {
   return {
     gender: astrolabe.gender,
-    solar_date: astrolabe.solarDate,
+    solar_date: normalizeSolarDateText(astrolabe.solarDate),
     lunar_date: astrolabe.lunarDate,
     chinese_date: astrolabe.chineseDate,
     birth_time_label: astrolabe.time,
@@ -94,7 +103,7 @@ export function buildActiveScope(params: {
   return {
     scope: currentScope,
     label: resolveScopeLabel(currentScope, currentScopeItem),
-    solar_date: horoscope.solarDate,
+    solar_date: normalizeSolarDateText(horoscope.solarDate),
     lunar_date: horoscope.lunarDate,
     nominal_age: horoscope.age.nominalAge,
     palace_index: currentScopeItem?.index,

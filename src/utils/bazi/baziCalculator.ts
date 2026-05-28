@@ -42,6 +42,7 @@ import {
   Wuxing,
 } from './baziTypes';
 import { getTimeIndexFromClock } from '../dateUtils';
+import { getBirthDateValidationMessage } from '../../lib/date-validation';
 
 type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>;
 type LunarHourInstance = ReturnType<SolarTimeInstance['getLunarHour']>;
@@ -119,6 +120,35 @@ export class BaziCalculator {
         typeof birthLongitude !== 'number')
     ) {
       throw new Error('真太阳时缺少精准时间或经度');
+    }
+    if (useTrueSolarTime && (birthHour! < 0 || birthHour! > 23)) {
+      throw new Error('出生小时需在 0-23 之间。');
+    }
+    if (useTrueSolarTime && (birthMinute! < 0 || birthMinute! > 59)) {
+      throw new Error('出生分钟需在 0-59 之间。');
+    }
+    if (useTrueSolarTime && (birthLongitude! < -180 || birthLongitude! > 180)) {
+      throw new Error('出生经度需在 -180 到 180 之间。');
+    }
+    if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+      throw new Error('出生年份需在 1900-2100 之间。');
+    }
+    if (!Number.isInteger(month) || month < 1 || month > 12) {
+      throw new Error('出生月份需在 1-12 之间。');
+    }
+    if (!Number.isInteger(day) || day < 1) {
+      throw new Error('出生日期不能小于 1。');
+    }
+
+    const validationMessage = getBirthDateValidationMessage({
+      year,
+      month,
+      day,
+      dateType: isLunar ? 'lunar' : 'solar',
+      isLeapMonth,
+    });
+    if (validationMessage) {
+      throw new Error(validationMessage);
     }
 
     // 根据用户选择的日历类型创建时间对象

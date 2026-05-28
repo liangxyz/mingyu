@@ -35,22 +35,26 @@ function resolveDivinationTimestamp(data?: DivinationData): number | null {
   return data.timestamp;
 }
 
-export function buildTimeInfoText(data?: DivinationData) {
+function resolveDivinationDate(data?: DivinationData): Date | undefined {
   const timestamp = resolveDivinationTimestamp(data);
-  const timeInfo =
-    timestamp === null
-      ? getDivinationTime().timeInfo
-      : getDivinationTime(new Date(timestamp)).timeInfo;
+  if (timestamp === null) {
+    return undefined;
+  }
+
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+export function buildTimeInfoText(data?: DivinationData) {
+  const date = resolveDivinationDate(data);
+  const timeInfo = date ? getDivinationTime(date).timeInfo : getDivinationTime().timeInfo;
   const display = LunarUtil.formatTimeDisplay(timeInfo);
   return [display.solar, display.lunar, display.ganzhi, `节气：${timeInfo.jieQi}`].join('\n');
 }
 
 export function buildSolarTimeInfoText(data?: DivinationData) {
-  const timestamp = resolveDivinationTimestamp(data);
-  const timeInfo =
-    timestamp === null
-      ? getDivinationTime().timeInfo
-      : getDivinationTime(new Date(timestamp)).timeInfo;
+  const date = resolveDivinationDate(data);
+  const timeInfo = date ? getDivinationTime(date).timeInfo : getDivinationTime().timeInfo;
   const display = LunarUtil.formatTimeDisplay(timeInfo);
   return display.solar;
 }

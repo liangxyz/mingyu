@@ -1,6 +1,25 @@
 import { SolarTime } from 'tyme4ts';
+import { daysInSolarMonth } from '../../../../lib/date-validation';
+
+function assertSolarDate(year: number, month: number, day: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+    throw new Error('年份需在 1900-2100 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+  if (!Number.isInteger(day) || day < 1) {
+    throw new Error('日期不能小于 1。');
+  }
+
+  const maxDay = daysInSolarMonth(year, month);
+  if (day > maxDay) {
+    throw new Error(`日期需在 1-${maxDay} 之间。`);
+  }
+}
 
 export function getDayHourBreakdown(year: number, month: number, day: number) {
+  assertSolarDate(year, month, day);
   const previousDate = new Date(year, month - 1, day - 1);
   const entries = [
     {

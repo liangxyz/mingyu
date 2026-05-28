@@ -2,11 +2,19 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateQimen } from '../../../src/lib/divination/algorithms/qimen/index.js';
 import { resultOutputSchema } from '../schemas.js';
-import { createErrorToolResult, createStructuredToolResult, getErrorMessage } from '../tool-results.js';
+import {
+  createErrorToolResult,
+  createStructuredToolResult,
+  getErrorMessage,
+} from '../tool-results.js';
 import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-common.js';
+import { readMcpCustomDate } from './input-helpers.js';
 
 const qimenSchema = z.object({
-  customDate: z.string().optional().describe('自定义排盘时间（ISO 8601 格式），不提供则使用当前时间'),
+  customDate: z
+    .string()
+    .optional()
+    .describe('自定义排盘时间（ISO 8601 格式），不提供则使用当前时间'),
 });
 
 const qimenPromptSchema = extendPromptSchema(qimenSchema, '用户希望围绕奇门盘解读的问题');
@@ -22,7 +30,7 @@ export function registerQimenTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const result = generateQimen(args.customDate ? new Date(args.customDate) : undefined);
+        const result = generateQimen(readMcpCustomDate(args.customDate));
         return createStructuredToolResult({ result });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '排盘失败'));
@@ -33,7 +41,8 @@ export function registerQimenTool(server: McpServer) {
   server.registerTool(
     'qimen_prompt',
     {
-      description: '奇门遁甲排盘并生成结构化 AI 解读提示词：一次调用返回奇门盘和可直接复制给 AI 的提示词',
+      description:
+        '奇门遁甲排盘并生成结构化 AI 解读提示词：一次调用返回奇门盘和可直接复制给 AI 的提示词',
       inputSchema: qimenPromptSchema.shape,
       outputSchema: {
         result: z.unknown().describe('奇门盘数据'),
@@ -42,7 +51,7 @@ export function registerQimenTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const result = generateQimen(args.customDate ? new Date(args.customDate) : undefined);
+        const result = generateQimen(readMcpCustomDate(args.customDate));
         return createStructuredToolResult({
           result,
           prompt: buildCommonDivinationPrompt('qimen', args.question, result, args.promptMode),

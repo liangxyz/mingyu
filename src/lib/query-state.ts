@@ -1,5 +1,7 @@
 import { BAZI_QUESTION_SCENES, type BaziQuestionScene } from '@/utils/ai/baziQuestionScene';
 import { ASTROLABE_PROMPT_TOPICS, type AstrolabePromptTopic } from '@/lib/astrolabe-prompts';
+import { BIRTH_TIME_OPTIONS } from '@/lib/birth-time';
+import { getBirthDateValidationMessage } from '@/lib/date-validation';
 
 export type ResultTabKey = 'bazi' | 'ziwei' | 'astrolabe' | 'prompt';
 export type PromptSourceKey = 'bazi' | 'ziwei' | 'bazi-ziwei' | 'astrolabe';
@@ -114,6 +116,7 @@ const ASTROLABE_PROMPT_SCOPES: readonly AstrolabeScopeMode[] = [
 ];
 
 export const UNKNOWN_TIME_INDEX = -1;
+const MAX_TIME_INDEX = BIRTH_TIME_OPTIONS.length - 1;
 
 export const defaultInputState: QueryInputState = {
   analysisMode: 'single',
@@ -425,8 +428,85 @@ function parseTimeIndex(value: string) {
     return '';
   }
 
+  if (!/^-?\d+$/.test(value)) {
+    return '';
+  }
+
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= UNKNOWN_TIME_INDEX ? parsed : '';
+  return Number.isInteger(parsed) &&
+    (parsed === UNKNOWN_TIME_INDEX || (parsed >= 0 && parsed <= MAX_TIME_INDEX))
+    ? parsed
+    : '';
+}
+
+function parseIntegerText(value: string, min: number, max: number) {
+  if (!/^\d+$/.test(value)) {
+    return '';
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= min && parsed <= max ? value : '';
+}
+
+function parseDecimalText(value: string, min: number, max: number) {
+  if (!/^-?(?:\d+|\d*\.\d+)$/.test(value)) {
+    return '';
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? value : '';
+}
+
+function parseBirthDateFields(params: {
+  year: string;
+  month: string;
+  day: string;
+  dateType: 'solar' | 'lunar';
+  isLeapMonth: boolean;
+}) {
+  const year = parseIntegerText(params.year, 1900, 2100);
+  const month = parseIntegerText(params.month, 1, 12);
+  const day = parseIntegerText(params.day, 1, params.dateType === 'lunar' ? 30 : 31);
+
+  if (!year || !month || !day) {
+    return { year, month, day };
+  }
+
+  const validationMessage = getBirthDateValidationMessage({
+    year: Number(year),
+    month: Number(month),
+    day: Number(day),
+    dateType: params.dateType,
+    isLeapMonth: params.isLeapMonth,
+  });
+
+  if (!validationMessage) {
+    return { year, month, day };
+  }
+
+  if (validationMessage.includes('年份')) {
+    return { year: '', month, day };
+  }
+  if (validationMessage.includes('月份') || validationMessage.includes('农历日期不存在')) {
+    return { year, month: '', day: '' };
+  }
+  return { year, month, day: '' };
+}
+
+function parseBirthHour(value: string) {
+  return parseIntegerText(value, 0, 23);
+}
+
+function parseBirthMinute(value: string) {
+  return parseIntegerText(value, 0, 59);
+}
+
+function parseLongitude(value: string) {
+  return parseDecimalText(value, -180, 180);
+}
+
+function parseLatitude(value: string) {
+  return parseDecimalText(value, -90, 90);
 }
 
 function parseBaziQuestionScene(value: string): BaziQuestionScene {
@@ -471,6 +551,79 @@ function parseAstrolabeScope(value: string): AstrolabeScopeMode {
   return defaultPromptState.astrolabeScope;
 }
 
+function parseScopeDateParts(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  try {
+    const maxDay = daysInScopeMonth(year, month);
+    if (day < 1 || day > maxDay) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function isValidScopeYearText(value: string) {
+  return /^\d{4}$/.test(value) && Number(value) >= 1900 && Number(value) <= 2200;
+}
+
+function isValidScopeMonthText(value: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value);
+  if (!match) {
+    return false;
+  }
+
+  try {
+    daysInScopeMonth(Number(match[1]), Number(match[2]));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function daysInScopeMonth(year: number, month: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2200) {
+    throw new Error('年份需在 1900-2200 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function normalizeZiweiScopeDate(scope: ZiweiScopeMode, dateStr: string) {
+  if (scope === 'origin' || !dateStr) {
+    return '';
+  }
+
+  return parseScopeDateParts(dateStr) ? dateStr : '';
+}
+
+function normalizeAstrolabeScopeDate(scope: AstrolabeScopeMode, dateStr: string) {
+  if (scope === 'natal' || !dateStr) {
+    return '';
+  }
+
+  if (scope === 'yearly') {
+    return isValidScopeYearText(dateStr) ? dateStr : '';
+  }
+  if (scope === 'monthly') {
+    return isValidScopeMonthText(dateStr) ? dateStr : '';
+  }
+
+  return parseScopeDateParts(dateStr) ? dateStr : '';
+}
+
 function normalizePromptState(prompt: QueryPromptState): QueryPromptState {
   const normalized: QueryPromptState = { ...prompt };
 
@@ -478,17 +631,19 @@ function normalizePromptState(prompt: QueryPromptState): QueryPromptState {
     normalized.ziweiTopic = 'chat';
   }
 
-  if (normalized.ziweiScope === 'origin') {
-    normalized.ziweiScopeDate = '';
-  }
+  normalized.ziweiScopeDate = normalizeZiweiScopeDate(
+    normalized.ziweiScope,
+    normalized.ziweiScopeDate,
+  );
 
   if (normalized.astrolabeShortcutMode === '自定义') {
     normalized.astrolabeTopic = 'chat';
   }
 
-  if (normalized.astrolabeScope === 'natal') {
-    normalized.astrolabeScopeDate = '';
-  }
+  normalized.astrolabeScopeDate = normalizeAstrolabeScopeDate(
+    normalized.astrolabeScope,
+    normalized.astrolabeScopeDate,
+  );
 
   if (normalized.baziFortuneScope === 'natal') {
     normalized.baziFortuneCycleIndex = '';
@@ -516,6 +671,29 @@ function normalizePromptState(prompt: QueryPromptState): QueryPromptState {
 }
 
 export function parseInputState(params: URLSearchParams): QueryInputState {
+  const dateType =
+    getString(params, 'dateType', defaultInputState.dateType) === 'lunar' ? 'lunar' : 'solar';
+  const isLeapMonth = getString(params, 'isLeapMonth', '0') === '1';
+  const birthDate = parseBirthDateFields({
+    year: getString(params, 'year', defaultInputState.year),
+    month: getString(params, 'month', defaultInputState.month),
+    day: getString(params, 'day', defaultInputState.day),
+    dateType,
+    isLeapMonth,
+  });
+  const partnerDateType =
+    getString(params, 'partnerDateType', defaultInputState.partnerDateType) === 'lunar'
+      ? 'lunar'
+      : 'solar';
+  const partnerIsLeapMonth = getString(params, 'partnerIsLeapMonth', '0') === '1';
+  const partnerBirthDate = parseBirthDateFields({
+    year: getString(params, 'partnerYear', defaultInputState.partnerYear),
+    month: getString(params, 'partnerMonth', defaultInputState.partnerMonth),
+    day: getString(params, 'partnerDay', defaultInputState.partnerDay),
+    dateType: partnerDateType,
+    isLeapMonth: partnerIsLeapMonth,
+  });
+
   return {
     analysisMode:
       getString(params, 'analysisMode', defaultInputState.analysisMode) === 'compatibility'
@@ -529,52 +707,48 @@ export function parseInputState(params: URLSearchParams): QueryInputState {
           : 'bazi',
     name: getString(params, 'name', defaultInputState.name),
     gender: getString(params, 'gender', defaultInputState.gender) === 'female' ? 'female' : 'male',
-    dateType:
-      getString(params, 'dateType', defaultInputState.dateType) === 'lunar' ? 'lunar' : 'solar',
-    year: getString(params, 'year', defaultInputState.year),
-    month: getString(params, 'month', defaultInputState.month),
-    day: getString(params, 'day', defaultInputState.day),
+    dateType,
+    year: birthDate.year,
+    month: birthDate.month,
+    day: birthDate.day,
     timeIndex: parseTimeIndex(getString(params, 'timeIndex', String(defaultInputState.timeIndex))),
-    isLeapMonth: getString(params, 'isLeapMonth', '0') === '1',
+    isLeapMonth,
     useTrueSolarTime: getString(params, 'useTrueSolarTime', '0') === '1',
-    birthHour: getString(params, 'birthHour', defaultInputState.birthHour),
-    birthMinute: getString(params, 'birthMinute', defaultInputState.birthMinute),
+    birthHour: parseBirthHour(getString(params, 'birthHour', defaultInputState.birthHour)),
+    birthMinute: parseBirthMinute(getString(params, 'birthMinute', defaultInputState.birthMinute)),
     birthPlace: getString(params, 'birthPlace', defaultInputState.birthPlace),
-    birthLongitude: getString(params, 'birthLongitude', defaultInputState.birthLongitude),
-    birthLatitude: getString(params, 'birthLatitude', defaultInputState.birthLatitude),
+    birthLongitude: parseLongitude(
+      getString(params, 'birthLongitude', defaultInputState.birthLongitude),
+    ),
+    birthLatitude: parseLatitude(
+      getString(params, 'birthLatitude', defaultInputState.birthLatitude),
+    ),
     partnerName: getString(params, 'partnerName', defaultInputState.partnerName),
     partnerGender:
       getString(params, 'partnerGender', defaultInputState.partnerGender) === 'male'
         ? 'male'
         : 'female',
-    partnerDateType:
-      getString(params, 'partnerDateType', defaultInputState.partnerDateType) === 'lunar'
-        ? 'lunar'
-        : 'solar',
-    partnerYear: getString(params, 'partnerYear', defaultInputState.partnerYear),
-    partnerMonth: getString(params, 'partnerMonth', defaultInputState.partnerMonth),
-    partnerDay: getString(params, 'partnerDay', defaultInputState.partnerDay),
+    partnerDateType,
+    partnerYear: partnerBirthDate.year,
+    partnerMonth: partnerBirthDate.month,
+    partnerDay: partnerBirthDate.day,
     partnerTimeIndex: parseTimeIndex(
       getString(params, 'partnerTimeIndex', String(defaultInputState.partnerTimeIndex)),
     ),
-    partnerIsLeapMonth: getString(params, 'partnerIsLeapMonth', '0') === '1',
+    partnerIsLeapMonth,
     partnerUseTrueSolarTime: getString(params, 'partnerUseTrueSolarTime', '0') === '1',
-    partnerBirthHour: getString(params, 'partnerBirthHour', defaultInputState.partnerBirthHour),
-    partnerBirthMinute: getString(
-      params,
-      'partnerBirthMinute',
-      defaultInputState.partnerBirthMinute,
+    partnerBirthHour: parseBirthHour(
+      getString(params, 'partnerBirthHour', defaultInputState.partnerBirthHour),
+    ),
+    partnerBirthMinute: parseBirthMinute(
+      getString(params, 'partnerBirthMinute', defaultInputState.partnerBirthMinute),
     ),
     partnerBirthPlace: getString(params, 'partnerBirthPlace', defaultInputState.partnerBirthPlace),
-    partnerBirthLongitude: getString(
-      params,
-      'partnerBirthLongitude',
-      defaultInputState.partnerBirthLongitude,
+    partnerBirthLongitude: parseLongitude(
+      getString(params, 'partnerBirthLongitude', defaultInputState.partnerBirthLongitude),
     ),
-    partnerBirthLatitude: getString(
-      params,
-      'partnerBirthLatitude',
-      defaultInputState.partnerBirthLatitude,
+    partnerBirthLatitude: parseLatitude(
+      getString(params, 'partnerBirthLatitude', defaultInputState.partnerBirthLatitude),
     ),
   };
 }

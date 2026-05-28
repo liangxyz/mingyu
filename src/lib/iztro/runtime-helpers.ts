@@ -2,6 +2,7 @@ import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe';
 import type FunctionalHoroscope from 'iztro/lib/astro/FunctionalHoroscope';
 import type { Config } from 'iztro/lib/data/types';
 import type { ChartInput } from '../../types/chart';
+import { daysInSolarMonth } from '../date-validation';
 
 export function normalizeChartInput(input: ChartInput): ChartInput {
   return {
@@ -60,6 +61,10 @@ export function formatLocalDate(date: Date): string {
 }
 
 export function getDefaultHoroscopeContext(now = new Date()) {
+  if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
+    throw new Error('当前时间不是有效日期。');
+  }
+
   return {
     dateStr: formatLocalDate(now),
     hourIndex: timeToIndex(now.getHours()),
@@ -79,12 +84,65 @@ export function shiftLocalDate(
   amount: number,
   unit: 'year' | 'month' | 'day',
 ): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
+  const { year, month, day } = parseSolarDateKey(dateStr);
+  if (!Number.isInteger(amount)) {
+    throw new Error('日期位移量必须是整数。');
+  }
 
-  if (unit === 'year') date.setFullYear(date.getFullYear() + amount);
-  if (unit === 'month') date.setMonth(date.getMonth() + amount);
-  if (unit === 'day') date.setDate(date.getDate() + amount);
+  let date: Date;
+
+  if (unit === 'year') {
+    const targetYear = year + amount;
+    const targetDay = Math.min(day, daysInGregorianMonth(targetYear, month));
+    date = new Date(targetYear, month - 1, targetDay);
+  } else if (unit === 'month') {
+    const totalMonthIndex = year * 12 + (month - 1) + amount;
+    const targetYear = Math.floor(totalMonthIndex / 12);
+    const targetMonth = (totalMonthIndex % 12) + 1;
+    const targetDay = Math.min(day, daysInGregorianMonth(targetYear, targetMonth));
+    date = new Date(targetYear, targetMonth - 1, targetDay);
+  } else {
+    date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + amount);
+  }
 
   return formatLocalDate(date);
+}
+
+function parseSolarDateKey(dateStr: string): { year: number; month: number; day: number } {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
+  if (!match) {
+    throw new Error('日期格式需为 YYYY-MM-DD。');
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+    throw new Error('年份需在 1900-2100 之间。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+
+  const maxDay = daysInSolarMonth(year, month);
+  if (!Number.isInteger(day) || day < 1) {
+    throw new Error('日期不能小于 1。');
+  }
+  if (day > maxDay) {
+    throw new Error(`日期需在 1-${maxDay} 之间。`);
+  }
+
+  return { year, month, day };
+}
+
+function daysInGregorianMonth(year: number, month: number) {
+  if (!Number.isInteger(year)) {
+    throw new Error('年份必须是整数。');
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error('月份需在 1-12 之间。');
+  }
+
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }

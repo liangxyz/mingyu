@@ -172,3 +172,42 @@ export function buildZiweiReadableSnapshot(params: {
     formatObjectList(snapshot.全盘宫位索引),
   ].join('\n');
 }
+
+export function buildZiweiTaskBookSnapshot(params: {
+  payload: AnalysisPayloadV1;
+  reportContext: PromptContext;
+}) {
+  const snapshot = buildPromptContextSnapshot(params);
+
+  return [
+    '【分析背景】',
+    formatKeyValueBlock({
+      分析主题: mapTopicLabel(params.reportContext.selected_topic),
+      分析范围: params.reportContext.scope_label,
+      重点宫位: params.reportContext.palace_name
+        ? formatPalaceName(params.reportContext.palace_name)
+        : undefined,
+    }),
+    '',
+    '【当前报告任务】',
+    formatKeyValueBlock(snapshot.当前报告任务),
+    '',
+    '【基础信息】',
+    formatKeyValueBlock(snapshot.命主基础信息),
+    '',
+    '【当前运限】',
+    formatKeyValueBlock(snapshot.当前运限信息),
+    '',
+    '【运限命中摘要】',
+    formatObjectList(snapshot.运限命中摘要.map((line) => ({ 摘要: line }))),
+    '',
+    '【命盘格局】',
+    formatObjectList(snapshot.命盘格局),
+    '',
+    '【重点宫位摘要】',
+    formatObjectList(snapshot.重点宫位摘要),
+    '',
+    '【关键证据摘要】',
+    formatObjectList(snapshot.关键证据摘要),
+  ].join('\n');
+}

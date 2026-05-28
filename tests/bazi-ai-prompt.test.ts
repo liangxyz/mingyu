@@ -284,6 +284,8 @@ test('八字提示词写入年限选择后应补充年限解读规则', () => {
   assert.match(prompt.user, /【主证】流年干支与十神/);
   assert.match(prompt.user, /【辅证】上层岁运背景/);
   assert.match(prompt.user, /【限制】断事层级限制/);
+  assert.doesNotMatch(prompt.user, /该流年包含的流月/);
+  assert.doesNotMatch(prompt.user, /交下节/);
   assert.match(prompt.user, /【年限解读规则】/);
   assert.match(prompt.user, /当前已选流年：回答以该年年度触发为主，必须承接所属大运背景/);
   assert.match(prompt.user, /大运层：看十年阶段的环境、身份、资源、压力和机会方向/);

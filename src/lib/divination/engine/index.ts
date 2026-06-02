@@ -127,6 +127,9 @@ export type DivinationDraft = {
   questionSource?: 'custom' | 'inspiration';
   gender: '' | '男' | '女';
   birthYear: string;
+  divinationTimeMode?: 'current' | 'custom';
+  customDivinationDate?: string;
+  customDivinationTime?: string;
   meihuaMethod: 'time' | 'number' | 'random';
   meihuaNumber: string;
   xiaoliurenMethod: XiaoliurenDivinationMethod;
@@ -471,6 +474,76 @@ function readDateText(value: string, fieldName: string) {
   };
 }
 
+function isTimeBasedDivinationMethod(method: Exclude<DivinationMethodId, 'random'>) {
+  if (method === 'liuyao' || method === 'qimen' || method === 'liuren') {
+    return true;
+  }
+
+  if (method === 'meihua' || method === 'xiaoliuren') {
+    return true;
+  }
+
+  return false;
+}
+
+function readCustomDivinationDate(draft: DivinationDraft): Date {
+  const dateText = draft.customDivinationDate?.trim() || '';
+  const timeText = draft.customDivinationTime?.trim() || '';
+
+  if (!dateText || !timeText) {
+    throw new Error('自定起卦时间需要填写日期和时间');
+  }
+
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
+  if (!dateMatch) {
+    throw new Error('自定起卦日期需要使用 YYYY-MM-DD 格式');
+  }
+
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  if (year < 1900 || year > 2100) {
+    throw new Error('自定起卦日期年份需在 1900-2100 之间');
+  }
+  if (month < 1 || month > 12) {
+    throw new Error('自定起卦日期不是有效日期');
+  }
+
+  const maxDay = daysInSolarMonth(year, month);
+  if (day < 1 || day > maxDay) {
+    throw new Error('自定起卦日期不是有效日期');
+  }
+
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeText);
+  if (!timeMatch) {
+    throw new Error('自定起卦时间需要使用 HH:mm 格式');
+  }
+
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    throw new Error('自定起卦时间不是有效时间');
+  }
+
+  const date = new Date(`${dateText}T${timeText}:00+08:00`);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('自定起卦时间不是有效时间');
+  }
+
+  return date;
+}
+
+function resolveCustomDivinationDate(
+  method: Exclude<DivinationMethodId, 'random'>,
+  draft: DivinationDraft,
+): Date | undefined {
+  if (draft.divinationTimeMode !== 'custom' || !isTimeBasedDivinationMethod(method)) {
+    return undefined;
+  }
+
+  return readCustomDivinationDate(draft);
+}
+
 function validateDateRange(startDate: string, endDate: string) {
   const start = readDateText(startDate, 'startDate');
   const end = readDateText(endDate, 'endDate');
@@ -525,6 +598,7 @@ export async function generateDivinationSession(
 ): Promise<DivinationSession> {
   validateDraft(draft);
   const method = resolveMethod(draft.method);
+  const customDate = resolveCustomDivinationDate(method, draft);
   const supplementaryInfo = buildSupplementaryInfo({
     ...draft,
     method,
@@ -535,18 +609,19 @@ export async function generateDivinationSession(
   switch (method) {
     case 'liuyao': {
       const module = await import('../algorithms/liuyao');
-      data = module.generateLiuyao();
+      data = module.generateLiuyao(customDate);
       break;
     }
     case 'meihua': {
       const module = await import('../algorithms/meihua');
-      data = module.generateMeihua(undefined, supplementaryInfo?.meihuaSettings);
+      data = module.generateMeihua(customDate, supplementaryInfo?.meihuaSettings);
       break;
     }
     case 'xiaoliuren': {
       const module = await import('../algorithms/xiaoliuren');
       data = module.generateXiaoliuren({
         method: draft.xiaoliurenMethod,
+        customDate,
         ...(draft.xiaoliurenMethod === 'number' && draft.xiaoliurenNumber.trim()
           ? { number: readPositiveIntegerText(draft.xiaoliurenNumber, '小六壬数字起课') }
           : {}),
@@ -555,12 +630,12 @@ export async function generateDivinationSession(
     }
     case 'qimen': {
       const module = await import('../algorithms/qimen');
-      data = module.generateQimen();
+      data = module.generateQimen(customDate);
       break;
     }
     case 'liuren': {
       const module = await import('../algorithms/liuren');
-      data = module.generateLiuren();
+      data = module.generateLiuren(customDate);
       break;
     }
     case 'tarot': {

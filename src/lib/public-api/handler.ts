@@ -166,7 +166,12 @@ const DIVINATION_REQUEST_PROPERTIES = {
     type: 'string',
     description: '占卜问题。黄历择日接口中可不填；若填写，会作为择日补充信息处理。',
   },
-  customDate: { type: 'string', format: 'date-time' },
+  customDate: {
+    type: 'string',
+    format: 'date-time',
+    description:
+      '时间类占卜的自定义起卦或排盘时间，支持六爻、梅花易数、小六壬、奇门遁甲、大六壬；不传则使用当前时间。',
+  },
   method: { enum: ['time', 'number', 'random', 'external'] },
   number: { type: 'integer', minimum: 1 },
   externalOmens: {

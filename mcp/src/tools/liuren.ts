@@ -28,7 +28,7 @@ export function registerLiurenTool(server: McpServer) {
     'divine_liuren',
     {
       description:
-        '大六壬排盘：生成完整的天盘、四课、三传、月将、贵人、旬空等信息，含格局标签与断课模板',
+        '大六壬排盘：基于当前时间或自定义时间生成完整的天盘、四课、三传、月将、贵人、旬空等信息，含格局标签与断课模板',
       inputSchema: liurenSchema.shape,
       outputSchema: resultOutputSchema,
     },

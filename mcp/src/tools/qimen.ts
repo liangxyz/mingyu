@@ -24,7 +24,7 @@ export function registerQimenTool(server: McpServer) {
     'divine_qimen',
     {
       description:
-        '奇门遁甲排盘：基于转盘奇门法生成时家奇门盘，包含天地人神四盘、九宫格、值符值使、格局标签与宫位洞察',
+        '奇门遁甲排盘：基于当前时间或自定义时间生成时家奇门盘，包含天地人神四盘、九宫格、值符值使、格局标签与宫位洞察',
       inputSchema: qimenSchema.shape,
       outputSchema: resultOutputSchema,
     },

@@ -121,6 +121,14 @@ curl -X POST https://aov.cc/api/v1/divination/tarot/prompt \
   -d '{"spreadType":"single","question":"我近期事业应该注意什么？"}'
 ```
 
+按自定时间起卦并生成提示词：
+
+```bash
+curl -X POST https://aov.cc/api/v1/divination/liuyao/prompt \
+  -H "Content-Type: application/json" \
+  -d '{"customDate":"2025-01-01T08:30:00+08:00","question":"这个项目现在适合推进吗？"}'
+```
+
 黄历择日：
 
 ```bash
@@ -157,9 +165,12 @@ curl -X POST https://aov.cc/api/v1/divination/astrolabe \
 
 `promptMode` 支持：`framework`（内置完整框架，默认）、`custom`（只围绕用户问题自由作答，不塞框架）。
 
+占卜时间参数：
+
+- `customDate`：六爻、梅花易数、小六壬、奇门遁甲、大六壬可用该字段指定起卦或排盘时间；不提供则使用当前时间。必须传带时区的 ISO 8601 时间字符串，例如 `2025-01-01T08:00:00+08:00`。
+
 占卜通用参数：
 
-- `customDate`：带时区的 ISO 8601 时间字符串，例如 `2025-01-01T08:00:00+08:00`；不提供则使用当前时间。
 - `question`：所有 `/prompt` 接口的必填字段，黄历择日 `/prompt` 中可不填。
 - `supplementaryInfo`：对象类型，占卜补充信息。
 

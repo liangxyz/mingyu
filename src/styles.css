@@ -3266,6 +3266,10 @@ select {
   flex-basis: 148px;
 }
 
+.divination-time-panel {
+  margin-top: -4px;
+}
+
 .divination-mobile-control-row {
   margin-top: 8px;
   align-items: center;
@@ -5220,7 +5224,13 @@ div.form-actions.page-submit-actions {
   }
 
   .divination-mobile-method-picker {
+    flex: 1 1 140px;
     min-width: 0;
+  }
+
+  .divination-mobile-secondary-picker {
+    flex: 0 1 auto;
+    max-width: 100%;
   }
 
   .divination-mobile-control-row {

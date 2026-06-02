@@ -20,6 +20,31 @@ import {
   xiaoliurenMethodLabelMap,
 } from './constants';
 
+const DIVINATION_TIME_MODE_OPTIONS = [
+  { value: 'current', label: '当前时间' },
+  { value: 'custom', label: '自定时间' },
+] as const;
+
+const divinationTimeModeLabelMap: Record<
+  NonNullable<DivinationDraft['divinationTimeMode']>,
+  string
+> = {
+  current: '当前时间',
+  custom: '自定时间',
+};
+
+function isTimeBasedDivinationDraft(draft: DivinationDraft) {
+  if (draft.method === 'liuyao' || draft.method === 'qimen' || draft.method === 'liuren') {
+    return true;
+  }
+
+  if (draft.method === 'meihua' || draft.method === 'xiaoliuren') {
+    return true;
+  }
+
+  return false;
+}
+
 interface DivinationFormProps {
   draft: DivinationDraft;
   updateDraft: <K extends keyof DivinationDraft>(key: K, value: DivinationDraft[K]) => void;
@@ -63,6 +88,8 @@ export function DivinationForm({
       : draft.method === 'astrolabe'
         ? '生成星盘'
         : '开始占卜';
+  const isTimeBasedDivination = isTimeBasedDivinationDraft(draft);
+  const divinationTimeMode = draft.divinationTimeMode ?? 'current';
 
   function updateAlmanacParticipant(
     id: string,
@@ -382,6 +409,36 @@ export function DivinationForm({
                         </div>
                       </div>
                     ) : null}
+
+                    {isTimeBasedDivination ? (
+                      <div className="form-item divination-inline-field">
+                        <label htmlFor="divination-time-mode-select">起卦时间</label>
+                        <div className="divination-select-shell divination-desktop-select-shell">
+                          <span className="divination-trigger-text">
+                            {divinationTimeModeLabelMap[divinationTimeMode]}
+                          </span>
+                          <select
+                            id="divination-time-mode-select"
+                            value={divinationTimeMode}
+                            className="form-input divination-overlay-select"
+                            onChange={(event) =>
+                              updateDraft(
+                                'divinationTimeMode',
+                                event.target.value as NonNullable<
+                                  DivinationDraft['divinationTimeMode']
+                                >,
+                              )
+                            }
+                          >
+                            {DIVINATION_TIME_MODE_OPTIONS.map((item) => (
+                              <option key={item.value} value={item.value}>
+                                {item.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   {!isAlmanac ? (
@@ -606,6 +663,31 @@ export function DivinationForm({
                   </div>
                 ) : null}
 
+                {isTimeBasedDivination ? (
+                  <div className="divination-mobile-secondary-picker">
+                    <span className="divination-mobile-trigger-text divination-trigger-text">
+                      {divinationTimeModeLabelMap[divinationTimeMode]}
+                    </span>
+                    <select
+                      aria-label="起卦时间"
+                      value={divinationTimeMode}
+                      className="form-input divination-mobile-method-select divination-overlay-select"
+                      onChange={(event) =>
+                        updateDraft(
+                          'divinationTimeMode',
+                          event.target.value as NonNullable<DivinationDraft['divinationTimeMode']>,
+                        )
+                      }
+                    >
+                      {DIVINATION_TIME_MODE_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+
                 {!isAlmanac ? (
                   <button
                     type="button"
@@ -653,6 +735,33 @@ export function DivinationForm({
                     updateDraft('xiaoliurenNumber', event.target.value.replace(/[^\d]/g, ''))
                   }
                 />
+              </div>
+            </div>
+          ) : null}
+
+          {isTimeBasedDivination && divinationTimeMode === 'custom' ? (
+            <div className="divination-extra-panel divination-time-panel">
+              <div className="form-row-flex">
+                <div className="form-item">
+                  <label htmlFor="custom-divination-date-input">起卦日期</label>
+                  <input
+                    id="custom-divination-date-input"
+                    type="date"
+                    className="form-input"
+                    value={draft.customDivinationDate ?? ''}
+                    onChange={(event) => updateDraft('customDivinationDate', event.target.value)}
+                  />
+                </div>
+                <div className="form-item">
+                  <label htmlFor="custom-divination-time-input">起卦时间（北京时间）</label>
+                  <input
+                    id="custom-divination-time-input"
+                    type="time"
+                    className="form-input"
+                    value={draft.customDivinationTime ?? ''}
+                    onChange={(event) => updateDraft('customDivinationTime', event.target.value)}
+                  />
+                </div>
               </div>
             </div>
           ) : null}

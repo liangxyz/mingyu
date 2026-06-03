@@ -247,110 +247,26 @@ test('公开 API OpenAPI 文档应标明占卜提示词接口返回摘要', asyn
     maximum: 12,
   });
   assert.equal(divinationRequestProperties.participants.items.properties.dateType.enum.length, 2);
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /family/,
+  const ziweiTopicSchema = JSON.stringify(
+    body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic,
   );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /social/,
+  for (const topic of [
+    'family', 'social', 'health', 'recent', 'job-change', 'startup-partnership',
+    'relationship-decision', 'children', 'home-move', 'study', 'study-advance',
+    'investment-partnership', 'reconciliation-decision', 'settle-relocate', 'exam-landing',
+  ]) {
+    assert.match(ziweiTopicSchema, new RegExp(topic), `紫微 promptTopic 应包含 ${topic}`);
+  }
+  const baziTopicSchema = JSON.stringify(
+    body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic,
   );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /health/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /recent/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /job-change/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /startup-partnership/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /relationship-decision/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /children/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /home-move/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /study/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /study-advance/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /investment-partnership/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /reconciliation-decision/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /settle-relocate/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.ZiweiPromptRequest.allOf[1].properties.promptTopic),
-    /exam-landing/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /recent/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /talent/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /relationship-push/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /startup-partnership/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /relationship-decision/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /home-move/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /study-advance/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /investment-partnership/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /reconciliation-decision/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /settle-relocate/,
-  );
-  assert.match(
-    JSON.stringify(body.data.components.schemas.BaziPromptRequest.allOf[1].properties.promptTopic),
-    /exam-landing/,
-  );
+  for (const topic of [
+    'recent', 'talent', 'relationship-push', 'startup-partnership', 'relationship-decision',
+    'home-move', 'study-advance', 'investment-partnership', 'reconciliation-decision',
+    'settle-relocate', 'exam-landing',
+  ]) {
+    assert.match(baziTopicSchema, new RegExp(topic), `八字 promptTopic 应包含 ${topic}`);
+  }
 });
 
 test('公开 API 应支持八字排盘', async () => {

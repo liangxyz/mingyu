@@ -1,5 +1,103 @@
-import type { LiurenLesson } from '../../../../../types/divination';
-import { isBranchKe } from './plate';
+import type { LiurenLesson, LiurenPlateItem } from '../../../../../types/divination';
+import { BASIC_MAPPINGS, HEAVENLY_STEMS } from '../../../../../utils/bazi/baziMappingsData';
+import { BRANCH_WUXING, getBranchIndex, isKe } from '../../_shared';
+import { getUnderByUpper, getUpperByUnder, isBranchKe, isElementKe } from './plate';
+
+const YANG_STEMS = new Set(['甲', '丙', '戊', '庚', '壬']);
+const YANG_BRANCHES = new Set(['子', '寅', '辰', '午', '申', '戌']);
+const STEM_HE_MAP = new Map([
+  ['甲', '己'],
+  ['己', '甲'],
+  ['乙', '庚'],
+  ['庚', '乙'],
+  ['丙', '辛'],
+  ['辛', '丙'],
+  ['丁', '壬'],
+  ['壬', '丁'],
+  ['戊', '癸'],
+  ['癸', '戊'],
+]);
+const STEM_RESIDENCE_MAP: Record<string, string> = {
+  甲: '寅',
+  乙: '辰',
+  丙: '巳',
+  丁: '未',
+  戊: '巳',
+  己: '未',
+  庚: '申',
+  辛: '戌',
+  壬: '亥',
+  癸: '丑',
+};
+const POST_HORSE_MAP: Record<string, string> = {
+  申: '寅',
+  子: '寅',
+  辰: '寅',
+  寅: '申',
+  午: '申',
+  戌: '申',
+  巳: '亥',
+  酉: '亥',
+  丑: '亥',
+  亥: '巳',
+  卯: '巳',
+  未: '巳',
+};
+const LIUCHONG_MAP: Record<string, string> = {
+  子: '午',
+  丑: '未',
+  寅: '申',
+  卯: '酉',
+  辰: '戌',
+  巳: '亥',
+  午: '子',
+  未: '丑',
+  申: '寅',
+  酉: '卯',
+  戌: '辰',
+  亥: '巳',
+};
+const SANXING_MAP: Record<string, string> = {
+  子: '卯',
+  卯: '子',
+  寅: '巳',
+  巳: '申',
+  申: '寅',
+  丑: '戌',
+  戌: '未',
+  未: '丑',
+  辰: '辰',
+  午: '午',
+  酉: '酉',
+  亥: '亥',
+};
+const MENG_BRANCHES = new Set(['寅', '巳', '申', '亥']);
+const ZHONG_BRANCHES = new Set(['子', '卯', '午', '酉']);
+const STEMS_BY_RESIDENCE: Record<string, string[]> = Object.entries(STEM_RESIDENCE_MAP).reduce<
+  Record<string, string[]>
+>((acc, [stem, branch]) => {
+  acc[branch] = [...(acc[branch] || []), stem];
+  return acc;
+}, {});
+
+export interface ResolveTransmissionContext {
+  dayStem: string;
+  dayBranch: string;
+  dayStemResidence: string;
+  heavenlyPlate: LiurenPlateItem[];
+}
+
+export interface InitialTransmissionResult {
+  initial: string;
+  rule: string;
+  tag: string;
+  branches?: string[];
+}
+
+interface KeCandidate {
+  lesson: LiurenLesson;
+  type: '下贼上' | '上克下';
+}
 
 export function buildLessonNote(relation: string, xunKong: string[], upper: string, lower: string) {
   const xunKongTip =
@@ -18,107 +116,368 @@ export function buildLessonNote(relation: string, xunKong: string[], upper: stri
   return ['需结合全课继续判断。', xunKongTip].filter(Boolean).join('');
 }
 
-function getCandidateScore(item: LiurenLesson, lessons: LiurenLesson[], xunKong: string[]) {
-  let score = 0;
-
-  if (!xunKong.includes(item.upper)) {
-    score += 3;
-  }
-  if (!xunKong.includes(item.lower)) {
-    score += 2;
-  }
-  if (item.god === '贵人' || item.god === '青龙' || item.god === '六合') {
-    score += 1;
-  }
-  if (item.relation === '比和') {
-    score += 1;
-  }
-
-  const sameUpperDamageCount = lessons.filter(
-    (lesson) =>
-      lesson.upper === item.upper &&
-      (isBranchKe(lesson.lower, lesson.upper) || isBranchKe(lesson.upper, lesson.lower)),
-  ).length;
-  score += sameUpperDamageCount;
-
-  return score;
+function isSameYinYangAsDayStem(branch: string, dayStem: string) {
+  return YANG_BRANCHES.has(branch) === YANG_STEMS.has(dayStem);
 }
 
-function pickBestCandidate(candidates: LiurenLesson[], lessons: LiurenLesson[], xunKong: string[]) {
-  if (candidates.length === 0) {
-    throw new Error('pickBestCandidate 调用时 candidates 为空。');
+function getStemWuxing(stem: string) {
+  const stemIndex = HEAVENLY_STEMS.indexOf(stem as (typeof HEAVENLY_STEMS)[number]);
+  return stemIndex >= 0 ? BASIC_MAPPINGS.STEM_WUXING[stemIndex] : '';
+}
+
+function uniqueCandidatesByUpper(candidates: KeCandidate[]) {
+  const seen = new Set<string>();
+  return candidates.filter((candidate) => {
+    if (seen.has(candidate.lesson.upper)) {
+      return false;
+    }
+    seen.add(candidate.lesson.upper);
+    return true;
+  });
+}
+
+function getBranchAt(rawIndex: number) {
+  const branches = Object.keys(BRANCH_WUXING);
+  return branches[((rawIndex % branches.length) + branches.length) % branches.length];
+}
+
+function shiftBranch(branch: string, steps: number) {
+  const index = getBranchIndex(branch);
+  if (index < 0) {
+    return branch;
   }
-  const sorted = candidates
-    .map((item, index) => ({
-      item,
+  return getBranchAt(index + steps);
+}
+
+function walkBranches(start: string, end: string) {
+  const startIndex = getBranchIndex(start);
+  const endIndex = getBranchIndex(end);
+  if (startIndex < 0 || endIndex < 0) {
+    return [];
+  }
+
+  const branches: string[] = [];
+  for (let step = 0; step < 12; step += 1) {
+    const branch = getBranchAt(startIndex + step);
+    if (branch === end && step > 0) {
+      break;
+    }
+    branches.push(branch);
+  }
+
+  return branches;
+}
+
+function getHarmDepth(candidate: KeCandidate, context: ResolveTransmissionContext) {
+  const upperElement = BRANCH_WUXING[candidate.lesson.upper] || '';
+  const startUnder = getUnderByUpper(context.heavenlyPlate, candidate.lesson.upper);
+  const walkedBranches = walkBranches(startUnder, candidate.lesson.upper);
+
+  return walkedBranches.reduce((count, branch) => {
+    const branchElement = BRANCH_WUXING[branch] || '';
+    const housedStemElements = (STEMS_BY_RESIDENCE[branch] || [])
+      .map(getStemWuxing)
+      .filter(Boolean);
+
+    if (candidate.type === '下贼上') {
+      const branchHit = isKe(branchElement, upperElement) ? 1 : 0;
+      const stemHits = housedStemElements.filter((element) => isKe(element, upperElement)).length;
+      return count + branchHit + stemHits;
+    }
+
+    const branchHit = isKe(upperElement, branchElement) ? 1 : 0;
+    const stemHits = housedStemElements.filter((element) => isKe(upperElement, element)).length;
+    return count + branchHit + stemHits;
+  }, 0);
+}
+
+function pickByHarmDepth(candidates: KeCandidate[], context: ResolveTransmissionContext) {
+  const ranked = candidates
+    .map((candidate, index) => ({
+      candidate,
       index,
-      score: getCandidateScore(item, lessons, xunKong),
+      depth: getHarmDepth(candidate, context),
+      under: getUnderByUpper(context.heavenlyPlate, candidate.lesson.upper),
     }))
-    .sort((a, b) => b.score - a.score || a.index - b.index);
-  const top = sorted[0];
-  if (!top) {
-    throw new Error('pickBestCandidate 排序后无有效候选。');
+    .sort((a, b) => b.depth - a.depth || a.index - b.index);
+  const maxDepth = ranked[0]?.depth ?? 0;
+  const tied = ranked.filter((item) => item.depth === maxDepth);
+  const meng = tied.find((item) => MENG_BRANCHES.has(item.under));
+  if (meng) {
+    return meng.candidate;
   }
-  return top.item;
+
+  const zhong = tied.find((item) => ZHONG_BRANCHES.has(item.under));
+  if (zhong) {
+    return zhong.candidate;
+  }
+
+  const preferredUpper = YANG_STEMS.has(context.dayStem)
+    ? context.dayStemResidence
+    : context.dayBranch;
+  return (
+    tied.find((item) => item.candidate.lesson.upper === preferredUpper)?.candidate ||
+    tied[0].candidate
+  );
 }
 
-export function resolveInitialTransmission(lessons: LiurenLesson[], xunKong: string[]) {
-  const lowerKeUpper = lessons.filter((item) => isBranchKe(item.lower, item.upper));
-  if (lowerKeUpper.length > 0) {
-    const picked = pickBestCandidate(lowerKeUpper, lessons, xunKong);
+function resolveMultipleCandidates(
+  candidates: KeCandidate[],
+  context: ResolveTransmissionContext,
+  tagPrefix = '',
+): InitialTransmissionResult {
+  const uniqueCandidates = uniqueCandidatesByUpper(candidates);
+  const biYongCandidates = uniqueCandidates.filter((item) =>
+    isSameYinYangAsDayStem(item.lesson.upper, context.dayStem),
+  );
+
+  if (biYongCandidates.length === 1) {
+    const picked = biYongCandidates[0];
     return {
-      initial: picked.upper,
-      rule: '贼克法',
-      tag: '贼克取用',
+      initial: picked.lesson.upper,
+      rule: tagPrefix ? `${tagPrefix}比用法` : '比用法',
+      tag: tagPrefix ? `${tagPrefix}比用` : '比用',
     };
   }
 
-  const upperKeLower = lessons.filter((item) => isBranchKe(item.upper, item.lower));
-  if (upperKeLower.length > 0) {
-    const picked = pickBestCandidate(upperKeLower, lessons, xunKong);
+  const picked = pickByHarmDepth(
+    biYongCandidates.length > 1 ? biYongCandidates : uniqueCandidates,
+    context,
+  );
+
+  return {
+    initial: picked.lesson.upper,
+    rule: tagPrefix ? `${tagPrefix}涉害法` : '涉害法',
+    tag: tagPrefix ? `${tagPrefix}涉害` : '涉害',
+  };
+}
+
+function resolveKeCandidates(
+  lowerKeUpper: KeCandidate[],
+  upperKeLower: KeCandidate[],
+  context: ResolveTransmissionContext,
+  rulePrefix = '',
+): InitialTransmissionResult | null {
+  if (lowerKeUpper.length === 1) {
+    const picked = lowerKeUpper[0].lesson;
     return {
       initial: picked.upper,
-      rule: '克法',
-      tag: '上克下',
+      rule: rulePrefix ? `${rulePrefix}贼克法` : '贼克法',
+      tag: rulePrefix ? `${rulePrefix}贼克` : '贼克取用',
     };
   }
 
-  const biHe = lessons.filter((item) => item.relation === '比和');
-  if (biHe.length > 0) {
-    const picked = pickBestCandidate(biHe, lessons, xunKong);
+  if (lowerKeUpper.length > 1) {
+    return resolveMultipleCandidates(lowerKeUpper, context, rulePrefix);
+  }
+
+  if (upperKeLower.length === 1) {
+    const picked = upperKeLower[0].lesson;
     return {
       initial: picked.upper,
-      rule: '比用法',
-      tag: '比用',
+      rule: rulePrefix ? `${rulePrefix}克法` : '克法',
+      tag: rulePrefix ? `${rulePrefix}上克下` : '上克下',
     };
   }
 
-  const sheHaiCandidates = lessons.filter((item) => item.relation.includes('克'));
-  if (sheHaiCandidates.length > 0) {
-    const picked = pickBestCandidate(sheHaiCandidates, lessons, xunKong);
+  if (upperKeLower.length > 1) {
+    return resolveMultipleCandidates(upperKeLower, context, rulePrefix);
+  }
+
+  return null;
+}
+
+function resolveRemoteKe(
+  lessons: LiurenLesson[],
+  context: ResolveTransmissionContext,
+): InitialTransmissionResult | null {
+  const dayStemWuxing = getStemWuxing(context.dayStem);
+  const remoteLessons = lessons.slice(1);
+  const upperKeDay = remoteLessons
+    .filter((lesson) => isElementKe(BRANCH_WUXING[lesson.upper] || '', dayStemWuxing))
+    .map((lesson) => ({ lesson, type: '上克下' }) satisfies KeCandidate);
+  const dayKeUpper = remoteLessons
+    .filter((lesson) => isElementKe(dayStemWuxing, BRANCH_WUXING[lesson.upper] || ''))
+    .map((lesson) => ({ lesson, type: '下贼上' }) satisfies KeCandidate);
+
+  if (upperKeDay.length === 1) {
+    return { initial: upperKeDay[0].lesson.upper, rule: '遥克法', tag: '蒿矢' };
+  }
+  if (upperKeDay.length > 1) {
+    return resolveMultipleCandidates(upperKeDay, context, '遥克');
+  }
+  if (dayKeUpper.length === 1) {
+    return { initial: dayKeUpper[0].lesson.upper, rule: '遥克法', tag: '弹射' };
+  }
+  if (dayKeUpper.length > 1) {
+    return resolveMultipleCandidates(dayKeUpper, context, '遥克');
+  }
+
+  return null;
+}
+
+function isFuyinPlate(plate: LiurenPlateItem[]) {
+  return plate.length === 12 && plate.every((item) => item.branch === item.under);
+}
+
+function isFanyinPlate(plate: LiurenPlateItem[]) {
+  return plate.length === 12 && plate.every((item) => LIUCHONG_MAP[item.under] === item.branch);
+}
+
+function getUniqueLessonPairCount(lessons: LiurenLesson[]) {
+  return new Set(lessons.map((lesson) => lesson.upper)).size;
+}
+
+function getPunishment(branch: string) {
+  return SANXING_MAP[branch] || branch;
+}
+
+function resolveFuyinTransmission(
+  lessons: LiurenLesson[],
+  context: ResolveTransmissionContext,
+): InitialTransmissionResult {
+  const yiKeUpper = lessons[0]?.upper || context.dayStemResidence;
+  const sanKeUpper = lessons[2]?.upper || context.dayBranch;
+  const useDayStemSide =
+    context.dayStem === '乙' || context.dayStem === '癸' || YANG_STEMS.has(context.dayStem);
+  const initial = useDayStemSide ? yiKeUpper : sanKeUpper;
+  let middle = getPunishment(initial);
+
+  if (middle === initial) {
+    middle = useDayStemSide ? sanKeUpper : yiKeUpper;
+  }
+
+  let final = getPunishment(middle);
+  if (final === middle || getPunishment(middle) === initial) {
+    final = LIUCHONG_MAP[middle] || middle;
+  }
+
+  return {
+    initial,
+    branches: [initial, middle, final],
+    rule: '伏吟法',
+    tag: YANG_STEMS.has(context.dayStem) ? '自任' : '自信',
+  };
+}
+
+function resolveFanyinTransmission(
+  lessons: LiurenLesson[],
+  context: ResolveTransmissionContext,
+): InitialTransmissionResult {
+  const lowerKeUpper = lessons
+    .filter((item) => isBranchKe(item.lower, item.upper))
+    .map((lesson) => ({ lesson, type: '下贼上' }) satisfies KeCandidate);
+  const upperKeLower = lessons
+    .filter((item) => isBranchKe(item.upper, item.lower))
+    .map((lesson) => ({ lesson, type: '上克下' }) satisfies KeCandidate);
+  const keResult = resolveKeCandidates(lowerKeUpper, upperKeLower, context, '返吟');
+  if (keResult) {
+    return keResult;
+  }
+
+  const yiKeUpper = lessons[0]?.upper || context.dayStemResidence;
+  const sanKeUpper = lessons[2]?.upper || context.dayBranch;
+  const initial = POST_HORSE_MAP[context.dayBranch] || getUpperByUnder(context.heavenlyPlate, '寅');
+
+  return {
+    initial,
+    branches: [initial, sanKeUpper, yiKeUpper],
+    rule: '返吟法',
+    tag: '无依',
+  };
+}
+
+function resolveSpecialTransmission(
+  lessons: LiurenLesson[],
+  context: ResolveTransmissionContext,
+): InitialTransmissionResult {
+  const yiKeUpper = lessons[0]?.upper || context.dayStemResidence;
+  const sanKeUpper = lessons[2]?.upper || context.dayBranch;
+  const siKeUpper = lessons[3]?.upper || sanKeUpper;
+  const isYangDay = YANG_STEMS.has(context.dayStem);
+
+  if (getUniqueLessonPairCount(lessons) === 4) {
+    const initial = isYangDay
+      ? getUpperByUnder(context.heavenlyPlate, '酉')
+      : getUnderByUpper(context.heavenlyPlate, '酉');
     return {
-      initial: picked.upper,
-      rule: '涉害法',
-      tag: '涉害',
+      initial,
+      branches: isYangDay ? [initial, sanKeUpper, yiKeUpper] : [initial, yiKeUpper, sanKeUpper],
+      rule: '昴星法',
+      tag: isYangDay ? '虎视' : '冬蛇掩目',
     };
   }
 
-  const safeLesson = lessons.find((item) => !xunKong.includes(item.upper));
-  if (safeLesson) {
+  if (getUniqueLessonPairCount(lessons) === 3) {
+    if (isYangDay) {
+      const heStem = STEM_HE_MAP.get(context.dayStem) || context.dayStem;
+      const heStemResidence = STEM_RESIDENCE_MAP[heStem] || context.dayStemResidence;
+      const initial = getUpperByUnder(context.heavenlyPlate, heStemResidence);
+      return {
+        initial,
+        branches: [initial, yiKeUpper, yiKeUpper],
+        rule: '别责法',
+        tag: '别责',
+      };
+    }
+
+    const initial = shiftBranch(context.dayBranch, 4);
     return {
-      initial: safeLesson.upper,
+      initial,
+      branches: [initial, yiKeUpper, yiKeUpper],
       rule: '别责法',
       tag: '别责',
     };
   }
 
-  const firstLesson = lessons[0];
-  if (!firstLesson) {
+  if (context.dayStemResidence === context.dayBranch) {
+    const initial = isYangDay ? shiftBranch(yiKeUpper, 2) : shiftBranch(siKeUpper, -2);
+    return {
+      initial,
+      branches: [initial, yiKeUpper, yiKeUpper],
+      rule: '八专法',
+      tag: '八专',
+    };
+  }
+
+  return {
+    initial: yiKeUpper,
+    rule: '别责法',
+    tag: '别责',
+  };
+}
+
+export function resolveInitialTransmission(
+  lessons: LiurenLesson[],
+  context: ResolveTransmissionContext,
+) {
+  if (lessons.length === 0) {
     throw new Error('resolveInitialTransmission 调用时 lessons 为空。');
   }
-  return {
-    initial: firstLesson.upper,
-    rule: '八专法',
-    tag: '八专',
-  };
+
+  if (isFuyinPlate(context.heavenlyPlate)) {
+    return resolveFuyinTransmission(lessons, context);
+  }
+
+  if (isFanyinPlate(context.heavenlyPlate)) {
+    return resolveFanyinTransmission(lessons, context);
+  }
+
+  const lowerKeUpper = lessons
+    .filter((item) => isBranchKe(item.lower, item.upper))
+    .map((lesson) => ({ lesson, type: '下贼上' }) satisfies KeCandidate);
+  const upperKeLower = lessons
+    .filter((item) => isBranchKe(item.upper, item.lower))
+    .map((lesson) => ({ lesson, type: '上克下' }) satisfies KeCandidate);
+  const keResult = resolveKeCandidates(lowerKeUpper, upperKeLower, context);
+  if (keResult) {
+    return keResult;
+  }
+
+  const remoteKeResult = resolveRemoteKe(lessons, context);
+  if (remoteKeResult) {
+    return remoteKeResult;
+  }
+
+  return resolveSpecialTransmission(lessons, context);
 }

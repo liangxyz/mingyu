@@ -89,11 +89,21 @@ export function generateLiuren(customDate?: Date): LiurenData {
     };
   }) satisfies LiurenLesson[];
 
-  const initialResult = resolveInitialTransmission(fourLessons, xunKong);
+  const initialResult = resolveInitialTransmission(fourLessons, {
+    dayStem,
+    dayBranch,
+    dayStemResidence,
+    heavenlyPlate,
+  });
   const chu = initialResult.initial;
-  const zhong = getUpperByUnder(heavenlyPlate, chu);
-  const mo = getUpperByUnder(heavenlyPlate, zhong);
-  const transmissionPattern = getTransmissionPattern(chu, zhong, mo);
+  const zhong = initialResult.branches?.[1] || getUpperByUnder(heavenlyPlate, chu);
+  const mo = initialResult.branches?.[2] || getUpperByUnder(heavenlyPlate, zhong);
+  const inferredTransmissionPattern = getTransmissionPattern(chu, zhong, mo);
+  const transmissionPattern = initialResult.rule.includes('伏吟')
+    ? '伏吟'
+    : initialResult.rule.includes('返吟')
+      ? '反吟'
+      : inferredTransmissionPattern;
   const transmissionBranches = [chu, zhong, mo];
   const transmissionStages: LiurenTransmission['stage'][] = ['初传', '中传', '末传'];
   const threeTransmissions = transmissionBranches.map((branch, index) => {

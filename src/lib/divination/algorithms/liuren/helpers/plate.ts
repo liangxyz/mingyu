@@ -67,6 +67,14 @@ export function isBranchKe(sourceBranch: string, targetBranch: string) {
   return isKe(sourceElement, targetElement);
 }
 
+export function isElementKe(sourceElement: string, targetElement: string) {
+  if (!sourceElement || !targetElement) {
+    return false;
+  }
+
+  return isKe(sourceElement, targetElement);
+}
+
 export function getNoblemanBranch(dayStem: string, dayNight: '昼占' | '夜占') {
   const pair = GUIREN_BRANCH_BY_STEM[dayStem];
   if (!pair) {
@@ -78,6 +86,10 @@ export function getNoblemanBranch(dayStem: string, dayNight: '昼占' | '夜占'
 
 export function getUpperByUnder(plate: LiurenPlateItem[], under: string) {
   return plate.find((item) => item.under === under)?.branch || under;
+}
+
+export function getUnderByUpper(plate: LiurenPlateItem[], upper: string) {
+  return plate.find((item) => item.branch === upper)?.under || upper;
 }
 
 export function buildHeavenlyPlate(args: {

@@ -1520,11 +1520,18 @@ function formatLiurenInfo(data: LiurenData) {
     firstTransmission ? `发用${firstTransmission.branch}乘${firstTransmission.god}` : '',
     lastTransmission ? `末传${lastTransmission.branch}` : '',
   ].filter(Boolean);
+  const noblemanGroundBranch =
+    data.noblemanGroundBranch ||
+    data.heavenlyPlate.find((item) => item.branch === data.noblemanBranch)?.under ||
+    '';
+  const noblemanText = data.noblemanBranch
+    ? `贵人${data.noblemanBranch}${noblemanGroundBranch ? `临${noblemanGroundBranch}` : ''}`
+    : '';
   const plateSummaryText = [
     `月将${data.monthLeader}`,
     `占时${data.divinationBranch}`,
     data.dayNight || '',
-    data.noblemanBranch ? `贵人落${data.noblemanBranch}` : '',
+    noblemanText,
     data.xunKong?.length ? `旬空${data.xunKong.join('、')}` : '',
   ].filter(Boolean);
   const heavenlyPlateText = data.heavenlyPlate

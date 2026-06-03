@@ -199,6 +199,21 @@ function formatLiurenTransmissionShortSummary(data: DivinationData) {
     .join(' → ')}`;
 }
 
+function formatLiurenNoblemanSummary(data: DivinationData) {
+  if (!('noblemanBranch' in data) || !data.noblemanBranch) {
+    return '贵人：未知';
+  }
+
+  const groundBranch =
+    'noblemanGroundBranch' in data && data.noblemanGroundBranch
+      ? data.noblemanGroundBranch
+      : 'heavenlyPlate' in data
+        ? data.heavenlyPlate?.find((item) => item.branch === data.noblemanBranch)?.under
+        : '';
+
+  return `贵人：${data.noblemanBranch}${groundBranch ? `临${groundBranch}` : ''}`;
+}
+
 function formatTarotFocusSummary(data: TarotData) {
   if (!data.cards.length) {
     return '';
@@ -312,7 +327,7 @@ export function getDivinationSummaryBlocks(
         ],
         lines: [
           wrapMainEvidence(formatLiurenFocusSummary(data)),
-          `贵人落地：${'noblemanBranch' in data && data.noblemanBranch ? data.noblemanBranch : '未知'}`,
+          formatLiurenNoblemanSummary(data),
           `日干寄宫：${'dayStemResidence' in data && data.dayStemResidence ? `${data.ganzhi.day.charAt(0)}寄${data.dayStemResidence}` : '未知'}`,
           `旬空：${'xunKong' in data && data.xunKong?.length ? data.xunKong.join('、') : '未知'}`,
           `取传法：${'transmissionRule' in data && data.transmissionRule ? data.transmissionRule : '未标注'}`,

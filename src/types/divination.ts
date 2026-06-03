@@ -379,6 +379,7 @@ export interface LiurenData {
   divinationBranch: string;
   dayOfficer: string;
   noblemanBranch?: string;
+  noblemanGroundBranch?: string;
   xunKong?: string[];
   transmissionRule?: string;
   transmissionPattern?: '伏吟' | '反吟' | '回环' | '递传';

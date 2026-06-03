@@ -9,6 +9,7 @@ import {
   getDayStemResidence,
   getNoblemanBranch,
   getPlateItemByBranch,
+  getUnderByUpper,
   getUpperByUnder,
 } from './helpers/plate';
 import { buildFourLessons, resolveInitialTransmission } from './helpers/lessons';
@@ -81,6 +82,7 @@ export function generateLiuren(customDate?: Date): LiurenData {
     noblemanBranch,
     dayNight,
   });
+  const noblemanGroundBranch = getUnderByUpper(heavenlyPlate, noblemanBranch);
 
   const dayStemResidence = getDayStemResidence(dayStem, dayBranch);
   const fourLessons = buildFourLessons({
@@ -154,6 +156,7 @@ export function generateLiuren(customDate?: Date): LiurenData {
     divinationBranch: hourBranch,
     dayOfficer,
     noblemanBranch,
+    noblemanGroundBranch,
     xunKong,
     transmissionRule: initialResult.rule,
     transmissionPattern,

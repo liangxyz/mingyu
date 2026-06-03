@@ -377,6 +377,7 @@ function createData(method: Exclude<DivinationType, 'tarot_single'>): Divination
         divinationBranch: '卯',
         dayOfficer: '贵人',
         noblemanBranch: '亥',
+        noblemanGroundBranch: '卯',
         xunKong: ['戌', '亥'],
         earthlyPlate: ['子', '丑', '寅'],
         dayStemResidence: '巳',
@@ -1074,7 +1075,7 @@ test('大六壬提示词会给出精简课传资料，避免重复堆叠', () =>
   );
 
   assert.match(prompt, /【排盘信息】/);
-  assert.match(prompt, /核心结构：盘面摘要：月将亥；占时卯；昼占；贵人落亥；旬空戌、亥/);
+  assert.match(prompt, /核心结构：盘面摘要：月将亥；占时卯；昼占；贵人亥临卯；旬空戌、亥/);
   assert.match(prompt, /地盘：子、丑、寅/);
   assert.match(prompt, /天盘：丑上子乘青龙；寅上丑乘天空；卯上寅乘白虎/);
   assert.match(prompt, /日干寄宫：丙寄巳/);

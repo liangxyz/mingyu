@@ -635,3 +635,36 @@ test('大六壬非八专日即使干支同寄宫，也不能误判为八专法',
 
   assert.notEqual(result.rule, '八专法');
 });
+
+test('大六壬应与传统排盘样本的申将午时天地盘和十二天将一致', () => {
+  const result = generateLiuren(new Date('2026-06-03T12:30:00+08:00'));
+
+  assert.equal(result.ganzhi.day, '戊申');
+  assert.equal(result.ganzhi.hour, '戊午');
+  assert.equal(result.monthLeader, '申');
+  assert.equal(result.divinationBranch, '午');
+  assert.equal(result.noblemanBranch, '丑');
+  assert.equal(result.noblemanGroundBranch, '亥');
+  assert.deepEqual(result.xunKong, ['寅', '卯']);
+  assert.deepEqual(
+    result.heavenlyPlate.map((item) => `${item.under}${item.branch}${item.god}`),
+    [
+      '子寅螣蛇',
+      '丑卯朱雀',
+      '寅辰六合',
+      '卯巳勾陈',
+      '辰午青龙',
+      '巳未天空',
+      '午申白虎',
+      '未酉太常',
+      '申戌玄武',
+      '酉亥太阴',
+      '戌子天后',
+      '亥丑贵人',
+    ],
+  );
+  assert.deepEqual(
+    result.threeTransmissions.map((item) => `${item.branch}${item.god}`),
+    ['子天后', '寅螣蛇', '辰六合'],
+  );
+});

@@ -4,7 +4,6 @@ import type { DivinationSummaryBlocks } from '@/lib/divination/summary';
 import type {
   AstrolabeData,
   LiurenData,
-  LiurenLesson,
   LiurenPlateItem,
   LiurenTransmission,
   XiaoliurenData,
@@ -25,18 +24,18 @@ interface DivinationResultProps {
 }
 
 const LIUREN_BRANCH_POSITIONS: Record<string, { row: number; column: number }> = {
-  子: { row: 1, column: 3 },
-  丑: { row: 1, column: 4 },
-  寅: { row: 2, column: 5 },
-  卯: { row: 3, column: 5 },
-  辰: { row: 4, column: 5 },
-  巳: { row: 5, column: 4 },
-  午: { row: 5, column: 3 },
-  未: { row: 5, column: 2 },
-  申: { row: 4, column: 1 },
-  酉: { row: 3, column: 1 },
-  戌: { row: 2, column: 1 },
-  亥: { row: 1, column: 2 },
+  巳: { row: 1, column: 1 },
+  午: { row: 1, column: 2 },
+  未: { row: 1, column: 3 },
+  申: { row: 1, column: 4 },
+  酉: { row: 2, column: 4 },
+  戌: { row: 3, column: 4 },
+  亥: { row: 4, column: 4 },
+  子: { row: 4, column: 3 },
+  丑: { row: 4, column: 2 },
+  寅: { row: 4, column: 1 },
+  卯: { row: 3, column: 1 },
+  辰: { row: 2, column: 1 },
 };
 
 const LIUREN_BRANCH_ORDER = Object.keys(LIUREN_BRANCH_POSITIONS);
@@ -46,16 +45,6 @@ function findLiurenTransmissionStage(
   branch: string,
 ): LiurenTransmission['stage'] | null {
   return transmissions.find((item) => item.branch === branch)?.stage || null;
-}
-
-function getLiurenPlateTags(data: LiurenData, item: LiurenPlateItem) {
-  return [
-    item.under === data.divinationBranch ? '占时' : '',
-    item.branch === data.monthLeader ? '月将' : '',
-    item.under === data.noblemanBranch ? '贵人落地' : '',
-    data.xunKong?.includes(item.under) ? '旬空' : '',
-    findLiurenTransmissionStage(data.threeTransmissions, item.branch) || '',
-  ].filter(Boolean);
 }
 
 function XiaoliurenStageCard(props: { label: string; detail: XiaoliurenPalaceDetail }) {
@@ -114,40 +103,27 @@ function XiaoliurenBoard({ data }: { data: XiaoliurenData }) {
 
 function LiurenPlateCell({ data, item }: { data: LiurenData; item: LiurenPlateItem }) {
   const position = LIUREN_BRANCH_POSITIONS[item.under];
-  const tags = getLiurenPlateTags(data, item);
+  const transmissionStage = findLiurenTransmissionStage(data.threeTransmissions, item.branch);
   const className = [
-    'liuren-plate-cell',
-    tags.includes('占时') ? 'is-hour' : '',
-    tags.includes('月将') ? 'is-month-leader' : '',
-    tags.includes('贵人落地') ? 'is-nobleman' : '',
-    tags.includes('旬空') ? 'is-empty' : '',
-    tags.some((tag) => tag.endsWith('传')) ? 'is-transmission' : '',
+    'liuren-script-cell',
+    item.under === data.divinationBranch ? 'is-hour' : '',
+    item.branch === data.monthLeader ? 'is-month-leader' : '',
+    item.branch === data.noblemanBranch ? 'is-nobleman' : '',
+    data.xunKong?.includes(item.under) ? 'is-empty' : '',
+    transmissionStage ? 'is-transmission' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <article
+    <div
       className={className}
       style={position ? { gridColumn: position.column, gridRow: position.row } : undefined}
     >
-      <div className="liuren-plate-branch-row">
-        <span>地盘</span>
-        <strong>{item.under}</strong>
-      </div>
-      <div className="liuren-plate-upper">
-        <span>天盘</span>
-        <strong>{item.branch}</strong>
-      </div>
-      <div className="liuren-plate-god">{item.god}</div>
-      {tags.length ? (
-        <div className="liuren-plate-tags">
-          {tags.map((tag) => (
-            <span key={`${item.under}-${tag}`}>{tag}</span>
-          ))}
-        </div>
-      ) : null}
-    </article>
+      <span>{item.god}</span>
+      <strong>{item.branch}</strong>
+      {transmissionStage ? <em>{transmissionStage.replace('传', '')}</em> : null}
+    </div>
   );
 }
 
@@ -158,17 +134,22 @@ function LiurenPlateGrid({ data }: { data: LiurenData }) {
   );
 
   return (
-    <div className="liuren-plate-grid">
+    <div className="liuren-script-plate">
       {orderedPlate.map((item) => (
         <LiurenPlateCell data={data} item={item} key={item.under} />
       ))}
-      <div className="liuren-plate-center">
+      <div className="liuren-script-center">
         <span>天地盘</span>
         <strong>
-          月将{data.monthLeader}加{data.divinationBranch}
+          {data.ganzhi.day}日 {data.ganzhi.hour}时
         </strong>
         <p>
-          {data.dayNight || '时段未知'} ·{' '}
+          月将{data.monthLeader}加{data.divinationBranch} · {data.dayNight || '时段未知'}
+        </p>
+        <p>
+          {data.noblemanBranch ? `贵人${data.noblemanBranch}` : '贵人未标注'}
+          {data.noblemanGroundBranch ? `临${data.noblemanGroundBranch}` : ''}
+          {' · '}
           {data.xunKong?.length ? `旬空${data.xunKong.join('、')}` : '旬空未知'}
         </p>
       </div>
@@ -176,80 +157,65 @@ function LiurenPlateGrid({ data }: { data: LiurenData }) {
   );
 }
 
-function LiurenLessonCard({ lesson }: { lesson: LiurenLesson }) {
+function LiurenCompactMatrix({ data }: { data: LiurenData }) {
   return (
-    <article className="liuren-lesson-card">
-      <div className="liuren-card-kicker">{lesson.name}</div>
-      <div className="liuren-lesson-stack">
-        <div>
-          <span>上神</span>
-          <strong>{lesson.upper}</strong>
+    <div className="liuren-compact-matrix">
+      <section>
+        <span className="liuren-matrix-title">四课</span>
+        <div className="liuren-matrix-columns">
+          {data.fourLessons.map((lesson) => (
+            <div className="liuren-matrix-column" key={lesson.name}>
+              <span>{lesson.god}</span>
+              <strong>{lesson.upper}</strong>
+              <b>{lesson.lower}</b>
+              <small>{lesson.name}</small>
+            </div>
+          ))}
         </div>
-        <div>
-          <span>下位</span>
-          <strong>{lesson.lower}</strong>
-        </div>
-      </div>
-      <div className="liuren-card-meta">
-        <span>{lesson.god}</span>
-        <span>{lesson.relation}</span>
-      </div>
-      <p>{lesson.note}</p>
-    </article>
-  );
-}
+      </section>
 
-function LiurenTransmissionCard({ transmission }: { transmission: LiurenTransmission }) {
-  return (
-    <article className="liuren-transmission-card">
-      <div className="liuren-card-kicker">{transmission.stage}</div>
-      <strong className="liuren-transmission-branch">{transmission.branch}</strong>
-      <div className="liuren-card-meta">
-        <span>{transmission.god}</span>
-        <span>{transmission.relation}</span>
-      </div>
-      <p>{transmission.note}</p>
-    </article>
+      <section>
+        <span className="liuren-matrix-title">三传</span>
+        <div className="liuren-matrix-columns">
+          {data.threeTransmissions.map((item) => (
+            <div className="liuren-matrix-column" key={item.stage}>
+              <span>{item.god}</span>
+              <strong>{item.branch}</strong>
+              <small>{item.stage}</small>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
 function LiurenBoard({ data }: { data: LiurenData }) {
+  const transmissionText = data.threeTransmissions
+    .map((item) => `${item.stage.replace('传', '')}${item.branch}`)
+    .join(' → ');
+
   return (
     <div className="divination-extra-panel liuren-board">
       <div className="divination-extra-head">
-        <strong>大六壬盘面</strong>
+        <strong>大六壬参考盘</strong>
         <span>
           {data.ganzhi.day}日 · {data.ganzhi.hour}时
         </span>
       </div>
 
-      <LiurenPlateGrid data={data} />
-
-      <div className="liuren-section-head">
-        <strong>四课</strong>
+      <div className="liuren-reference-strip">
+        <span>月将{data.monthLeader}加{data.divinationBranch}</span>
+        <span>三传：{transmissionText || '未生成'}</span>
         <span>
-          {data.dayStemResidence
-            ? `${data.ganzhi.day.charAt(0)}寄${data.dayStemResidence}`
-            : '日干寄宫未标注'}
+          {data.transmissionRule || '取传未标注'}
+          {data.xunKong?.length ? ` · 空${data.xunKong.join('、')}` : ''}
         </span>
       </div>
-      <div className="liuren-lessons-grid">
-        {data.fourLessons.map((lesson) => (
-          <LiurenLessonCard lesson={lesson} key={lesson.name} />
-        ))}
-      </div>
 
-      <div className="liuren-section-head">
-        <strong>三传</strong>
-        <span>
-          {data.transmissionRule || '取传法未标注'}
-          {data.transmissionPattern ? ` · ${data.transmissionPattern}` : ''}
-        </span>
-      </div>
-      <div className="liuren-transmission-chain">
-        {data.threeTransmissions.map((transmission) => (
-          <LiurenTransmissionCard transmission={transmission} key={transmission.stage} />
-        ))}
+      <div className="liuren-script-panel">
+        <LiurenPlateGrid data={data} />
+        <LiurenCompactMatrix data={data} />
       </div>
     </div>
   );

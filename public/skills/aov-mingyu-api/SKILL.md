@@ -163,7 +163,11 @@ curl -X POST https://aov.cc/api/v1/divination/astrolabe \
 
 紫微 `promptScope` 支持：`origin`（本命）、`decadal`（大限）、`yearly`（流年）、`monthly`（流月）、`daily`（流日）、`hourly`（流时）、`age`（年龄）。公开 API 返回轻量排盘资料，默认只返回 `origin`；请求传入 `promptScope` 时，会返回 `origin` 加指定范围，包含分析对象、落宫与四化信息。
 
+紫微排盘结果以 `payloadByScope.origin.palaces` 为主结构；接口同时提供 `四化`、`fourMutagens`、`birthMutagens` 和 `gongList`，方便 agent 直接读取生年四化和十二宫星曜。
+
 `promptMode` 支持：`framework`（内置完整框架，默认）、`custom`（只围绕用户问题自由作答，不塞框架）。
+
+Python `urllib` 默认 `User-Agent` 可能被 Cloudflare 拦截；Python 调用时请显式设置正常 `User-Agent`，例如 `curl/8.0.0` 或业务自己的客户端名称。
 
 占卜时间参数：
 

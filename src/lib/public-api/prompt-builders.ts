@@ -137,10 +137,57 @@ export function buildBaziPromptForResult(params: {
 }
 
 export function buildSerializableZiweiResult(result: ZiweiRuntime) {
+  const originPayload = result.payloadByScope.origin;
+  const compatibility = buildZiweiCompatibilityFields(originPayload);
+
   return {
-    basicInfo: result.payloadByScope.origin.basic_info,
+    basicInfo: originPayload.basic_info,
     scopeNames: Object.keys(result.payloadByScope),
     payloadByScope: result.payloadByScope,
+    ...compatibility,
+  };
+}
+
+function buildZiweiCompatibilityFields(payload: ZiweiRuntime['payloadByScope']['origin']) {
+  const mutagens: Record<string, string> = {};
+  const gongList = payload.palaces.map((palace) => {
+    const allStars = [
+      ...palace.major_stars,
+      ...palace.minor_stars,
+      ...palace.other_stars,
+      ...palace.scope_stars,
+    ];
+
+    allStars.forEach((star) => {
+      if (star.birth_mutagen) {
+        mutagens[star.birth_mutagen] = star.name;
+      }
+    });
+
+    return {
+      index: palace.index,
+      name: palace.name,
+      heavenlyStem: palace.heavenly_stem,
+      earthlyBranch: palace.earthly_branch,
+      isLifePalace: palace.name === '命宫',
+      isBodyPalace: palace.is_body_palace,
+      stars: allStars.map((star) => star.name).filter(Boolean),
+      majorStars: palace.major_stars.map((star) => star.name).filter(Boolean),
+      minorStars: palace.minor_stars.map((star) => star.name).filter(Boolean),
+      otherStars: palace.other_stars.map((star) => star.name).filter(Boolean),
+    };
+  });
+  const lifePalace = payload.palaces.find((palace) => palace.name === '命宫');
+  const bodyPalace = payload.palaces.find((palace) => palace.is_body_palace);
+
+  return {
+    fourMutagens: mutagens,
+    birthMutagens: mutagens,
+    gongList,
+    命宫: lifePalace?.earthly_branch ?? '',
+    身宫: bodyPalace?.name ?? '',
+    五行局: payload.basic_info.five_elements_class,
+    四化: mutagens,
   };
 }
 

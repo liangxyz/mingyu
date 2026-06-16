@@ -1138,6 +1138,37 @@ test('公开 API 紫微排盘接口支持按需返回指定范围', async () => 
   assert.equal(body.data.payloadByScope.yearly, undefined);
 });
 
+test('公开 API 紫微排盘应提供 agent 易解析的四化和宫位列表', async () => {
+  const { response, body } = await callApi('ziwei/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: '吴丹蕾',
+      gender: 'female',
+      dateType: 'solar',
+      year: '1998',
+      month: '8',
+      day: '13',
+      timeIndex: 0,
+    }),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.deepEqual(body.data.四化, {
+    禄: '贪狼',
+    权: '太阴',
+    科: '右弼',
+    忌: '天机',
+  });
+  assert.deepEqual(body.data.fourMutagens, body.data.四化);
+  assert.equal(body.data.五行局, body.data.basicInfo.five_elements_class);
+  assert.equal(body.data.gongList.length, 12);
+  assert.ok(body.data.gongList.some((palace: { name: string; stars: string[] }) => {
+    return palace.name === '命宫' && palace.stars.length > 0;
+  }));
+});
+
 test('公开 API 紫微真太阳时参数缺失或越界时应返回 400', async () => {
   for (const payload of [
     {

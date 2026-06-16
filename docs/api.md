@@ -117,8 +117,10 @@ curl -X POST https://aov.cc/api/v1/divination/qimen/prompt \
 - 紫微 `promptTopic` 支持 `destiny`、`relationship`、`relationship-push`、`relationship-decision`、`children`、`career-wealth`、`job-change`、`startup-partnership`、`investment-partnership`、`recent`、`family`、`home-move`、`settle-relocate`、`social`、`emotion`、`health`、`study`、`study-advance`、`exam-landing`、`reconciliation-decision`、`growth`、`talent`、`life`、`chat`。
 - 紫微 `promptScope` 支持 `origin`、`decadal`、`yearly`、`monthly`、`daily`、`hourly`、`age`。
 - 紫微公开 API 为保证线上稳定，返回轻量排盘资料，默认只返回 `origin`（本命）范围；如果请求传入 `promptScope`，接口会返回 `origin` 加指定范围，包含分析对象、落宫与四化信息，供流年、流月、流日等分析使用。
+- 紫微排盘结果以 `payloadByScope.origin.palaces` 为主结构；同时提供 `四化`、`fourMutagens`、`birthMutagens` 和 `gongList`，方便 agent 直接读取生年四化和十二宫星曜。
 - `promptMode` 支持 `framework`（内置完整框架，默认）和 `custom`（只围绕用户问题自由作答）。
 - `customDate` 用于指定时间类占卜的起卦或排盘时间，支持六爻、梅花易数、小六壬、奇门遁甲、大六壬；不传时使用服务器当前时间。该字段必须使用带时区的 ISO 8601 时间字符串，例如 `2025-01-01T08:00:00+08:00` 或 `2025-01-01T00:00:00Z`。
+- Python `urllib` 默认 `User-Agent` 可能被 Cloudflare 拦截；Python 调用时请显式设置正常 `User-Agent`，例如 `curl/8.0.0` 或业务自己的客户端名称。
 - 梅花易数 `method` 支持 `time`、`number`、`random`、`external`。数字起卦使用 `number`；外应起卦使用 `externalOmens`，至少提供两项可映射外应，并提供 `count` 作为动爻数量，例如 `{"direction":"南","object":"火电文书","count":3}`。
 - 小六壬 `xiaoliurenMethod` 支持 `time`、`number`、`random`，数字起课时使用 `xiaoliurenNumber`。
 - 塔罗 `spreadType` 支持 `single`、`three`、`love`、`career`、`decision`。

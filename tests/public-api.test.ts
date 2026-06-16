@@ -690,6 +690,7 @@ test('公开 API 紫微提示词接口应一次返回排盘和提示词', async 
   assert.equal(response.status, 200);
   assert.equal(body.ok, true);
   assert.deepEqual(body.data.result.scopeNames, ['origin']);
+  assert.equal(body.data.result.payloadByScope.origin.evidence_pool.length, 0);
   assert.match(body.data.prompt, /【问题】/);
   assert.match(body.data.prompt, /我的感情关系要注意什么/);
 });

@@ -1,6 +1,6 @@
 import { resolveZiweiTrueSolarBirth } from '../ziwei/true-solar-input';
 import type { ChartInput } from '../../types/chart';
-import type { AnalysisPayloadV1, ScopeType } from '../../types/analysis';
+import type { AnalysisPayloadV1, PalaceFact, ScopeType } from '../../types/analysis';
 import type { IztroAstrolabe, IztroHoroscope } from '../../types/iztro';
 import { getBirthDateValidationMessage } from '../date-validation';
 import {
@@ -9,7 +9,8 @@ import {
   getDefaultHoroscopeContext,
 } from '../iztro/runtime-helpers';
 import { buildAnalysisPayloadV1 } from '../iztro/build-analysis-payload';
-import { buildActiveScope } from '../iztro/build-analysis-payload/helpers/builders';
+import { buildActiveScope, buildBasicInfo } from '../iztro/build-analysis-payload/helpers/builders';
+import { mapStarFact } from '../iztro/build-analysis-payload/helpers/mappers';
 import { getCurrentScopeItem } from '../iztro/build-analysis-payload/helpers/scope';
 import {
   getZiweiCompatibilityDefaultQuestion,
@@ -127,9 +128,41 @@ export async function calculateZiweiChartForScopes(
   };
 }
 
-function buildLightweightScopePayload(params: {
+function buildLightweightPublicPalaces(astrolabe: IztroAstrolabe): PalaceFact[] {
+  return astrolabe.palaces.map((palace) => ({
+    index: palace.index,
+    name: palace.name,
+    is_body_palace: palace.isBodyPalace,
+    is_original_palace: palace.isOriginalPalace,
+    heavenly_stem: palace.heavenlyStem,
+    earthly_branch: palace.earthlyBranch,
+    major_stars: palace.majorStars.map((star) => mapStarFact(star, [])),
+    minor_stars: palace.minorStars.map((star) => mapStarFact(star, [])),
+    other_stars: palace.adjectiveStars.map((star) => mapStarFact(star, [])),
+    scope_stars: [],
+    changsheng12: palace.changsheng12,
+    boshi12: palace.boshi12,
+    base_jiangqian12: palace.jiangqian12,
+    base_suiqian12: palace.suiqian12,
+    decadal_range: palace.decadal.range,
+    ages: palace.ages,
+    scope_hits: [],
+    empty_state: palace.isEmpty(),
+    opposite_palace_index: (palace.index + 6) % 12,
+    surrounded_palace_indexes: [palace.index],
+    summary_tags: [
+      palace.name === '命宫' ? '命宫' : '',
+      palace.isBodyPalace ? '身宫' : '',
+      palace.isOriginalPalace ? '来因宫' : '',
+      palace.isEmpty() ? '空宫' : '',
+    ].filter(Boolean),
+  }));
+}
+
+function buildLightweightPublicPayload(params: {
   horoscope: IztroHoroscope;
-  originPayload: AnalysisPayloadV1;
+  basicInfo: AnalysisPayloadV1['basic_info'];
+  palaces: PalaceFact[];
   scope: ScopeType;
   astrolabe: IztroAstrolabe;
 }): AnalysisPayloadV1 {
@@ -138,14 +171,14 @@ function buildLightweightScopePayload(params: {
   return {
     payload_version: 'analysis_payload_v1',
     language: 'zh-CN',
-    basic_info: params.originPayload.basic_info,
+    basic_info: params.basicInfo,
     active_scope: buildActiveScope({
       horoscope: params.horoscope,
       currentScope: params.scope,
       currentScopeItem,
       palaces: params.astrolabe.palaces,
     }),
-    palaces: params.originPayload.palaces,
+    palaces: params.palaces,
     evidence_pool: [],
     patterns: [],
   };
@@ -159,21 +192,16 @@ export async function calculatePublicZiweiChartForScopes(
   const { dateStr, hourIndex } = getDefaultHoroscopeContext();
   const horoscope = buildHoroscope(astrolabe, dateStr, hourIndex);
   const requestedScopes = Array.from(new Set(['origin' as const, ...(scopes ?? [])]));
-  const originPayload = buildAnalysisPayloadV1({
-    astrolabe,
-    horoscope,
-    currentScope: 'origin',
-  });
-  const payloadByScope: Partial<Record<ScopeType, AnalysisPayloadV1>> = {
-    origin: originPayload,
-  };
+  const basicInfo = buildBasicInfo(astrolabe);
+  const palaces = buildLightweightPublicPalaces(astrolabe);
+  const payloadByScope: Partial<Record<ScopeType, AnalysisPayloadV1>> = {};
 
   requestedScopes.forEach((scope) => {
-    if (scope === 'origin') return;
-    payloadByScope[scope] = buildLightweightScopePayload({
+    payloadByScope[scope] = buildLightweightPublicPayload({
       astrolabe,
       horoscope,
-      originPayload,
+      basicInfo,
+      palaces,
       scope,
     });
   });

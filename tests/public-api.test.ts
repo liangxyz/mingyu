@@ -716,6 +716,8 @@ test('公开 API 紫微提示词接口只生成所需范围，避免线上函数
   assert.equal(body.ok, true);
   assert.deepEqual(body.data.result.scopeNames, ['origin', 'yearly']);
   assert.equal(body.data.result.payloadByScope.yearly.active_scope.scope, 'yearly');
+  assert.equal(body.data.result.payloadByScope.yearly.evidence_pool.length, 0);
+  assert.equal(body.data.result.payloadByScope.yearly.patterns.length, 0);
   assert.equal(body.data.result.payloadByScope.decadal, undefined);
   assert.match(body.data.prompt, /分析范围：流年/);
   assert.match(body.data.prompt, /【任务】/);

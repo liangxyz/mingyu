@@ -1,7 +1,10 @@
 import { baziCalculator } from '../../utils/bazi/baziCalculator';
 import type { Person } from '../../utils/bazi/baziTypes';
 import { getTimeIndexFromClock } from '../../utils/dateUtils';
-import { buildZiweiChartInput, calculateZiweiChartForScopes } from '../full-chart-engine/ziwei';
+import {
+  buildZiweiChartInput,
+  calculatePublicZiweiChartForScopes,
+} from '../full-chart-engine/ziwei';
 import {
   daysInSolarMonth,
   getBirthDateValidationMessage,
@@ -668,7 +671,7 @@ async function calculateZiweiRuntime(input: JsonRecord, scopes: ZiweiPromptScope
         birthMinute: readString(input, 'birthMinute', ''),
         birthLongitude: readString(input, 'birthLongitude', ''),
       };
-  return calculateZiweiChartForScopes(
+  return calculatePublicZiweiChartForScopes(
     buildZiweiChartInput({
       name: readString(input, 'name', ''),
       gender: readEnum(input, 'gender', ['male', 'female']),

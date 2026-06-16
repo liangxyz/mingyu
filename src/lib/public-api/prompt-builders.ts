@@ -7,6 +7,7 @@ import {
   type AIPromptOption,
 } from '../../utils/ai/aiPrompts';
 import { buildCombinedZiweiPrompt, type ZiweiRuntime } from '../full-chart-engine/ziwei';
+import { mapScopeLabel, mapTopicLabel } from '../ziwei-prompts/labels';
 
 export const BAZI_PROMPT_TOPICS = [
   'general',
@@ -189,9 +190,36 @@ export function buildPublicZiweiPromptForRuntime(params: {
   const topic = params.topic ?? (mode === 'custom' ? 'chat' : 'life');
   const payload =
     params.result.payloadByScope[scope as ScopeType] ?? params.result.payloadByScope.origin;
-  const prompt = buildCombinedZiweiPrompt(payload, topic, params.question ?? '', {
-    isCustomQuestion: true,
-  });
+  const scopeLabel = mapScopeLabel(payload.active_scope.scope);
+  const topicLabel = mapTopicLabel(topic);
+  const activePalace = payload.palaces.find(
+    (palace) => palace.index === payload.active_scope.palace_index,
+  );
+  const lifePalace = payload.palaces.find((palace) => palace.name === '命宫');
+  const bodyPalace = payload.palaces.find((palace) => palace.is_body_palace);
+  const formatStars = (palace: (typeof payload.palaces)[number] | undefined) => {
+    const stars = [...(palace?.major_stars ?? []), ...(palace?.minor_stars ?? [])]
+      .map((star) => star.name)
+      .filter(Boolean)
+      .slice(0, 8);
+
+    return stars.length > 0 ? stars.join('、') : '未提供主星资料';
+  };
+  const mutagenText =
+    payload.active_scope.mutagen_map.length > 0
+      ? payload.active_scope.mutagen_map
+          .map((item) =>
+            [item.star ? `${item.star}化${item.mutagen}` : `化${item.mutagen}`, item.palace_name]
+              .filter(Boolean)
+              .join('入'),
+          )
+          .join('；')
+      : '未提供当前范围四化';
+  const prompt = [
+    `【分析背景】\n分析主题：${topicLabel}\n分析范围：${scopeLabel}\n分析对象：${payload.active_scope.label || scopeLabel}\n参考日期：${payload.active_scope.solar_date}\n虚岁：${payload.active_scope.nominal_age}`,
+    `【排盘信息】\n出生日期：${payload.basic_info.solar_date}；农历：${payload.basic_info.lunar_date}；时辰：${payload.basic_info.birth_time_label}\n命宫：${lifePalace?.name ?? '命宫'}；星曜：${formatStars(lifePalace)}\n身宫：${bodyPalace?.name ?? '未标出'}；星曜：${formatStars(bodyPalace)}\n当前落宫：${activePalace?.name ?? '本命范围'}\n当前四化：${mutagenText}`,
+    `【问题】\n${params.question ?? ''}`,
+  ].join('\n\n');
 
   if (mode === 'custom') {
     return prompt;

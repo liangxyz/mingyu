@@ -9,6 +9,8 @@ import {
   getDefaultHoroscopeContext,
 } from '../iztro/runtime-helpers';
 import { buildAnalysisPayloadV1 } from '../iztro/build-analysis-payload';
+import { buildActiveScope } from '../iztro/build-analysis-payload/helpers/builders';
+import { getCurrentScopeItem } from '../iztro/build-analysis-payload/helpers/scope';
 import {
   getZiweiCompatibilityDefaultQuestion,
   getZiweiDefaultQuestion,
@@ -122,6 +124,64 @@ export async function calculateZiweiChartForScopes(
     astrolabe,
     horoscope,
     payloadByScope,
+  };
+}
+
+function buildLightweightScopePayload(params: {
+  horoscope: IztroHoroscope;
+  originPayload: AnalysisPayloadV1;
+  scope: ScopeType;
+  astrolabe: IztroAstrolabe;
+}): AnalysisPayloadV1 {
+  const currentScopeItem = getCurrentScopeItem(params.horoscope, params.scope);
+
+  return {
+    payload_version: 'analysis_payload_v1',
+    language: 'zh-CN',
+    basic_info: params.originPayload.basic_info,
+    active_scope: buildActiveScope({
+      horoscope: params.horoscope,
+      currentScope: params.scope,
+      currentScopeItem,
+      palaces: params.astrolabe.palaces,
+    }),
+    palaces: params.originPayload.palaces,
+    evidence_pool: [],
+    patterns: [],
+  };
+}
+
+export async function calculatePublicZiweiChartForScopes(
+  input: ChartInput,
+  scopes?: ScopeType[],
+): Promise<ZiweiRuntime> {
+  const astrolabe = await buildAstrolabeFromInput(input);
+  const { dateStr, hourIndex } = getDefaultHoroscopeContext();
+  const horoscope = buildHoroscope(astrolabe, dateStr, hourIndex);
+  const requestedScopes = Array.from(new Set(['origin' as const, ...(scopes ?? [])]));
+  const originPayload = buildAnalysisPayloadV1({
+    astrolabe,
+    horoscope,
+    currentScope: 'origin',
+  });
+  const payloadByScope: Partial<Record<ScopeType, AnalysisPayloadV1>> = {
+    origin: originPayload,
+  };
+
+  requestedScopes.forEach((scope) => {
+    if (scope === 'origin') return;
+    payloadByScope[scope] = buildLightweightScopePayload({
+      astrolabe,
+      horoscope,
+      originPayload,
+      scope,
+    });
+  });
+
+  return {
+    astrolabe,
+    horoscope,
+    payloadByScope: payloadByScope as Record<ScopeType, AnalysisPayloadV1>,
   };
 }
 

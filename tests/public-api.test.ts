@@ -717,7 +717,8 @@ test('公开 API 紫微提示词接口只生成所需范围，避免线上函数
   assert.deepEqual(body.data.result.scopeNames, ['origin', 'yearly']);
   assert.equal(body.data.result.payloadByScope.yearly.active_scope.scope, 'yearly');
   assert.equal(body.data.result.payloadByScope.decadal, undefined);
-  assert.match(body.data.prompt, /当前已选流年/);
+  assert.match(body.data.prompt, /分析范围：流年/);
+  assert.match(body.data.prompt, /【任务】/);
 });
 
 test('公开 API 紫微空问题应返回 400，保持 question 必填契约', async () => {
@@ -1067,10 +1068,8 @@ test('公开 API 紫微未指定方向时应默认走综合框架而不是自由
   assert.equal(body.ok, true);
   assert.match(body.data.prompt, /【分析背景】/);
   assert.match(body.data.prompt, /分析主题：人生解析/);
-  assert.match(
-    body.data.prompt,
-    /人生解析按“命身定位、长期课题、能力资源、关系模式、关键转折、当前阶段策略”展开。/,
-  );
+  assert.match(body.data.prompt, /围绕人生解析，优先看命身定位、长期课题、能力资源/);
+  assert.match(body.data.prompt, /【输出要求】/);
   assert.doesNotMatch(body.data.prompt, /自由问答先判断问题落在哪些宫位/);
 });
 

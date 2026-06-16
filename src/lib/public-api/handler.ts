@@ -48,8 +48,8 @@ import {
   ZIWEI_PROMPT_SCOPES,
   ZIWEI_PROMPT_TOPICS,
   buildBaziPromptForResult,
+  buildPublicZiweiPromptForRuntime,
   buildSerializableZiweiResult,
-  buildZiweiPromptForRuntime,
   type BaziPromptTopic,
   type PromptMode,
   type ZiweiPromptScope,
@@ -699,14 +699,15 @@ async function buildZiweiPrompt(input: JsonRecord) {
     input.promptTopic === undefined
       ? undefined
       : (readEnum(input, 'promptTopic', ZIWEI_PROMPT_TOPICS) as ZiweiPromptTopic);
+  const mode = readEnum(input, 'promptMode', PROMPT_MODES, 'framework') as PromptMode;
   return {
     result: buildSerializableZiweiResult(result),
-    prompt: buildZiweiPromptForRuntime({
+    prompt: buildPublicZiweiPromptForRuntime({
       result,
       question: readRequiredString(input, 'question'),
       topic: promptTopic,
       scope,
-      mode: readEnum(input, 'promptMode', PROMPT_MODES, 'framework') as PromptMode,
+      mode,
     }),
   };
 }

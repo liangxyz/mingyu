@@ -15,6 +15,10 @@ const qimenSchema = z.object({
     .string()
     .optional()
     .describe('自定义排盘时间（ISO 8601 格式），不提供则使用当前时间'),
+  qimenMethod: z
+    .enum(['zhuanpan', 'feipan'])
+    .optional()
+    .describe('排盘方法：zhuanpan 为转盘法（默认），feipan 为飞盘法'),
 });
 
 const qimenPromptSchema = extendPromptSchema(qimenSchema, '用户希望围绕奇门盘解读的问题');
@@ -30,7 +34,8 @@ export function registerQimenTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const result = generateQimen(readMcpCustomDate(args.customDate));
+        const method = args.qimenMethod ?? 'zhuanpan';
+        const result = generateQimen(readMcpCustomDate(args.customDate), method as 'zhuanpan' | 'feipan');
         return createStructuredToolResult({ result });
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '排盘失败'));
@@ -51,7 +56,8 @@ export function registerQimenTool(server: McpServer) {
     },
     async (args) => {
       try {
-        const result = generateQimen(readMcpCustomDate(args.customDate));
+        const method = args.qimenMethod ?? 'zhuanpan';
+        const result = generateQimen(readMcpCustomDate(args.customDate), method as 'zhuanpan' | 'feipan');
         return createStructuredToolResult({
           result,
           prompt: buildCommonDivinationPrompt('qimen', args.question, result, args.promptMode),

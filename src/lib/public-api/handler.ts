@@ -175,6 +175,10 @@ const DIVINATION_REQUEST_PROPERTIES = {
     description:
       '时间类占卜的自定义起卦或排盘时间，支持六爻、梅花易数、小六壬、奇门遁甲、大六壬；不传则使用当前时间。',
   },
+  qimenMethod: {
+    enum: ['zhuanpan', 'feipan'],
+    description: '奇门遁甲排盘方法：zhuanpan 为转盘法（默认），feipan 为飞盘法。',
+  },
   method: { enum: ['time', 'number', 'random', 'external'] },
   number: { type: 'integer', minimum: 1 },
   externalOmens: {
@@ -720,7 +724,8 @@ function calculateLiuyao(input: JsonRecord) {
 }
 
 function calculateQimen(input: JsonRecord) {
-  return generateQimen(readCustomDate(input));
+  const method = readEnum(input, 'qimenMethod', ['zhuanpan', 'feipan'], 'zhuanpan');
+  return generateQimen(readCustomDate(input), method as 'zhuanpan' | 'feipan');
 }
 
 function calculateMeihua(input: JsonRecord) {

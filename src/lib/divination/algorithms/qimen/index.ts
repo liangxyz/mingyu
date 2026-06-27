@@ -44,18 +44,21 @@ function getHorseBranch(sourceBranch: string) {
   return '';
 }
 
+import type { QimenMethod } from './helpers/layout';
+
 /**
  * 生成奇门遁甲盘
  * @param customDate 自定义时间，若不提供则使用当前时间
+ * @param method 排盘方法，'zhuanpan'为转盘法（默认），'feipan'为飞盘法
  * @returns 返回一个完整的奇门遁甲盘数据对象
  */
-export function generateQimen(customDate?: Date) {
+export function generateQimen(customDate?: Date, method: QimenMethod = 'zhuanpan') {
   const { timeInfo, ganzhi, timestamp } = getDivinationTime(customDate);
   const { jieQi } = timeInfo;
 
   const { isYangDun, juShu, yuan } = getQimenJuShu(timeInfo);
   const { zhiFu, zhiShi, specialConditions } = getZhiFuZhiShi(ganzhi.hour);
-  const jiuGongGe = arrangeJiuGongGe(isYangDun, juShu, zhiFu, zhiShi, { hour: ganzhi.hour });
+  const jiuGongGe = arrangeJiuGongGe(isYangDun, juShu, zhiFu, zhiShi, { hour: ganzhi.hour }, method);
   const hourZhi = ganzhi.hour.charAt(1);
   const hourGanForFind = getDunJiaStem(ganzhi.hour);
   const voidBranches = getVoidBranches(ganzhi.hour);

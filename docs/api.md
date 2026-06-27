@@ -126,6 +126,7 @@ curl -X POST https://aov.cc/api/v1/divination/qimen/prompt \
 - 塔罗 `spreadType` 支持 `single`、`three`、`love`、`career`、`decision`。
 - 六爻 `liuyaoTemplate` 支持 `general`、`ganqing`、`shiye`、`caifu`、`guaishen`。
 - 大六壬 `liurenTemplate` 支持 `general`、`ganqing`、`shiye`、`caifu`。
+- 奇门遁甲 `qimenMethod` 支持 `zhuanpan`（转盘法，默认）、`feipan`（飞盘法）。
 - 黄历择日 `topic` 支持 `marriage`、`move`、`opening`、`contract`、`travel`、`medical`、`study`、`burial`、`renovation`、`custom`，并使用 `startDate`、`endDate` 和可选 `participants`。
 - 雷诺曼 `spreadType` 支持 `single`、`three`、`relationship`、`decision`、`nine`。
 - 星盘需要 `year`、`month`、`day`、`hour`、`minute`、`latitude`、`longitude`、`timezone`，可传 `useTrueSolarTime` 启用真太阳时校正，提示词接口可使用 `astrolabeTopic` 和 `astrolabeScopeText`。

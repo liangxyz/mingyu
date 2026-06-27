@@ -3,12 +3,15 @@ import { getDunJiaStem } from './palace-utils';
 
 const { diPanPalaces, palaceStars, palaceDoors, yangGods, yinGods, ninePositions } = qimen;
 
+export type QimenMethod = 'zhuanpan' | 'feipan';
+
 export function arrangeJiuGongGe(
   isYangDun: boolean,
   juShu: number,
   zhiFu: string,
   zhiShi: string,
   ganzhi: { hour: string },
+  method: QimenMethod = 'zhuanpan',
 ) {
   const jiuGong = Array.from({ length: 9 }, (_, i) => ({
     gong: i + 1,
@@ -81,23 +84,49 @@ export function arrangeJiuGongGe(
   // 法理：天盘九星由值符星带领，从值符落宫开始，按九宫顺序（阳顺阴逆）飞布。
   // 天盘天干则随其所附之星飞布，即“星带干飞”。
   const zhiFuStarIndex = palaceStars.indexOf(zhiFu);
-  for (let i = 0; i < 9; i++) {
-    const palaceIndex = (zhiFuLandingPalace - 1 + (isYangDun ? i : -i) + 9) % 9;
-    const starIndex = (zhiFuStarIndex + i + 9) % 9;
-    const star = palaceStars[starIndex];
-    jiuGong[palaceIndex].tianPan.star = star;
+  const luoShuPathForTian = [1, 8, 3, 4, 9, 2, 7, 6]; // 洛书轨迹
 
-    // 关键：天盘之干，是该星在地盘的“老家”的那个干。
-    let originalStarPalaceIndex = starIndex;
-    if (star === '天禽' && centerJiGongStem) {
-      jiuGong[palaceIndex].tianPan.stem = centerJiGongStem;
-      continue;
+  if (method === 'feipan') {
+    // 飞盘法：天盘九星按洛书轨迹飞布
+    const zhiFuLuoShuIndex = luoShuPathForTian.indexOf(zhiFuLandingPalace);
+    for (let i = 0; i < 8; i++) {
+      const starIndex = (zhiFuStarIndex + i + 8) % 8;
+      const luoShuIndex = (zhiFuLuoShuIndex + (isYangDun ? i : -i) + 8) % 8;
+      const palaceNum = luoShuPathForTian[luoShuIndex];
+      const star = palaceStars[starIndex];
+      jiuGong[palaceNum - 1].tianPan.star = star;
+
+      // 天盘之干，是该星在地盘的”老家”的那个干
+      let originalStarPalaceIndex = starIndex;
+      if (star === '天禽' && centerJiGongStem) {
+        jiuGong[palaceNum - 1].tianPan.stem = centerJiGongStem;
+        continue;
+      }
+      if (star === '天禽' && !jiuGong[4].diPan.stem) {
+        originalStarPalaceIndex = 1;
+      }
+      jiuGong[palaceNum - 1].tianPan.stem = jiuGong[originalStarPalaceIndex].diPan.stem;
     }
-    // 天禽星的老家是中五宫，但中五宫无干时采用寄宫。
-    if (star === '天禽' && !jiuGong[4].diPan.stem) {
-      originalStarPalaceIndex = 1;
+  } else {
+    // 转盘法：天盘九星整体旋转
+    for (let i = 0; i < 9; i++) {
+      const palaceIndex = (zhiFuLandingPalace - 1 + (isYangDun ? i : -i) + 9) % 9;
+      const starIndex = (zhiFuStarIndex + i + 9) % 9;
+      const star = palaceStars[starIndex];
+      jiuGong[palaceIndex].tianPan.star = star;
+
+      // 关键：天盘之干，是该星在地盘的”老家”的那个干。
+      let originalStarPalaceIndex = starIndex;
+      if (star === '天禽' && centerJiGongStem) {
+        jiuGong[palaceIndex].tianPan.stem = centerJiGongStem;
+        continue;
+      }
+      // 天禽星的老家是中五宫，但中五宫无干时采用寄宫。
+      if (star === '天禽' && !jiuGong[4].diPan.stem) {
+        originalStarPalaceIndex = 1;
+      }
+      jiuGong[palaceIndex].tianPan.stem = jiuGong[originalStarPalaceIndex].diPan.stem;
     }
-    jiuGong[palaceIndex].tianPan.stem = jiuGong[originalStarPalaceIndex].diPan.stem;
   }
 
   // 步骤四：排神盘八神 (Shen Pan)

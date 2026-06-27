@@ -160,6 +160,14 @@ const rawHexagramsData = [
     lower: '坤',
     palace: '乾',
     description: '康侯用锡马蕃庶',
+    yaoCi: [
+      '晋如摧如，贞吉',
+      '晋如愁如，贞吉',
+      '众允，悔亡',
+      '晋如鼫鼠，贞厉',
+      '悔亡，失得勿恤',
+      '晋其角，维用伐邑',
+    ],
   },
   {
     id: 14,
@@ -266,6 +274,14 @@ const rawHexagramsData = [
     lower: '离',
     palace: '坎',
     description: '利艰贞',
+    yaoCi: [
+      '明夷于飞，垂其翼',
+      '明夷，夷于左股',
+      '明夷于南狩',
+      '入于左腹，获明夷之心',
+      '箕子之明夷，利贞',
+      '不明晦，初登于天',
+    ],
   },
   {
     id: 7,
@@ -360,6 +376,14 @@ const rawHexagramsData = [
     lower: '兑',
     palace: '艮',
     description: '小事吉',
+    yaoCi: [
+      '悔亡，丧马勿逐',
+      '遇主于巷，无咎',
+      '见舆曳，其牛掣',
+      '睽孤，遇元夫',
+      '悔亡，厥宗噬肤',
+      '睽孤，见豕负涂',
+    ],
   },
   {
     id: 10,
@@ -568,6 +592,14 @@ const rawHexagramsData = [
     lower: '离',
     palace: '巽',
     description: '利女贞',
+    yaoCi: [
+      '闲有家，悔亡',
+      '无攸遂，在中馈',
+      '家人嗃嗃，悔厉吉',
+      '富家，大吉',
+      '王假有家，勿恤',
+      '有孚威如，终吉',
+    ],
   },
   {
     id: 42,

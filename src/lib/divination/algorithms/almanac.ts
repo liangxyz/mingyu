@@ -164,9 +164,26 @@ function createParticipantProfiles(
   });
 }
 
+// 建除十二神宜忌
+const JIANCHU_DUTIES: Record<string, { good: string[]; bad: string[]; advice: string }> = {
+  建: { good: ['出行', '上任', '赴任'], bad: ['动土', '开仓'], advice: '宜出行上任，忌动土开仓' },
+  除: { good: ['解除', '扫舍', '治病'], bad: ['出行', '嫁娶'], advice: '宜解除扫舍，忌出行嫁娶' },
+  满: { good: ['祭祀', '祈福', '进人口'], bad: ['栽种', '下葬'], advice: '宜祭祀祈福，忌栽种下葬' },
+  平: { good: ['修造', '动土', '装修'], bad: ['嫁娶', '出行'], advice: '宜修造动土，忌嫁娶出行' },
+  定: { good: ['冠带', '嫁娶', '订盟'], bad: ['词讼', '出行'], advice: '宜冠带嫁娶，忌词讼出行' },
+  执: { good: ['祭祀', '捕捉', '修造'], bad: ['移徙', '出行'], advice: '宜祭祀捕捉，忌移徙出行' },
+  破: { good: [], bad: ['诸事不宜'], advice: '破日诸事不宜，宜破屋坏垣' },
+  危: { good: ['安床', '祭祀', '祈福'], bad: ['登高', '出行'], advice: '宜安床祭祀，忌登高出行' },
+  成: { good: ['开业', '嫁娶', '签约'], bad: ['词讼', '出行'], advice: '宜开业嫁娶，忌词讼出行' },
+  收: { good: ['收债', '纳财', '进人口'], bad: ['开市', '出行'], advice: '宜收债纳财，忌开市出行' },
+  开: { good: ['开业', '嫁娶', '开市'], bad: ['安葬', '出行'], advice: '宜开业嫁娶，忌安葬出行' },
+  闭: { good: ['安葬', '收藏', '修补'], bad: ['开市', '出行'], advice: '宜安葬收藏，忌开市出行' },
+};
+
 function scoreDay(params: {
   topic: AlmanacTopic;
   dayBranch: string;
+  dayDuty: string;
   recommends: string[];
   avoids: string[];
   gods: string[];
@@ -187,6 +204,19 @@ function scoreDay(params: {
   if (hasAnyKeyword(params.avoids, avoidKeywords)) {
     score -= 24;
     cautions.push(`黄历忌项触及${ALMANAC_TOPIC_LABELS[params.topic]}`);
+  }
+
+  // 建除十二神评分
+  const duty = JIANCHU_DUTIES[params.dayDuty];
+  if (duty) {
+    if (hasAnyKeyword(recommendKeywords, duty.good)) {
+      score += 8;
+      highlights.push(`执日${params.dayDuty}宜${ALMANAC_TOPIC_LABELS[params.topic]}`);
+    }
+    if (hasAnyKeyword(avoidKeywords, duty.bad) || params.dayDuty === '破') {
+      score -= 15;
+      cautions.push(`执日${params.dayDuty}${duty.advice}`);
+    }
   }
 
   if (params.gods.length >= 4) {
@@ -239,9 +269,11 @@ function buildDayCandidate(
   const recommends = normalizeTaboos(lunarDay.getRecommends());
   const avoids = normalizeTaboos(lunarDay.getAvoids());
   const gods = lunarDay.getGods().map((item: { getName(): string }) => item.getName());
+  const dayDuty = lunarDay.getDuty().getName();
   const scoring = scoreDay({
     topic,
     dayBranch: dayBranch.getName(),
+    dayDuty,
     recommends,
     avoids,
     gods,

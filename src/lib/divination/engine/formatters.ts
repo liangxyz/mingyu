@@ -1254,7 +1254,7 @@ function formatMeihuaInfo(data: MeihuaData) {
   return [
     '占法：梅花易数',
     `时间干支：${formatGanzhi(data.ganzhi).replace('干支：', '')}`,
-    `核心结构：主卦${data.originalName}；互卦${data.interName || '无'}；变卦${data.changedName || '无'}`,
+    `核心结构：主卦${data.originalName}${data.mainHexagram?.description ? `（${data.mainHexagram.description}）` : ''}；互卦${data.interName || '无'}${data.interHexagram?.description ? `（${data.interHexagram.description}）` : ''}；变卦${data.changedName || '无'}${data.changedHexagram?.description ? `（${data.changedHexagram.description}）` : ''}`,
     '断卦抓手：先定体用，再看互卦过程、变卦结果与四时旺衰',
     `主轴证据：体卦${data.tiGua.name}（${data.tiGua.element}）；用卦${data.yongGua.name}（${data.yongGua.element}）；动爻第${data.movingYao.position}爻；体用关系${data.analysis.tiYongRelation}`,
     `体用评分：${scoringEvidence}`,

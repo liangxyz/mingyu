@@ -4,6 +4,21 @@ import { getDoorElement, getOppositePalace } from './palace-utils';
 
 const { palaceStars, doorPalaceMap } = qimen;
 
+// 入墓规则：天干入墓宫
+const RU_MU_MAP: Record<string, number> = {
+  戊: 5, // 辰
+  己: 2, // 丑
+  庚: 2, // 丑
+  辛: 5, // 辰
+  壬: 5, // 辰
+  癸: 8, // 未
+};
+
+// 宫位地支映射
+const PALACE_BRANCH_MAP: Record<number, string> = {
+  1: '子', 2: '丑', 3: '寅', 4: '卯', 5: '辰', 6: '巳', 7: '午', 8: '未', 9: '申',
+};
+
 function getMenPoTags(
   jiuGongGe: Array<{
     name: string;
@@ -31,6 +46,14 @@ function getJiXingTag(stem: string, landingPalace: number, palaceName: string): 
     return `击刑（时干${stem}落${palaceName}）`;
   }
 
+  return null;
+}
+
+function getRuMuTag(stem: string, landingPalace: number, palaceName: string): string | null {
+  const muPalace = RU_MU_MAP[stem];
+  if (muPalace === landingPalace) {
+    return `入墓（时干${stem}落${palaceName}）`;
+  }
   return null;
 }
 
@@ -73,6 +96,14 @@ export function getQimenPatternTags(args: {
     tags.push(jiXingTag);
   }
 
+  // 入墓判断
+  const ruMuTag = zhiFuLandingGong
+    ? getRuMuTag(args.hourGanForFind, args.zhiFuLandingPalace, zhiFuLandingGong.name)
+    : null;
+  if (ruMuTag) {
+    tags.push(ruMuTag);
+  }
+
   return tags;
 }
 
@@ -103,6 +134,9 @@ function getPatternSummary(tag: string): string {
   }
   if (tag.startsWith('击刑')) {
     return '时干落击刑位，主压力、掣肘或规章束缚，宜谨慎行事。';
+  }
+  if (tag.startsWith('入墓')) {
+    return '时干入墓宫，主能量被困、事情停滞或难以施展，宜等待时机或寻求突破。';
   }
   return '需结合全局继续参看。';
 }

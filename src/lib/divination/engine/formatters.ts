@@ -1789,6 +1789,8 @@ function formatAlmanacInfo(data: AlmanacData) {
     travel: ['出行', '赴任', '远行'],
     medical: ['求医', '治病', '动土', '手术'],
     study: ['入学', '考试', '求学', '开光'],
+    burial: ['安葬', '修坟', '启钻', '立碑'],
+    renovation: ['修造', '动土', '竖柱', '上梁'],
     custom: data.topicLabel
       .split(/[、，,；;\s]+/)
       .map((item) => item.trim())

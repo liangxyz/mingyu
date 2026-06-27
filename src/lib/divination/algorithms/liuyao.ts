@@ -26,18 +26,34 @@ import { generateYaosByTime, getDivinationTime } from '../../../utils/timeManage
 
 // 六冲关系
 const LIU_CHONG: Record<string, string> = {
-  子: '午', 午: '子',
-  丑: '未', 未: '丑',
-  寅: '申', 申: '寅',
-  卯: '酉', 酉: '卯',
-  辰: '戌', 戌: '辰',
-  巳: '亥', 亥: '巳',
+  子: '午',
+  午: '子',
+  丑: '未',
+  未: '丑',
+  寅: '申',
+  申: '寅',
+  卯: '酉',
+  酉: '卯',
+  辰: '戌',
+  戌: '辰',
+  巳: '亥',
+  亥: '巳',
 };
 
 // 地支五行
 const BRANCH_WUXING: Record<string, string> = {
-  子: '水', 丑: '土', 寅: '木', 卯: '木', 辰: '土', 巳: '火',
-  午: '火', 未: '土', 申: '金', 酉: '金', 戌: '土', 亥: '水',
+  子: '水',
+  丑: '土',
+  寅: '木',
+  卯: '木',
+  辰: '土',
+  巳: '火',
+  午: '火',
+  未: '土',
+  申: '金',
+  酉: '金',
+  戌: '土',
+  亥: '水',
 };
 
 // 地支顺序（用于判断进神退神）
@@ -357,9 +373,7 @@ export function generateLiuyao(customDate?: Date) {
     const changedInfo = isChanging ? changedYaosInfo[index] : null;
     const isDayBreakFlag = isDayBreak(info.dizhi, dayBranch);
     const isMonthBreakFlag = isMonthBreak(info.dizhi, monthBranch);
-    const changeDirection = changedInfo
-      ? getChangeDirection(info.dizhi, changedInfo.dizhi)
-      : null;
+    const changeDirection = changedInfo ? getChangeDirection(info.dizhi, changedInfo.dizhi) : null;
 
     return {
       position: index + 1,

@@ -127,6 +127,9 @@ export interface LiuyaoYaoDetail extends BaseYaoDetail {
   isWorld: boolean;
   isResponse: boolean;
   isVoid: boolean;
+  isDayBreak?: boolean;
+  isMonthBreak?: boolean;
+  changeDirection?: '化进神' | '化退神' | null;
   changedYao?: {
     dizhi: string;
     wuxing: string;

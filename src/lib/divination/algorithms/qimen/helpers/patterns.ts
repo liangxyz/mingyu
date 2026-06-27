@@ -14,11 +14,6 @@ const RU_MU_MAP: Record<string, number> = {
   癸: 8, // 未
 };
 
-// 宫位地支映射
-const PALACE_BRANCH_MAP: Record<number, string> = {
-  1: '子', 2: '丑', 3: '寅', 4: '卯', 5: '辰', 6: '巳', 7: '午', 8: '未', 9: '申',
-};
-
 function getMenPoTags(
   jiuGongGe: Array<{
     name: string;

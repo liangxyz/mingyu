@@ -58,7 +58,14 @@ export function generateQimen(customDate?: Date, method: QimenMethod = 'zhuanpan
 
   const { isYangDun, juShu, yuan } = getQimenJuShu(timeInfo);
   const { zhiFu, zhiShi, specialConditions } = getZhiFuZhiShi(ganzhi.hour);
-  const jiuGongGe = arrangeJiuGongGe(isYangDun, juShu, zhiFu, zhiShi, { hour: ganzhi.hour }, method);
+  const jiuGongGe = arrangeJiuGongGe(
+    isYangDun,
+    juShu,
+    zhiFu,
+    zhiShi,
+    { hour: ganzhi.hour },
+    method,
+  );
   const hourZhi = ganzhi.hour.charAt(1);
   const hourGanForFind = getDunJiaStem(ganzhi.hour);
   const voidBranches = getVoidBranches(ganzhi.hour);

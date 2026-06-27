@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   buildZiweiChartInput,
-  calculateFullZiweiChart,
+  calculateZiweiChartForScopes,
 } from '../../../src/lib/full-chart-engine/ziwei.js';
 import {
   PROMPT_MODES,
@@ -40,6 +40,12 @@ const ziweiSchema = z.object({
     .max(12)
     .optional()
     .describe('时辰索引：0=早子时,1=丑时,...,12=晚子时；未启用真太阳时时必填'),
+  promptScope: z
+    .enum(ZIWEI_PROMPT_SCOPES)
+    .optional()
+    .describe(
+      '运限范围：origin=本命（默认）, decadal=大限, yearly=流年, monthly=流月, daily=流日, hourly=流时, age=年龄。默认只返回 origin 范围，避免响应过大；传入后会返回 origin + 指定范围。',
+    ),
   isLeapMonth: z.boolean().optional().describe('是否为闰月（仅农历有效）'),
   useTrueSolarTime: z.boolean().optional().describe('是否启用真太阳时校正'),
   birthHour: z.string().optional().describe('精准出生小时，启用真太阳时时必填，如 1'),
@@ -111,15 +117,16 @@ export function registerZiweiTool(server: McpServer) {
   server.registerTool(
     'ziwei_calculate',
     {
-      description: '紫微斗数排盘：根据出生信息计算完整紫微命盘，包含星曜、宫位、大限、流年等数据',
+      description:
+        '紫微斗数排盘：根据出生信息计算紫微命盘。默认只返回 origin（本命）范围；通过 promptScope 可指定额外的运限范围（decadal/yearly/monthly/daily/hourly/age），避免响应过大',
       inputSchema: ziweiSchema.shape,
       outputSchema: ziweiOutputSchema,
     },
     async (args) => {
       try {
         const input = buildMcpZiweiChartInput(args);
-
-        const result = await calculateFullZiweiChart(input);
+        const scope = (args.promptScope ?? 'origin') as ZiweiPromptScope;
+        const result = await calculateZiweiChartForScopes(input, [scope]);
         return createStructuredToolResult(buildSerializableZiweiResult(result));
       } catch (error) {
         return createErrorToolResult(getErrorMessage(error, '排盘失败'));
@@ -131,7 +138,7 @@ export function registerZiweiTool(server: McpServer) {
     'ziwei_prompt',
     {
       description:
-        '紫微斗数排盘并生成结构化 AI 解读提示词：一次调用返回命盘数据和可直接复制给 AI 的提示词',
+        '紫微斗数排盘并生成结构化 AI 解读提示词：一次调用返回命盘数据和可直接复制给 AI 的提示词。默认只返回 origin（本命）范围；通过 promptScope 可指定额外的运限范围（decadal/yearly/monthly/daily/hourly/age），避免响应过大',
       inputSchema: ziweiPromptSchema.shape,
       outputSchema: {
         result: z.unknown().describe('紫微命盘数据'),
@@ -141,15 +148,15 @@ export function registerZiweiTool(server: McpServer) {
     async (args) => {
       try {
         const input = buildMcpZiweiChartInput(args);
-
-        const result = await calculateFullZiweiChart(input);
+        const scope = (args.promptScope ?? 'origin') as ZiweiPromptScope;
+        const result = await calculateZiweiChartForScopes(input, [scope]);
         return createStructuredToolResult({
           result: buildSerializableZiweiResult(result),
           prompt: buildZiweiPromptForRuntime({
             result,
             question: args.question,
             topic: args.promptTopic ? (args.promptTopic as ZiweiPromptTopic) : undefined,
-            scope: (args.promptScope ?? 'origin') as ZiweiPromptScope,
+            scope,
             mode: (args.promptMode ?? 'framework') as PromptMode,
           }),
         });

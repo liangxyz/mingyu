@@ -30,7 +30,7 @@ export function buildRoleText(method: Exclude<DivinationMethodId, 'random'>) {
 export function buildTaskText(method: Exclude<DivinationMethodId, 'random'>) {
   switch (method) {
     case 'liuyao':
-      return '请围绕用神、世应、动爻、变卦、伏神、空亡和旺衰判断，直接回答问题，并说明该如何推进或规避风险。';
+      return '请围绕用神、世应、动爻、变卦、伏神、空亡、日破、月破、化进神、化退神和旺衰判断，直接回答问题，并说明该如何推进或规避风险。';
     case 'meihua':
       return '请围绕体用关系、互卦过程、变卦结果和四时旺衰判断，直接回答问题，并给出顺势应对建议。';
     case 'xiaoliuren':
@@ -57,7 +57,7 @@ export function buildTaskText(method: Exclude<DivinationMethodId, 'random'>) {
 export function buildMethodRequirementText(method: Exclude<DivinationMethodId, 'random'>) {
   switch (method) {
     case 'liuyao':
-      return '- 优先看世应、用神、动爻、变卦与空亡，再结合伏神、旺衰或神煞区分主证、辅证、反证和应期候选。';
+      return '- 优先看世应、用神、动爻、变卦与空亡，再结合日破、月破、化进神、化退神、伏神、旺衰或神煞区分主证、辅证、反证和应期候选。';
     case 'meihua':
       return '- 解释顺序以体用为先，再看互卦过程、变卦结果与四时旺衰，不要只按卦名泛讲。';
     case 'xiaoliuren':

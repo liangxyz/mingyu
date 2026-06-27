@@ -324,6 +324,14 @@ const rawHexagramsData = [
     lower: '乾',
     palace: '艮',
     description: '利贞，不家食吉',
+    yaoCi: [
+      '有厉，利已',
+      '舆说辐',
+      '良马逐，利艰贞',
+      '童牛之牿，元吉',
+      '豶豕之牙，吉',
+      '何天之衢，亨',
+    ],
   },
   {
     id: 41,
@@ -470,6 +478,14 @@ const rawHexagramsData = [
     lower: '巽',
     palace: '震',
     description: '栋桡，利有攸往',
+    yaoCi: [
+      '藉用白茅，无咎',
+      '枯杨生稊，老夫得其女妻',
+      '栋桡，凶',
+      '栋隆，吉',
+      '枯杨生华，老妇得其士夫',
+      '过涉灭顶，凶',
+    ],
   },
   {
     id: 17,
@@ -556,6 +572,14 @@ const rawHexagramsData = [
     lower: '震',
     palace: '巽',
     description: '元亨利贞',
+    yaoCi: [
+      '无妄，往吉',
+      '不耕获，不菑畬',
+      '无妄之灾',
+      '可贞，无咎',
+      '无妄之疾，勿药有喜',
+      '无妄，行有眚',
+    ],
   },
   {
     id: 21,
@@ -584,6 +608,14 @@ const rawHexagramsData = [
     lower: '震',
     palace: '巽',
     description: '贞吉，观颐',
+    yaoCi: [
+      '舍尔灵龟，观我朵颐',
+      '颠颐，拂经',
+      '拂颐，贞凶',
+      '颠颐，吉',
+      '拂经，居贞吉',
+      '由颐，厉吉',
+    ],
   },
   {
     id: 18,

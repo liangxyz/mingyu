@@ -285,7 +285,6 @@ export function buildZiweiChartInput(input: {
     birthTimeIndex: trueSolarBirth?.birthTimeIndex ?? birthTimeIndex,
     isLeapMonth: input.isLeapMonth,
     fixLeap: true,
-    astroType: 'earth',
     algorithm: 'default',
     yearDivide: 'normal',
     horoscopeDivide: 'normal',

@@ -107,6 +107,38 @@ curl -X POST https://aov.cc/api/v1/divination/qimen/prompt \
   -d '{"customDate":"2025-01-01T08:30:00+08:00","question":"这个项目现在适合推进吗？"}'
 ```
 
+八字盲派流派解读：
+
+```bash
+curl -X POST https://aov.cc/api/v1/bazi/prompt \
+  -H "Content-Type: application/json" \
+  -d '{"gender":"male","year":1990,"month":5,"day":15,"timeIndex":1,"dateType":"solar","question":"近期工作发展如何？","promptTopic":"career","school":"mangpai"}'
+```
+
+紫微飞星派流派解读：
+
+```bash
+curl -X POST https://aov.cc/api/v1/ziwei/prompt \
+  -H "Content-Type: application/json" \
+  -d '{"gender":"female","dateType":"solar","year":"1992","month":"8","day":"21","timeIndex":4,"question":"2025年事业财运如何？","promptTopic":"career-wealth","promptScope":"yearly","school":"feixing"}'
+```
+
+奇门飞盘法排盘：
+
+```bash
+curl -X POST https://aov.cc/api/v1/divination/qimen/prompt \
+  -H "Content-Type: application/json" \
+  -d '{"qimenMethod":"feipan","question":"项目现在能推进吗？"}'
+```
+
+黄历安葬择日：
+
+```bash
+curl -X POST https://aov.cc/api/v1/divination/almanac \
+  -H "Content-Type: application/json" \
+  -d '{"topic":"burial","startDate":"2026-07-01","endDate":"2026-07-15"}'
+```
+
 ## 参数约定
 
 - `gender` 使用 `male` 或 `female`。

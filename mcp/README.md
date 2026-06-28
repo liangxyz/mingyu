@@ -75,13 +75,18 @@ npm run mcp
 
 - "帮我排一下 1990 年 5 月 15 日丑时出生的八字"
 - "用八字提示词工具，问我适合创业还是上班"
+- "用八字盲派流派解读 1990 年 5 月 15 日丑时八字的事业运"
+- "用紫微飞星派解读 1992 年 8 月 21 日辰时女性的 2025 年事业财运"
+- "用紫微斗数排盘看 1992 年 8 月 21 日辰时女性的命盘"
 - "用六爻提示词工具起一卦，问今年事业运势如何"
 - "用小六壬数字起课，数字 18，问这件事能不能推进"
 - "抽一张塔罗牌并生成提示词，看看我近期的感情走向"
 - "用奇门遁甲提示词工具排个盘，问这次投资能不能成"
+- "用奇门飞盘法排盘，问这个项目的方向"
 - "用 2025-01-01 08:30 北京时间排奇门盘，问这个项目现在适不适合推进"
 - "用黄历择日工具看看 2026-06-01 到 2026-06-05 哪天适合签约"
 - "用黄历择日工具看看 2026-06-01 到 2026-06-05 哪天适合安葬"
+- "用黄历择日工具看看 2026-06-01 到 2026-06-05 哪天适合修造动土"
 - "用黄历择日工具看看 2026-06-01 到 2026-06-05 哪天适合修造动土"
 - "用雷诺曼关系牌阵看看这段关系下一步怎么走"
 - "用星盘提示词工具，按北京出生经纬度看我的事业发展"
@@ -110,7 +115,21 @@ npm run mcp
 
 ### 黄历择日参数
 
-黄历择日工具需要提供 `topic`、`startDate`、`endDate`。日期使用 `YYYY-MM-DD` 格式，一次最多比较 31 天。`participants` 可选，每个参与人包含 `id`、`name`、`gender`、`year`、`month`、`day`、`timeIndex`、`dateType`、`isLeapMonth`。
+黄历择日工具需要提供 `topic`、`startDate`、`endDate`。日期使用 `YYYY-MM-DD` 格式，一次最多比较 31 天。`topic` 支持 `marriage`（订婚结婚）、`move`（搬家入宅）、`opening`（开业启动）、`contract`（签约合作）、`travel`（出行赴任）、`medical`（就医手术）、`study`（考试学习）、`burial`（安葬修坟）、`renovation`（修造动土）、`custom`（自定义）。`participants` 可选，每个参与人包含 `id`、`name`、`gender`、`year`、`month`、`day`、`timeIndex`、`dateType`、`isLeapMonth`。
+
+### 奇门遁甲排盘方法
+
+奇门遁甲工具支持 `qimenMethod` 参数：`zhuanpan`（转盘法，默认）或 `feipan`（飞盘法）。
+
+### 八字流派与紫微流派
+
+`bazi_prompt` 工具支持 `school` 参数：`traditional`（传统派子平正法）、`mangpai`（盲派十神象法）、`xinpai`（新派调候流通）。不传则不附加流派指引。
+
+`ziwei_prompt` 工具支持 `school` 参数：`sanhe`（三合派三方四正）、`feixing`（飞星派四化飞星链路）、`sihua`（四化派生年四化主线）。不传则不附加流派指引。
+
+### 紫微 promptScope 参数
+
+`ziwei_calculate` 和 `ziwei_prompt` 默认只返回 `origin`（本命）范围，避免响应过大。传入 `promptScope` 时会返回 `origin` 加指定范围。支持的值：`origin`、`decadal`、`yearly`、`monthly`、`daily`、`hourly`、`age`。
 
 ### 雷诺曼牌阵参数
 

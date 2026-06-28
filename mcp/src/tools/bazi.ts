@@ -5,9 +5,11 @@ import type { Person } from '../../../src/utils/bazi/baziTypes.js';
 import { getTimeIndexFromClock } from '../../../src/utils/dateUtils.js';
 import {
   BAZI_PROMPT_TOPICS,
+  BAZI_SCHOOLS,
   PROMPT_MODES,
   buildBaziPromptForResult,
   type BaziPromptTopic,
+  type BaziSchool,
   type PromptMode,
 } from '../../../src/lib/public-api/prompt-builders.js';
 import { promptOutputSchema, resultOutputSchema } from '../schemas.js';
@@ -61,6 +63,12 @@ const baziPromptSchema = baziSchema.extend({
     .enum(PROMPT_MODES)
     .optional()
     .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
+  school: z
+    .enum(BAZI_SCHOOLS)
+    .optional()
+    .describe(
+      '八字流派：traditional=传统派（子平正法、格局调候）, mangpai=盲派（十神象法、年限分段）, xinpai=新派（调候流通）。不传则不附加流派指引',
+    ),
 });
 
 function buildBaziPerson(args: z.infer<typeof baziSchema>): Person {
@@ -167,6 +175,7 @@ export function registerBaziTool(server: McpServer) {
             question: args.question,
             topic: (args.promptTopic ?? 'general') as BaziPromptTopic,
             mode: (args.promptMode ?? 'framework') as PromptMode,
+            school: args.school as BaziSchool | undefined,
           }),
         });
       } catch (error) {

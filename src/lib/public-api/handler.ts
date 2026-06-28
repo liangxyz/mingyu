@@ -47,16 +47,20 @@ import { drawSingleCard, drawSpreadCards, getCardKeywords } from '../../utils/ta
 import type { DivinationMethodId } from '../divination/config';
 import {
   BAZI_PROMPT_TOPICS,
+  BAZI_SCHOOLS,
   PROMPT_MODES,
   ZIWEI_PROMPT_SCOPES,
   ZIWEI_PROMPT_TOPICS,
+  ZIWEI_SCHOOLS,
   buildBaziPromptForResult,
   buildPublicZiweiPromptForRuntime,
   buildSerializableZiweiResult,
   type BaziPromptTopic,
+  type BaziSchool,
   type PromptMode,
   type ZiweiPromptScope,
   type ZiweiPromptTopic,
+  type ZiweiSchool,
 } from './prompt-builders';
 
 const API_VERSION = 'v1';
@@ -461,6 +465,11 @@ export function getPublicApiOpenApiDocument() {
                 question: { type: 'string' },
                 promptTopic: { enum: [...BAZI_PROMPT_TOPICS] },
                 promptMode: { enum: [...PROMPT_MODES] },
+                school: {
+                  enum: [...BAZI_SCHOOLS],
+                  description:
+                    '八字流派指引：traditional=传统派（子平正法、格局调候）, mangpai=盲派（十神象法、年限分段）, xinpai=新派（调候流通）。不传则不附加流派指引。',
+                },
               },
             },
           ],
@@ -499,6 +508,11 @@ export function getPublicApiOpenApiDocument() {
                 promptTopic: { enum: [...ZIWEI_PROMPT_TOPICS] },
                 promptScope: { enum: [...ZIWEI_PROMPT_SCOPES] },
                 promptMode: { enum: [...PROMPT_MODES] },
+                school: {
+                  enum: [...ZIWEI_SCHOOLS],
+                  description:
+                    '紫微流派指引：sanhe=三合派（三方四正、星曜庙旺）, feixing=飞星派（四化飞星链路）, sihua=四化派（生年四化主线）。不传则不附加流派指引。',
+                },
               },
             },
           ],
@@ -658,6 +672,11 @@ function calculateBazi(input: JsonRecord) {
 
 function buildBaziPrompt(input: JsonRecord) {
   const result = calculateBazi(input);
+  const schoolValue = input.school;
+  const school =
+    typeof schoolValue === 'string' && (BAZI_SCHOOLS as readonly string[]).includes(schoolValue)
+      ? (schoolValue as BaziSchool)
+      : undefined;
   return {
     result,
     prompt: buildBaziPromptForResult({
@@ -665,6 +684,7 @@ function buildBaziPrompt(input: JsonRecord) {
       question: readRequiredString(input, 'question'),
       topic: readEnum(input, 'promptTopic', BAZI_PROMPT_TOPICS, 'general') as BaziPromptTopic,
       mode: readEnum(input, 'promptMode', PROMPT_MODES, 'framework') as PromptMode,
+      school,
     }),
   };
 }
@@ -718,6 +738,11 @@ async function buildZiweiPrompt(input: JsonRecord) {
       ? undefined
       : (readEnum(input, 'promptTopic', ZIWEI_PROMPT_TOPICS) as ZiweiPromptTopic);
   const mode = readEnum(input, 'promptMode', PROMPT_MODES, 'framework') as PromptMode;
+  const schoolValue = input.school;
+  const school =
+    typeof schoolValue === 'string' && (ZIWEI_SCHOOLS as readonly string[]).includes(schoolValue)
+      ? (schoolValue as ZiweiSchool)
+      : undefined;
   return {
     result: buildSerializableZiweiResult(result),
     prompt: buildPublicZiweiPromptForRuntime({
@@ -726,6 +751,7 @@ async function buildZiweiPrompt(input: JsonRecord) {
       topic: promptTopic,
       scope,
       mode,
+      school,
     }),
   };
 }

@@ -75,10 +75,47 @@ export const ZIWEI_PROMPT_SCOPES = [
 
 export const PROMPT_MODES = ['framework', 'custom'] as const;
 
+export const BAZI_SCHOOLS = ['traditional', 'mangpai', 'xinpai'] as const;
+export const ZIWEI_SCHOOLS = ['sanhe', 'feixing', 'sihua'] as const;
+
 export type BaziPromptTopic = (typeof BAZI_PROMPT_TOPICS)[number];
 export type ZiweiPromptTopic = (typeof ZIWEI_PROMPT_TOPICS)[number];
 export type ZiweiPromptScope = (typeof ZIWEI_PROMPT_SCOPES)[number];
 export type PromptMode = (typeof PROMPT_MODES)[number];
+export type BaziSchool = (typeof BAZI_SCHOOLS)[number];
+export type ZiweiSchool = (typeof ZIWEI_SCHOOLS)[number];
+
+const BAZI_SCHOOL_GUIDANCE: Record<BaziSchool, string> = {
+  traditional:
+    '【流派指引】传统派：以子平正法为本，先看月令旺衰、格局成败、调候用神，再看十神生克、宫位关系、神煞旁证；用神取扶抑、调候、通关、病药四法之一作为主线。',
+  mangpai:
+    '【流派指引】盲派：以日干为我，重柱位、阴阳、十神象法、六亲实战；不强调旺衰格局，而以十神配位、生克制化、合冲刑害的"动作"为断验主线；可结合"年限分段"看大运岁数对应实事。',
+  xinpai:
+    '【流派指引】新派（新派子平）：以日干旺衰为根，强调"调候 + 流通"，重五行平衡与气候配合；用神取流通生扶之神，忌神为破坏流通之神；不拘泥固定格局名相。',
+};
+
+const ZIWEI_SCHOOL_GUIDANCE: Record<ZiweiSchool, string> = {
+  sanhe:
+    '【流派指引】三合派：以本命十二宫为根基，重三方四正（命迁财官的对、合、夹）、星曜庙旺平陷、星情组合、本命格局；运限按大限十年看，重点是星曜与宫位的稳定结构。',
+  feixing:
+    '【流派指引】飞星派：以四化飞星为核心，关注生年四化、命宫四化、宫干自化、运限四化飞入飞出的链路；化禄/化权/化科为引动主证，化忌为牵动暗证；强调"飞入哪宫触发哪事"。',
+  sihua:
+    '【流派指引】四化派：以生年四化定先天命局主轴，结合宫干四化看后天事象；化禄主财喜机会、化权主权柄掌控、化科主名声贵人、化忌主牵挂阻滞；以四化飞入飞出的"宫职链"判断主线。',
+};
+
+export function getBaziSchoolGuidance(school?: BaziSchool) {
+  if (!school || !BAZI_SCHOOL_GUIDANCE[school]) {
+    return '';
+  }
+  return BAZI_SCHOOL_GUIDANCE[school];
+}
+
+export function getZiweiSchoolGuidance(school?: ZiweiSchool) {
+  if (!school || !ZIWEI_SCHOOL_GUIDANCE[school]) {
+    return '';
+  }
+  return ZIWEI_SCHOOL_GUIDANCE[school];
+}
 
 const BAZI_TOPIC_TO_PROMPT_ID: Record<BaziPromptTopic, string> = {
   general: 'ai-mingge-zonglun',
@@ -121,6 +158,7 @@ export function buildBaziPromptForResult(params: {
   question?: string;
   topic?: BaziPromptTopic;
   mode?: PromptMode;
+  school?: BaziSchool;
   fortuneSelectionContext?: FortuneSelectionContext | null;
 }) {
   const option = resolveBaziPromptOption(params.topic ?? 'general');
@@ -133,7 +171,12 @@ export function buildBaziPromptForResult(params: {
     { isCustomQuestion: params.mode === 'custom' },
   );
 
-  return buildCombinedPromptText(prompt.system, prompt.user);
+  const baseText = buildCombinedPromptText(prompt.system, prompt.user);
+  const schoolGuidance = getBaziSchoolGuidance(params.school);
+  if (schoolGuidance) {
+    return `${schoolGuidance}\n\n${baseText}`;
+  }
+  return baseText;
 }
 
 export function buildSerializableZiweiResult(result: ZiweiRuntime) {
@@ -197,14 +240,25 @@ export function buildZiweiPromptForRuntime(params: {
   topic?: ZiweiPromptTopic;
   scope?: ZiweiPromptScope;
   mode?: PromptMode;
+  school?: ZiweiSchool;
 }) {
   const scope = params.scope ?? 'origin';
   const payload =
     params.result.payloadByScope[scope as ScopeType] ?? params.result.payloadByScope.origin;
   const fallbackTopic = params.mode === 'custom' ? 'chat' : 'life';
-  return buildCombinedZiweiPrompt(payload, params.topic ?? fallbackTopic, params.question ?? '', {
-    isCustomQuestion: params.mode === 'custom',
-  });
+  const baseText = buildCombinedZiweiPrompt(
+    payload,
+    params.topic ?? fallbackTopic,
+    params.question ?? '',
+    {
+      isCustomQuestion: params.mode === 'custom',
+    },
+  );
+  const schoolGuidance = getZiweiSchoolGuidance(params.school);
+  if (schoolGuidance) {
+    return `${schoolGuidance}\n\n${baseText}`;
+  }
+  return baseText;
 }
 
 function buildPublicZiweiTaskText(topic: ZiweiPromptTopic) {
@@ -231,6 +285,7 @@ export function buildPublicZiweiPromptForRuntime(params: {
   topic?: ZiweiPromptTopic;
   scope?: ZiweiPromptScope;
   mode?: PromptMode;
+  school?: ZiweiSchool;
 }) {
   const scope = params.scope ?? 'origin';
   const mode = params.mode ?? 'framework';
@@ -268,12 +323,15 @@ export function buildPublicZiweiPromptForRuntime(params: {
     `【问题】\n${params.question ?? ''}`,
   ].join('\n\n');
 
+  const schoolGuidance = getZiweiSchoolGuidance(params.school);
+  const promptWithSchool = schoolGuidance ? `${schoolGuidance}\n\n${prompt}` : prompt;
+
   if (mode === 'custom') {
-    return prompt;
+    return promptWithSchool;
   }
 
   return [
-    prompt,
+    promptWithSchool,
     '',
     `【任务】\n${buildPublicZiweiTaskText(topic)}请结合【问题】直接给出判断、关键依据和可执行建议。`,
     '',

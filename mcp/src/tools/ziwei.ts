@@ -8,11 +8,13 @@ import {
   PROMPT_MODES,
   ZIWEI_PROMPT_SCOPES,
   ZIWEI_PROMPT_TOPICS,
+  ZIWEI_SCHOOLS,
   buildSerializableZiweiResult,
   buildZiweiPromptForRuntime,
   type PromptMode,
   type ZiweiPromptScope,
   type ZiweiPromptTopic,
+  type ZiweiSchool,
 } from '../../../src/lib/public-api/prompt-builders.js';
 import { ziweiOutputSchema } from '../schemas.js';
 import {
@@ -61,16 +63,16 @@ const ziweiPromptSchema = ziweiSchema.extend({
     .describe(
       '提示词主题：destiny=命局, relationship=感情, career-wealth=事业财运, family=六亲家庭, health=健康养护, study=学业成长, life=人生, chat=自由问答',
     ),
-  promptScope: z
-    .enum(ZIWEI_PROMPT_SCOPES)
-    .optional()
-    .describe(
-      '提示词运限范围：origin=本命, decadal=大限, yearly=流年, monthly=流月, daily=流日, hourly=流时, age=年龄',
-    ),
   promptMode: z
     .enum(PROMPT_MODES)
     .optional()
     .describe('提示词模式：framework=内置完整框架, custom=只围绕用户问题自由作答'),
+  school: z
+    .enum(ZIWEI_SCHOOLS)
+    .optional()
+    .describe(
+      '紫微流派：sanhe=三合派（三方四正、星曜庙旺）, feixing=飞星派（四化飞星链路）, sihua=四化派（生年四化主线）。不传则不附加流派指引',
+    ),
 });
 
 function buildMcpZiweiChartInput(args: z.infer<typeof ziweiSchema>) {
@@ -158,6 +160,7 @@ export function registerZiweiTool(server: McpServer) {
             topic: args.promptTopic ? (args.promptTopic as ZiweiPromptTopic) : undefined,
             scope,
             mode: (args.promptMode ?? 'framework') as PromptMode,
+            school: args.school as ZiweiSchool | undefined,
           }),
         });
       } catch (error) {

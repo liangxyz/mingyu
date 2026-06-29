@@ -4,7 +4,8 @@ export const YI_SI_CLIMATE_RULES: ClimateRule[] = [
   {
     id: 'si-month-yi-bing-gui-first',
     label: '乙日巳月先癸后丙规则',
-    description: '乙木生巳月，火旺木焚，《穷通宝鉴》夏木专用癸水，以癸水滋木为先、丙火为次，先润后照。',
+    description:
+      '乙木生巳月，火旺木焚，《穷通宝鉴》夏木专用癸水，以癸水滋木为先、丙火为次，先润后照。',
     priority: 121,
     months: ['巳'],
     dayMasters: ['木'],

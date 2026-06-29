@@ -4,7 +4,8 @@ export const BING_CHOU_CLIMATE_RULES: ClimateRule[] = [
   {
     id: 'chou-month-bing-wu-xin-first',
     label: '丙日丑月壬水为尊戊土为佐规则',
-    description: '丙火生丑月，湿寒交加，《穷通宝鉴》三冬丙火以壬水为尊、戊土制水为佐，壬戊相配方显丙火之光。',
+    description:
+      '丙火生丑月，湿寒交加，《穷通宝鉴》三冬丙火以壬水为尊、戊土制水为佐，壬戊相配方显丙火之光。',
     priority: 121,
     months: ['丑'],
     dayMasters: ['火'],
@@ -16,7 +17,8 @@ export const BING_CHOU_CLIMATE_RULES: ClimateRule[] = [
   {
     id: 'chou-month-bing-wu-xin-geng-all',
     label: '丙日丑月壬戊齐透鼎甲可期规则',
-    description: '丙火生丑月，壬水与戊土齐透，壬戊相制成格，较合原文"丙火生丑月，壬戊齐透，鼎甲可期"。',
+    description:
+      '丙火生丑月，壬水与戊土齐透，壬戊相制成格，较合原文"丙火生丑月，壬戊齐透，鼎甲可期"。',
     priority: 126,
     months: ['丑'],
     dayMasters: ['火'],

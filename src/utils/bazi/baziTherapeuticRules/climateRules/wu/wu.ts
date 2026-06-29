@@ -4,7 +4,8 @@ export const WU_WU_CLIMATE_RULES: ClimateRule[] = [
   {
     id: 'wu-month-wu-gui-bing-first',
     label: '戊日午月先壬后甲规则',
-    description: '戊土生午月，夏燥正盛，《穷通宝鉴》以壬水润燥为先、甲木疏土为佐，戊土高燥喜壬不喜癸。',
+    description:
+      '戊土生午月，夏燥正盛，《穷通宝鉴》以壬水润燥为先、甲木疏土为佐，戊土高燥喜壬不喜癸。',
     priority: 120,
     months: ['午'],
     dayMasters: ['土'],

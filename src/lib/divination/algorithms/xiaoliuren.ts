@@ -10,6 +10,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '大安',
     index: 0,
+    element: '木',
     meaning: '局势偏稳，宜先守住基本盘，再做稳妥推进。',
     keywords: ['稳定', '守成', '缓进'],
     tendency: '宜等待',
@@ -18,6 +19,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '留连',
     index: 1,
+    element: '木',
     meaning: '事情容易拖延反复，推进时会被旧问题牵扯。',
     keywords: ['拖延', '牵扯', '反复'],
     tendency: '易反复',
@@ -26,6 +28,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '速喜',
     index: 2,
+    element: '火',
     meaning: '消息与进展来得较快，适合顺势跟进。',
     keywords: ['消息', '转机', '加速'],
     tendency: '宜推进',
@@ -34,6 +37,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '赤口',
     index: 3,
+    element: '金',
     meaning: '容易出现争执、误会、口舌或情绪冲撞。',
     keywords: ['争执', '误会', '情绪'],
     tendency: '易争执',
@@ -42,6 +46,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '小吉',
     index: 4,
+    element: '水',
     meaning: '事情整体可成，常有助力，但更适合渐进推进。',
     keywords: ['助力', '可成', '渐进'],
     tendency: '有助力',
@@ -50,6 +55,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '空亡',
     index: 5,
+    element: '水',
     meaning: '当前信息虚、时机虚或目标虚，容易白忙一场。',
     keywords: ['落空', '失焦', '不实'],
     tendency: '易落空',
@@ -118,10 +124,13 @@ export function generateXiaoliuren(params?: {
   const lunarMonth = timeInfo.lunar.monthNumber;
   const lunarDay = timeInfo.lunar.dayNumber;
   const hourIndex = getTimeIndexFromClock(timeInfo.solar.hour, timeInfo.solar.minute);
+  // 时辰数取地支序（子1…亥12）：早子时与晚子时均为 1，与传统小六壬口径一致。
+  // hourIndex 为 0-12（早子=0、晚子=12），直接入式会使所有时辰落宫偏移一格。
+  const hourNumber = (hourIndex % 12) + 1;
 
   let startSeed = lunarMonth;
   let processSeed = lunarMonth + lunarDay - 1;
-  let resultSeed = lunarMonth + lunarDay + hourIndex - 2;
+  let resultSeed = lunarMonth + lunarDay + hourNumber - 2;
 
   if (method === 'number') {
     const inputNumber = params?.number;
@@ -130,12 +139,12 @@ export function generateXiaoliuren(params?: {
     }
     startSeed = inputNumber;
     processSeed = inputNumber + lunarDay - 1;
-    resultSeed = inputNumber + lunarDay + hourIndex - 2;
+    resultSeed = inputNumber + lunarDay + hourNumber - 2;
   } else if (method === 'random') {
     const base = normalizeModulo(timestamp, 6) + 1;
     startSeed = base;
     processSeed = base + lunarDay - 1;
-    resultSeed = base + lunarDay + hourIndex - 2;
+    resultSeed = base + lunarDay + hourNumber - 2;
   }
 
   const start = getPalaceByValue(startSeed - 1);

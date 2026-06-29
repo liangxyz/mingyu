@@ -36,7 +36,7 @@ const TOPIC_RECOMMEND_KEYWORDS: Record<AlmanacTopic, string[]> = {
 };
 
 const TOPIC_AVOID_KEYWORDS: Record<AlmanacTopic, string[]> = {
-  move: ['入宅', '移徙', '安床', '动土'],
+  move: ['入宅', '移徙', '安床'],
   marriage: ['嫁娶', '纳采', '订盟'],
   opening: ['开市', '交易', '立券'],
   contract: ['交易', '立券'],
@@ -174,9 +174,9 @@ const JIANCHU_DUTIES: Record<string, { good: string[]; bad: string[]; advice: st
   执: { good: ['祭祀', '捕捉', '修造'], bad: ['移徙', '出行'], advice: '宜祭祀捕捉，忌移徙出行' },
   破: { good: [], bad: ['诸事不宜'], advice: '破日诸事不宜，宜破屋坏垣' },
   危: { good: ['安床', '祭祀', '祈福'], bad: ['登高', '出行'], advice: '宜安床祭祀，忌登高出行' },
-  成: { good: ['开业', '嫁娶', '签约'], bad: ['词讼', '出行'], advice: '宜开业嫁娶，忌词讼出行' },
+  成: { good: ['开市', '嫁娶', '签约'], bad: ['词讼', '出行'], advice: '宜开市嫁娶，忌词讼出行' },
   收: { good: ['收债', '纳财', '进人口'], bad: ['开市', '出行'], advice: '宜收债纳财，忌开市出行' },
-  开: { good: ['开业', '嫁娶', '开市'], bad: ['安葬', '出行'], advice: '宜开业嫁娶，忌安葬出行' },
+  开: { good: ['开市', '嫁娶'], bad: ['安葬', '出行'], advice: '宜开市嫁娶，忌安葬出行' },
   闭: { good: ['安葬', '收藏', '修补'], bad: ['开市', '出行'], advice: '宜安葬收藏，忌开市出行' },
 };
 

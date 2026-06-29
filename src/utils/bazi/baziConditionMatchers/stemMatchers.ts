@@ -35,5 +35,10 @@ export const wuHeMatcher: Matcher = ({ condition, allStems }) => {
 export const noZhengHeMatcher: Matcher = ({ condition, allStems }) => {
   const match = condition.match(NO_ZHENG_HE_REGEX);
   if (!match) return null;
-  return !(allStems.includes(match[1]) && allStems.includes(match[2]));
+  // 争合（妒合）指一干合多干：合干之一在命局出现 ≥2 次方为争合、破化气之纯；
+  // 乙庚各一为正合，化气成立。原实现“两干同时出现即判争合”，而化气格本就要求
+  // 乙庚同透，会令所有化气格恒被破局。
+  const count1 = allStems.filter((s) => s === match[1]).length;
+  const count2 = allStems.filter((s) => s === match[2]).length;
+  return !(count1 >= 2 || count2 >= 2);
 };

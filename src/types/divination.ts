@@ -80,6 +80,7 @@ export interface MeihuaSettings {
 export interface XiaoliurenPalaceDetail {
   name: '大安' | '留连' | '速喜' | '赤口' | '小吉' | '空亡';
   index: number;
+  element: '木' | '火' | '金' | '水';
   meaning: string;
   keywords: string[];
   tendency: '宜推进' | '宜等待' | '易反复' | '易争执' | '有助力' | '易落空';

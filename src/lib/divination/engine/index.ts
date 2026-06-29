@@ -148,7 +148,7 @@ export type DivinationDraft = {
   divinationTimeMode?: 'current' | 'custom';
   customDivinationDate?: string;
   customDivinationTime?: string;
-  meihuaMethod: 'time' | 'number' | 'random';
+  meihuaMethod: 'time' | 'number' | 'random' | 'external' | 'laterHeaven';
   meihuaNumber: string;
   xiaoliurenMethod: XiaoliurenDivinationMethod;
   xiaoliurenNumber: string;

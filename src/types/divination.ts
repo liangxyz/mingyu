@@ -13,7 +13,7 @@ export type DivinationType =
   | 'lenormand'
   | 'astrolabe';
 
-export type MeihuaDivinationMethod = 'time' | 'number' | 'random' | 'external';
+export type MeihuaDivinationMethod = 'time' | 'number' | 'random' | 'external' | 'laterHeaven';
 
 export type XiaoliurenDivinationMethod = 'time' | 'number' | 'random';
 
@@ -85,6 +85,14 @@ export interface XiaoliurenPalaceDetail {
   keywords: string[];
   tendency: '宜推进' | '宜等待' | '易反复' | '易争执' | '有助力' | '易落空';
   advice: string;
+  direction?: string;
+  shenSha?: string;
+  yinYang?: '阳' | '阴';
+  number?: string;
+  seasonProsper?: string;
+  bodyPart?: string;
+  fortune?: string;
+  timing?: string;
 }
 
 export interface XiaoliurenData {
@@ -108,6 +116,17 @@ export interface XiaoliurenData {
   primary: XiaoliurenPalaceDetail;
   tendency: XiaoliurenPalaceDetail['tendency'];
   questionHint: string;
+  seasonStates?: {
+    start: string;
+    process: string;
+    result: string;
+  };
+  yingQi?: string;
+  direction?: string;
+  shenSha?: string;
+  fortune?: string;
+  timing?: string;
+  bodyPart?: string;
 }
 
 export interface BaseGanZhi {
@@ -145,6 +164,15 @@ export interface LiuyaoYaoDetail extends BaseYaoDetail {
     liuqin: string;
     isVoid: boolean;
   } | null;
+  isSanxing?: boolean;
+  sanxingType?: string;
+  isLiuhe?: boolean;
+  liuhePartner?: string;
+  isLiuhai?: boolean;
+  isRuMu?: boolean;
+  shiErGong?: string;
+  isYueMu?: boolean;
+  isRiMu?: boolean;
 }
 
 export interface LiuyaoHiddenSpirit {
@@ -196,6 +224,20 @@ export interface LiuyaoData extends BaseHexagramData {
   specialAdvice?: string;
   isChaotic?: boolean;
   chaoticReason?: string;
+  sanheWithDay?: {
+    group: string;
+    members: string[];
+    description: string;
+  } | null;
+  sanxingInYaos?: Array<{
+    branches: string[];
+    type: string;
+  }>;
+  guaShen?: {
+    branch: string;
+    sixRelative: string;
+    position: number;
+  } | null;
 }
 
 export interface MeihuaCalculation {
@@ -259,6 +301,8 @@ export interface MeihuaData extends BaseHexagramData {
     inter2Relation: string;
     changedRelation: string;
     changedTiYongRelation: string;
+    tiYongRaw?: string;
+    yingQi?: string[];
   };
   mainHexagram: {
     name: string;
@@ -411,6 +455,17 @@ export interface LiurenData {
   transmissionSummary?: string;
   guaTi?: string[];
   shenShaSummary?: string[];
+  tianJiangProps?: Record<string, {
+    wuxing: string;
+    yinYang: string;
+    category: string;
+    color?: string;
+    flavor?: string;
+    number?: number;
+    terrain?: string;
+    description?: string;
+    bodyPart?: string;
+  }>;
 }
 
 export interface TarotData {
@@ -496,11 +551,23 @@ export interface AlmanacDayCandidate {
   dayOfficer: string;
   twelveStar: string;
   twentyEightStar: string;
+  twentyEightStarDetail?: {
+    wuxing: string;
+    fortune: string;
+    meaning: string;
+  } | null;
   nineStar: string;
+  nineStarDetail?: {
+    wuxing: string;
+    fortune: string;
+    meaning: string;
+  } | null;
   gods: string[];
   recommends: string[];
   avoids: string[];
   pengZu: string;
+  pengZuGan?: string;
+  pengZuZhi?: string;
   clash: string;
   score: number;
   highlights: string[];
@@ -518,7 +585,7 @@ export interface AlmanacData {
   timestamp: number;
 }
 
-export type LenormandSpreadType = 'single' | 'three' | 'relationship' | 'decision' | 'nine';
+export type LenormandSpreadType = 'single' | 'three' | 'five' | 'relationship' | 'decision' | 'nine' | 'element' | 'grandTableau';
 
 export interface LenormandData {
   spreadType: LenormandSpreadType;
@@ -530,6 +597,11 @@ export interface LenormandData {
     keywords: string[];
     meaning: string;
   }[];
+  combinations?: Array<{
+    card1: string;
+    card2: string;
+    meaning: string;
+  }>;
   timestamp: number;
 }
 

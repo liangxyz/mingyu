@@ -91,6 +91,7 @@ export function formatSupplementaryInfoSection(
       number: '数字起卦',
       random: '随机起卦',
       external: '外应起卦',
+      timeTrigram: '时辰纳卦法',
     };
     lines.push(
       `起卦方式：${methodLabelMap[supplementaryInfo.meihuaSettings.method] || supplementaryInfo.meihuaSettings.method}`,

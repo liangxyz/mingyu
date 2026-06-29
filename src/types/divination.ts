@@ -13,7 +13,7 @@ export type DivinationType =
   | 'lenormand'
   | 'astrolabe';
 
-export type MeihuaDivinationMethod = 'time' | 'number' | 'random' | 'external' | 'laterHeaven';
+export type MeihuaDivinationMethod = 'time' | 'number' | 'random' | 'external' | 'timeTrigram';
 
 export type XiaoliurenDivinationMethod = 'time' | 'number' | 'random';
 

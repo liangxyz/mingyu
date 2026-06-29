@@ -61,24 +61,25 @@ export function resolveTimeMethod(
 }
 
 /**
- * 端法后天起卦法（《梅花易数》端法后天占验）：
- * 按邵雍《梅花易数》端法后天占验篇，以外应方向为卜卦依据，
- * 以方取象：乾南、坤北、离东、坎西、震东北、兑东南、巽西南、艮西北。
- * 用八卦方位取代先天数，直接将外界感知转化为卦象。
+ * 时辰纳卦法（依时辰地支方位配先天八卦起卦）
  *
- * 此方法与外应起卦法不同：外应法将外应映射为先天八卦数，
- * 端法后天起卦直接以方位定卦，并以时辰地支序数定动爻。
+ * 以时辰地支对应的自然方位（子北、卯东、午南、酉西），
+ * 按先天八卦方位图（乾南、坤北、离东、坎西等）将方位映射为卦象，
+ * 再以时辰地支序数取动爻。
  *
- * 返回八卦索引：1乾 2兑 3离 4震 5巽 6坎 7艮 8坤
+ * 注意：本方法与传统《梅花易数》"端法后天占验"不同。
+ * 端法后天强调以外应方向定卦，需真实观测到的外应（人物、方位、声音等），
+ * 按后天八卦方位（离南、坎北、震东、兑西）起卦。
+ * 此处仅以时辰地支推算方向，属简化启发法，并非邵雍原著之端法后天。
+ *
+ * 八卦索引：1乾 2兑 3离 4震 5巽 6坎 7艮 8坤
  */
-export function resolveLaterHeavenMethod(timeBranch: string): MeihuaMethodResult {
-  // 后天方位八卦映射（以观测者为中心）：
+export function resolveTimeTrigramMethod(timeBranch: string): MeihuaMethodResult {
+  // 先天方位八卦映射（以观测者为中心，依先天八卦方位）：
   // 南=乾(1)、东南=兑(2)、东=离(3)、东北=震(4)、
   // 西南=巽(5)、西=坎(6)、西北=艮(7)、北=坤(8)
-  // 此处是定例：若用户从东方来→离(3)，南方来→乾(1)
-  // 使用时辰对应的地支方位来定上下卦
 
-  // 地支与后天八卦方位映射（邵雍定例）
+  // 地支与先天八卦方位映射
   const BRANCH_TO_TRIGRAM: Record<string, { upper: number; lower: number }> = {
     子: { upper: 8, lower: 3 }, // 子(北)→坤(上)离(下)
     丑: { upper: 7, lower: 4 }, // 丑(东北)→艮(上)震(下)
@@ -96,15 +97,14 @@ export function resolveLaterHeavenMethod(timeBranch: string): MeihuaMethodResult
 
   const mapping = BRANCH_TO_TRIGRAM[timeBranch];
   if (!mapping) {
-    // fallback: 使用时辰序数
     const timeIndex = dizhi.indexOf(timeBranch) + 1;
     return {
       upperTrigramIndex: timeIndex % 8 || 8,
       lowerTrigramIndex: (timeIndex * 3) % 8 || 8,
       movingYaoIndex: timeIndex % 6 || 6,
       calculation: {
-        method: '端法后天起卦法',
-        methodKey: 'laterHeaven',
+        method: '时辰纳卦法',
+        methodKey: 'timeTrigram',
         timeBranch,
         upperTrigramIndex: timeIndex % 8 || 8,
         lowerTrigramIndex: (timeIndex * 3) % 8 || 8,
@@ -120,8 +120,8 @@ export function resolveLaterHeavenMethod(timeBranch: string): MeihuaMethodResult
     lowerTrigramIndex: mapping.lower,
     movingYaoIndex,
     calculation: {
-      method: '端法后天起卦法',
-      methodKey: 'laterHeaven',
+      method: '时辰纳卦法',
+      methodKey: 'timeTrigram',
       timeBranch,
       upperTrigramIndex: mapping.upper,
       lowerTrigramIndex: mapping.lower,

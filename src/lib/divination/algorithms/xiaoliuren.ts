@@ -107,7 +107,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
   {
     name: '空亡',
     index: 5,
-    element: '水',
+    element: '土',
     meaning: '当前信息虚、时机虚或目标虚，容易白忙一场。',
     keywords: ['落空', '失焦', '不实'],
     tendency: '易落空',
@@ -116,7 +116,7 @@ const XIAOLIUREN_PALACES: XiaoliurenPalaceDetail[] = [
     shenSha: '勾陈',
     yinYang: '阴',
     number: '5/8/10',
-    seasonProsper: '冬（亥子月）最旺',
+    seasonProsper: '季（辰戌丑未月）最旺',
     bodyPart: '脾',
     fortune: '凶（大凶）',
     timing: '应期不定或落空，需重新评估',

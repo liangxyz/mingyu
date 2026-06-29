@@ -254,6 +254,12 @@ function getChangeDirection(
     return '化退神';
   }
 
+  // 土支（辰戌丑未）进神退神：《增删卜易》辰→未→戌→丑 顺行3位为进神，逆行3位为退神
+  if (originalWuxing === '土') {
+    if (forwardDistance === 3) return '化进神';
+    if (backwardDistance === 3) return '化退神';
+  }
+
   return null;
 }
 

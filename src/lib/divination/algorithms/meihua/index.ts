@@ -21,7 +21,7 @@ import { getSeasonState, isSheng, isKe } from '../_shared';
 import { findHexagramByTrigrams, resolveTiYongByMovingYao } from './helpers/hexagram';
 import {
   resolveExternalMethod,
-  resolveLaterHeavenMethod,
+  resolveTimeTrigramMethod,
   resolveNumberMethod,
   resolveRandomMethod,
   resolveTimeMethod,
@@ -126,8 +126,8 @@ export function generateMeihua(customDate?: Date, settings?: MeihuaSettings): Me
         return resolveRandomMethod();
       case 'external':
         return resolveExternalMethod(settings?.externalOmens);
-      case 'laterHeaven':
-        return resolveLaterHeavenMethod(ganzhi.hour.slice(-1));
+      case 'timeTrigram':
+        return resolveTimeTrigramMethod(ganzhi.hour.slice(-1));
       case 'time':
       default:
         return resolveTimeMethod(ganzhi, lunar);

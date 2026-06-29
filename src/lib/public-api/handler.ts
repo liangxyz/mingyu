@@ -782,7 +782,7 @@ function calculateMeihua(input: JsonRecord) {
   const method = readEnum(
     input,
     'method',
-    ['time', 'number', 'random', 'external', 'laterHeaven'],
+    ['time', 'number', 'random', 'external', 'timeTrigram'],
     'time',
   );
   const settings: MeihuaSettings = {

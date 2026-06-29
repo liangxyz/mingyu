@@ -779,7 +779,7 @@ function calculateQimen(input: JsonRecord) {
 }
 
 function calculateMeihua(input: JsonRecord) {
-  const method = readEnum(input, 'method', ['time', 'number', 'random', 'external'], 'time');
+  const method = readEnum(input, 'method', ['time', 'number', 'random', 'external', 'laterHeaven'], 'time');
   const settings: MeihuaSettings = {
     method,
     ...(method === 'number' ? { number: readInteger(input, 'number', 1) } : {}),
@@ -899,7 +899,7 @@ function calculateLenormand(input: JsonRecord) {
     readEnum(
       input,
       'spreadType',
-      ['single', 'three', 'relationship', 'decision', 'nine'],
+      ['single', 'three', 'five', 'relationship', 'decision', 'nine', 'element', 'grandTableau'],
       'three',
     ) as LenormandSpreadType,
   );

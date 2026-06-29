@@ -26,7 +26,7 @@
 | `ssgw_prompt`       | 灵签提示词   | 三山国王灵签求签并返回可直接用于 AI 解读的结构化提示词   |
 | `divine_almanac`    | 黄历择日     | 按事项、日期范围和可选参与人八字筛选候选日期             |
 | `almanac_prompt`    | 择日提示词   | 黄历择日并返回可直接用于 AI 解读的结构化提示词           |
-| `divine_lenormand`  | 雷诺曼抽牌   | 支持单牌、三牌、关系、选择和九宫牌阵                     |
+| `divine_lenormand`  | 雷诺曼抽牌   | 支持单牌、三牌、五牌十字、关系、选择、九宫、五行和大桌牌阵 |
 | `lenormand_prompt`  | 雷诺曼提示词 | 雷诺曼抽牌并返回可直接用于 AI 解读的结构化提示词         |
 | `divine_astrolabe`  | 星盘生成     | 根据出生时间、经纬度和时区生成星体、宫位与相位数据       |
 | `astrolabe_prompt`  | 星盘提示词   | 星盘生成并返回可直接用于 AI 解读的结构化提示词           |
@@ -133,7 +133,7 @@ npm run mcp
 
 ### 雷诺曼牌阵参数
 
-雷诺曼工具的 `spreadType` 支持 `single`、`three`、`relationship`、`decision`、`nine`，不传时默认使用三牌事件线。
+雷诺曼工具的 `spreadType` 支持 `single`、`three`、`five`（五牌十字阵）、`relationship`、`decision`、`nine`、`element`（五行牌阵）、`grandTableau`（大桌牌阵），不传时默认使用三牌事件线。
 
 ### 星盘参数
 

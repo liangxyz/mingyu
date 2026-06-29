@@ -155,14 +155,14 @@ curl -X POST https://aov.cc/api/v1/divination/almanac \
 - 紫微 `school` 支持 `sanhe`（三合派三方四正）、`feixing`（飞星派四化飞星链路）、`sihua`（四化派生年四化主线）。不传则不附加流派指引。
 - `customDate` 用于指定时间类占卜的起卦或排盘时间，支持六爻、梅花易数、小六壬、奇门遁甲、大六壬；不传时使用服务器当前时间。该字段必须使用带时区的 ISO 8601 时间字符串，例如 `2025-01-01T08:00:00+08:00` 或 `2025-01-01T00:00:00Z`。
 - Python `urllib` 默认 `User-Agent` 可能被 Cloudflare 拦截；Python 调用时请显式设置正常 `User-Agent`，例如 `curl/8.0.0` 或业务自己的客户端名称。
-- 梅花易数 `method` 支持 `time`、`number`、`random`、`external`。数字起卦使用 `number`；外应起卦使用 `externalOmens`，至少提供两项可映射外应，并提供 `count` 作为动爻数量，例如 `{"direction":"南","object":"火电文书","count":3}`。
+- 梅花易数 `method` 支持 `time`、`number`、`random`、`external`、`laterHeaven`。数字起卦使用 `number`；外应起卦使用 `externalOmens`，至少提供两项可映射外应，并提供 `count` 作为动爻数量，例如 `{"direction":"南","object":"火电文书","count":3}`；端法后天起卦使用 `laterHeaven`，以时辰地支方位定上下卦。
 - 小六壬 `xiaoliurenMethod` 支持 `time`、`number`、`random`，数字起课时使用 `xiaoliurenNumber`。
 - 塔罗 `spreadType` 支持 `single`、`three`、`love`、`career`、`decision`。
 - 六爻 `liuyaoTemplate` 支持 `general`、`ganqing`、`shiye`、`caifu`、`guaishen`。
 - 大六壬 `liurenTemplate` 支持 `general`、`ganqing`、`shiye`、`caifu`。
 - 奇门遁甲 `qimenMethod` 支持 `zhuanpan`（转盘法，默认）、`feipan`（飞盘法）。
 - 黄历择日 `topic` 支持 `marriage`、`move`、`opening`、`contract`、`travel`、`medical`、`study`、`burial`、`renovation`、`custom`，并使用 `startDate`、`endDate` 和可选 `participants`。
-- 雷诺曼 `spreadType` 支持 `single`、`three`、`relationship`、`decision`、`nine`。
+- 雷诺曼 `spreadType` 支持 `single`、`three`、`five`、`relationship`、`decision`、`nine`、`element`、`grandTableau`。
 - 星盘需要 `year`、`month`、`day`、`hour`、`minute`、`latitude`、`longitude`、`timezone`，可传 `useTrueSolarTime` 启用真太阳时校正，提示词接口可使用 `astrolabeTopic` 和 `astrolabeScopeText`。
 
 更完整的字段结构以 [OpenAPI](https://aov.cc/api/v1/openapi.json) 为准。

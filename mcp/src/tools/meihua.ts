@@ -26,9 +26,9 @@ import {
 
 const meihuaSchema = z.object({
   method: z
-    .enum(['time', 'number', 'random', 'external'])
+    .enum(['time', 'number', 'random', 'external', 'laterHeaven'])
     .optional()
-    .describe('起卦方式：time=时间起卦, number=数字起卦, random=随机起卦, external=外应起卦'),
+    .describe('起卦方式：time=时间起卦, number=数字起卦, random=随机起卦, external=外应起卦, laterHeaven=端法后天起卦（依方位定卦）'),
   number: z.number().optional().describe('数字起卦时使用的正整数'),
   externalOmens: z
     .object({
@@ -138,7 +138,7 @@ export function registerMeihuaTool(server: McpServer) {
     'divine_meihua',
     {
       description:
-        '梅花易数起卦：支持时间起卦、数字起卦、随机起卦，生成主卦、互卦、变卦及体用生克分析',
+        '梅花易数起卦：支持时间起卦、数字起卦、随机起卦、外应起卦、端法后天起卦，生成主卦、互卦、变卦/体用生克分析及应期判断',
       inputSchema: meihuaSchema.shape,
       outputSchema: resultOutputSchema,
     },
@@ -157,7 +157,7 @@ export function registerMeihuaTool(server: McpServer) {
     'meihua_prompt',
     {
       description:
-        '梅花易数起卦并生成结构化 AI 解读提示词：一次调用返回卦盘数据和可直接复制给 AI 的提示词',
+        '梅花易数起卦并生成结构化 AI 解读提示词：一次调用返回卦盘数据（含主互变卦、体用生克、应期判断）和可直接复制给 AI 的提示词',
       inputSchema: meihuaPromptSchema.shape,
       outputSchema: {
         result: z.unknown().describe('梅花易数卦盘数据'),

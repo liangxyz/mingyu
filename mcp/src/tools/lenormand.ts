@@ -12,9 +12,9 @@ import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-co
 
 const lenormandSchema = z.object({
   spreadType: z
-    .enum(['single', 'three', 'relationship', 'decision', 'nine'])
+    .enum(['single', 'three', 'five', 'relationship', 'decision', 'nine', 'element', 'grandTableau'])
     .optional()
-    .describe('牌阵类型：single=单牌, three=三牌, relationship=关系, decision=选择, nine=九宫'),
+    .describe('牌阵类型：single=单牌, three=三牌, five=五牌十字, relationship=关系, decision=选择, nine=九宫, element=五行, grandTableau=大桌'),
 });
 
 const lenormandPromptSchema = extendPromptSchema(
@@ -30,7 +30,7 @@ export function registerLenormandTool(server: McpServer) {
   server.registerTool(
     'divine_lenormand',
     {
-      description: '雷诺曼抽牌：偏现实事件判断，支持单牌、三牌、关系、选择和九宫牌阵',
+      description: '雷诺曼抽牌：偏现实事件判断，支持单牌、三牌、五牌十字、关系、选择、九宫、五行牌阵和大桌牌阵',
       inputSchema: lenormandSchema.shape,
       outputSchema: resultOutputSchema,
     },

@@ -23,6 +23,7 @@ import {
   palaceHexagrams,
 } from '../../../config/divination-data.ts';
 import { generateYaosByTime, getDivinationTime } from '../../../utils/timeManager.ts';
+import { isSheng, isKe } from './_shared/wuxing.ts';
 
 // 六冲关系
 const LIU_CHONG: Record<string, string> = {
@@ -58,6 +59,68 @@ const BRANCH_WUXING: Record<string, string> = {
 
 // 地支顺序（用于判断进神退神）
 const BRANCH_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+// 月令当令五行（按月建地支本气定当令之神）：同令为旺，令生为相，生令为休，
+// 令克为囚，克令为死。六爻旺衰以月令为提纲，按月支而非季节粗分。
+const MONTH_LING_WUXING: Record<string, string> = {
+  子: '水',
+  丑: '土',
+  寅: '木',
+  卯: '木',
+  辰: '土',
+  巳: '火',
+  午: '火',
+  未: '土',
+  申: '金',
+  酉: '金',
+  戌: '土',
+  亥: '水',
+};
+
+/**
+ * 月令旺衰：按月建地支定爻之五行的旺相休囚死。
+ * 旺=同令，相=令生，休=生令，囚=令克，死=克令。
+ */
+function getSeasonState(
+  yaoWuxing: string,
+  monthBranch: string,
+): '旺' | '相' | '休' | '囚' | '死' | '平' {
+  const lingWuxing = MONTH_LING_WUXING[monthBranch];
+  if (!lingWuxing || !yaoWuxing) {
+    return '平';
+  }
+  if (lingWuxing === yaoWuxing) return '旺';
+  if (isSheng(lingWuxing, yaoWuxing)) return '相';
+  if (isSheng(yaoWuxing, lingWuxing)) return '休';
+  if (isKe(lingWuxing, yaoWuxing)) return '囚';
+  if (isKe(yaoWuxing, lingWuxing)) return '死';
+  return '平';
+}
+
+/**
+ * 回头生克冲：动爻变出之爻对动爻本身的关系。
+ * - 回头生：变爻生动爻（如寅动化卯，水动化木）
+ * - 回头克：变爻克动爻
+ * - 回头冲：变爻冲动爻（六冲）
+ * - 化空：变爻落旬空
+ * - 化进/化退：同五行递进退（由 getChangeDirection 判定）
+ * - 比和：同五行同比和
+ */
+function getChangeRelation(
+  originalWuxing: string,
+  changedWuxing: string,
+  originalBranch: string,
+  changedBranch: string,
+  changedIsVoid: boolean,
+): '回头生' | '回头克' | '回头冲' | '化空' | '比和' | null {
+  if (!originalWuxing || !changedWuxing) return null;
+  if (changedIsVoid) return '化空';
+  if (LIU_CHONG[originalBranch] === changedBranch) return '回头冲';
+  if (isSheng(changedWuxing, originalWuxing)) return '回头生';
+  if (isKe(changedWuxing, originalWuxing)) return '回头克';
+  if (originalWuxing === changedWuxing) return '比和';
+  return null;
+}
 
 /**
  * 判断是否为日破：爻的地支被日辰地支冲克
@@ -375,6 +438,23 @@ export function generateLiuyao(customDate?: Date) {
     const isMonthBreakFlag = isMonthBreak(info.dizhi, monthBranch);
     const changeDirection = changedInfo ? getChangeDirection(info.dizhi, changedInfo.dizhi) : null;
 
+    // 月令旺衰：按月建定爻之五行的旺相休囚死。旺相为有力，休囚死为无力。
+    const seasonState = getSeasonState(info.wuxing, monthBranch);
+    // 暗动：静爻被日辰冲为暗动（旺相有力，暗中发动）；休囚被日冲为日破（无力）。
+    // 与 isDayBreak 互补：日冲静爻按旺衰区分暗动（有力可用）与日破（无力）。
+    const isHiddenMove =
+      !isChanging && isDayBreakFlag && (seasonState === '旺' || seasonState === '相');
+    // 回头生克冲：动爻变出之爻对动爻本身的关系（仅动爻有变爻时计算）。
+    const changeRelation = changedInfo
+      ? getChangeRelation(
+          info.wuxing,
+          changedInfo.wuxing,
+          info.dizhi,
+          changedInfo.dizhi,
+          voids.includes(changedInfo.dizhi),
+        )
+      : null;
+
     return {
       position: index + 1,
       rawValue: rawYaos[index],
@@ -390,7 +470,10 @@ export function generateLiuyao(customDate?: Date) {
       isVoid: voids.includes(info.dizhi),
       isDayBreak: isDayBreakFlag,
       isMonthBreak: isMonthBreakFlag,
+      isHiddenMove: isHiddenMove,
+      seasonState: seasonState,
       changeDirection: changeDirection,
+      changeRelation: changeRelation,
       changedYao: changedInfo
         ? {
             dizhi: changedInfo.dizhi,

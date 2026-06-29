@@ -180,6 +180,89 @@ const JIANCHU_DUTIES: Record<string, { good: string[]; bad: string[]; advice: st
   闭: { good: ['安葬', '收藏', '修补'], bad: ['开市', '出行'], advice: '宜安葬收藏，忌开市出行' },
 };
 
+// 传统吉凶神煞清单（取自《协纪辨方书》，名称与 tyme4ts God.NAMES 对齐）。
+// tyme4ts 的 getGods() 已返回每日临值神煞及其吉凶（getLuck），此处按传统
+// 择日口径识别大吉神与大凶神，用于评分加权。
+const SHENSHA_AUSPICIOUS = [
+  '天德',
+  '月德',
+  '天德合',
+  '月德合',
+  '天赦',
+  '天愿',
+  '天恩',
+  '岁德',
+  '月恩',
+  '月空',
+  '天德合',
+  '母仓',
+  '生气',
+  '益后',
+  '续世',
+  '五富',
+  '三合',
+  '六合',
+  '五合',
+  '福德',
+  '金匮',
+  '玉堂',
+  '司命',
+  '青龙',
+  '明堂',
+  '金堂',
+  '宝光',
+];
+
+const SHENSHA_INAUSPICIOUS = [
+  '四废',
+  '四离',
+  '四穷',
+  '四忌',
+  '四击',
+  '四耗',
+  '五虚',
+  '五离',
+  '五墓',
+  '劫煞',
+  '灾煞',
+  '月煞',
+  '月刑',
+  '月害',
+  '月厌',
+  '月破',
+  '月建',
+  '大煞',
+  '大耗',
+  '大败',
+  '大时',
+  '天火',
+  '地火',
+  '天贼',
+  '天刑',
+  '天牢',
+  '朱雀',
+  '白虎',
+  '元武',
+  '勾陈',
+  '死神',
+  '死气',
+  '致死',
+  '血支',
+  '血忌',
+  '游祸',
+  '河魁',
+  '土符',
+  '土府',
+  '往亡',
+  '归忌',
+  '厌对',
+  '招摇',
+  '九空',
+  '九坎',
+  '九焦',
+  '天罡',
+];
+
 function scoreDay(params: {
   topic: AlmanacTopic;
   dayBranch: string;
@@ -222,6 +305,19 @@ function scoreDay(params: {
   if (params.gods.length >= 4) {
     score += 6;
     highlights.push('吉神信息较多，可作为辅助加分');
+  }
+
+  // 传统吉凶神煞评分（tyme4ts God 已含天德/月德/天赦/天愿/岁德等大吉神与四废/劫煞/灾煞等大凶神）。
+  // 按《协纪辨方书》口径：大吉神临值宜趋吉，大凶神临值宜避忌。
+  const bigAuspicious = SHENSHA_AUSPICIOUS.filter((name) => params.gods.includes(name));
+  const bigInauspicious = SHENSHA_INAUSPICIOUS.filter((name) => params.gods.includes(name));
+  if (bigAuspicious.length > 0) {
+    score += bigAuspicious.length * 6;
+    highlights.push(`吉神临值：${bigAuspicious.join('、')}`);
+  }
+  if (bigInauspicious.length > 0) {
+    score -= bigInauspicious.length * 6;
+    cautions.push(`凶神临值：${bigInauspicious.join('、')}，宜避忌`);
   }
 
   params.participants.forEach((participant) => {

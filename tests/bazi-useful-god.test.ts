@@ -316,6 +316,9 @@ const testCases: Array<{
   { name: '癸日午月一派己土且无甲出制时，应按从杀大贵处理，不应仍退回普通夏水扶抑', args: ['身弱', { pattern: '七杀格', isSpecial: false }, '水', '午', undefined, '癸', { visibleStems: ['癸', '己', '己', '丙'], hiddenStems: ['己', '己'], wuxingCounts: { 木: 0, 火: 2, 土: 5, 金: 0, 水: 1 }, }], expected: { favorableFirst: '土', traceIncludes: ['取用层次:一派己土，无甲出制', '成格层次:作从杀而论，又主大贵'], ruleHas: 'wu-month-gui-ji-pure-follow-kill' }, },
   { name: '癸日午月一派己土但甲木透干时，不应仍按从杀大贵论', args: ['身弱', { pattern: '七杀格', isSpecial: false }, '水', '午', undefined, '癸', { visibleStems: ['癸', '己', '己', '甲'], hiddenStems: ['己', '己'], wuxingCounts: { 木: 1, 火: 1, 土: 5, 金: 0, 水: 1 }, }], expected: { traceNotIncludes: '成格层次:作从杀而论，又主大贵', ruleNotHas: 'wu-month-gui-ji-pure-follow-kill' }, },
   { name: '癸日午月土虽重但混入戊土时，不应误判为一派己土从杀', args: ['身弱', { pattern: '七杀格', isSpecial: false }, '水', '午', undefined, '癸', { visibleStems: ['癸', '己', '戊', '丙'], hiddenStems: ['己', '己'], wuxingCounts: { 木: 0, 火: 2, 土: 5, 金: 0, 水: 1 }, }], expected: { traceNotIncludes: '成格层次:作从杀而论，又主大贵', ruleNotHas: 'wu-month-gui-ji-pure-follow-kill' }, },
+  { name: '丙日子月调候应以壬水为尊戊土为佐，不应仍取壬辛庚方向', args: ['身弱', { pattern: '七杀格', isSpecial: false }, '火', '子', undefined, '丙'], expected: { favorableSlice: ['水', '土'], primaryReason: '调候', traceIncludes: '调候优先:水 -> 土', ruleHas: 'zi-month-bing-wu-xin-first' }, },
+  { name: '戊日巳月调候应以壬水润燥甲木疏土，不应仍取先癸后丙', args: ['身强', { pattern: '比肩格', isSpecial: false }, '土', '巳', undefined, '戊'], expected: { favorableSlice: ['水', '木'], primaryReason: '调候', traceIncludes: '调候优先:水 -> 木', ruleHas: 'si-month-wu-gui-bing-first' }, },
+  { name: '乙日巳月调候应以癸水为先丙火为次，不应仍取先丙后癸', args: ['身弱', { pattern: '偏财格', isSpecial: false }, '木', '巳', undefined, '乙'], expected: { favorableSlice: ['水', '火'], primaryReason: '调候', traceIncludes: '调候优先:水 -> 火', ruleHas: 'si-month-yi-bing-gui-first' }, },
 ];
 
 test('用神策略参数化测试', async (t) => {

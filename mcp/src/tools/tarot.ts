@@ -11,9 +11,22 @@ import { buildTarotSpread } from './divination-common.js';
 
 const tarotSchema = z.object({
   spreadType: z
-    .enum(['single', 'three', 'love', 'career', 'decision'])
+    .enum([
+      'single',
+      'three',
+      'love',
+      'career',
+      'decision',
+      'celtic',
+      'chakra',
+      'year',
+      'mindBodySpirit',
+      'horseshoe',
+    ])
     .optional()
-    .describe('牌阵类型：single=单牌指引, three=时间流, love=爱情, career=事业, decision=选择'),
+    .describe(
+      '牌阵类型：single=单牌指引, three=时间流, love=爱情, career=事业, decision=选择, celtic=凯尔特十字, chakra=七脉轮, year=年运, mindBodySpirit=身心灵, horseshoe=马蹄铁',
+    ),
 });
 
 const tarotPromptSchema = extendPromptSchema(tarotSchema, '用户希望围绕牌阵解读的问题');

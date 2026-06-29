@@ -223,9 +223,22 @@ const DIVINATION_REQUEST_PROPERTIES = {
   xiaoliurenMethod: { enum: ['time', 'number', 'random'] },
   xiaoliurenNumber: { type: 'integer', minimum: 1 },
   spreadType: {
-    enum: ['single', 'three', 'love', 'career', 'decision', 'relationship', 'nine'],
+    enum: [
+      'single',
+      'three',
+      'love',
+      'career',
+      'decision',
+      'celtic',
+      'chakra',
+      'year',
+      'mindBodySpirit',
+      'horseshoe',
+      'relationship',
+      'nine',
+    ],
     description:
-      '塔罗支持 single、three、love、career、decision；雷诺曼支持 single、three、relationship、decision、nine。',
+      '塔罗支持 single、three、love、career、decision、celtic、chakra、year、mindBodySpirit、horseshoe；雷诺曼支持 single、three、relationship、decision、nine。',
   },
   liuyaoTemplate: { enum: ['general', 'ganqing', 'shiye', 'caifu', 'guaishen'] },
   liurenTemplate: { enum: ['general', 'ganqing', 'shiye', 'caifu'] },
@@ -807,7 +820,18 @@ function calculateTarot(input: JsonRecord) {
   const spreadType = readEnum(
     input,
     'spreadType',
-    ['single', 'three', 'love', 'career', 'decision'],
+    [
+      'single',
+      'three',
+      'love',
+      'career',
+      'decision',
+      'celtic',
+      'chakra',
+      'year',
+      'mindBodySpirit',
+      'horseshoe',
+    ],
     'single',
   );
   if (spreadType === 'single') {

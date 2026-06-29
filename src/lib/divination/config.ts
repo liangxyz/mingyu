@@ -129,6 +129,11 @@ export const TAROT_SPREAD_OPTIONS: Array<{
   { value: 'love', label: '爱情牌阵' },
   { value: 'career', label: '事业牌阵' },
   { value: 'decision', label: '选择牌阵' },
+  { value: 'celtic', label: '凯尔特十字' },
+  { value: 'chakra', label: '七脉轮牌阵' },
+  { value: 'year', label: '年运牌阵' },
+  { value: 'mindBodySpirit', label: '身心灵牌阵' },
+  { value: 'horseshoe', label: '马蹄铁牌阵' },
 ];
 
 export const LIUREN_TEMPLATE_OPTIONS: Array<{

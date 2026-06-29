@@ -37,6 +37,129 @@ const MONTH_LEADER_BY_ZHONGQI: Record<string, string> = {
 };
 const DAYTIME_BRANCHES = new Set(['卯', '辰', '巳', '午', '未', '申']);
 
+/**
+ * 按《大六壬指南》神煞体系计算核心神煞。
+ * 驿马、劫煞、亡神按三合局取；桃花按四季取；天德月德按干支起。
+ */
+function buildShenShaSummary(
+  _yearBranch: string,
+  monthBranch: string,
+  dayBranch: string,
+  _dayStem: string,
+): string[] {
+  const items: string[] = [];
+
+  // 驿马（日支取）：申子辰在寅、亥卯未在巳、寅午戌在申、巳酉丑在亥
+  const horseMap: Record<string, string> = {
+    子: '寅',
+    申: '寅',
+    辰: '寅',
+    亥: '巳',
+    卯: '巳',
+    未: '巳',
+    寅: '申',
+    午: '申',
+    戌: '申',
+    巳: '亥',
+    酉: '亥',
+    丑: '亥',
+  };
+  const horse = horseMap[dayBranch];
+  if (horse) items.push(`驿马在${horse}`);
+
+  // 劫煞（日支取）：三合局之绝位
+  const jieShaMap: Record<string, string> = {
+    子: '巳',
+    申: '巳',
+    辰: '巳',
+    亥: '申',
+    卯: '申',
+    未: '申',
+    寅: '亥',
+    午: '亥',
+    戌: '亥',
+    巳: '寅',
+    酉: '寅',
+    丑: '寅',
+  };
+  const jieSha = jieShaMap[dayBranch];
+  if (jieSha) items.push(`劫煞在${jieSha}`);
+
+  // 亡神（日支取）：三合局之临官前一位
+  const wangShenMap: Record<string, string> = {
+    子: '亥',
+    申: '亥',
+    辰: '亥',
+    亥: '寅',
+    卯: '寅',
+    未: '寅',
+    寅: '巳',
+    午: '巳',
+    戌: '巳',
+    巳: '申',
+    酉: '申',
+    丑: '申',
+  };
+  const wangShen = wangShenMap[dayBranch];
+  if (wangShen) items.push(`亡神在${wangShen}`);
+
+  // 桃花（日支取）：申子辰在酉、亥卯未在子、寅午戌在卯、巳酉丑在午
+  const peachMap: Record<string, string> = {
+    子: '酉',
+    申: '酉',
+    辰: '酉',
+    亥: '子',
+    卯: '子',
+    未: '子',
+    寅: '卯',
+    午: '卯',
+    戌: '卯',
+    巳: '午',
+    酉: '午',
+    丑: '午',
+  };
+  const peach = peachMap[dayBranch];
+  if (peach) items.push(`桃花在${peach}`);
+
+  // 天德（月支取）：正丁二申三壬四辛五亥六甲七癸八寅九丙十乙子巳丑庚
+  const tianDeMap: Record<string, string> = {
+    寅: '丁',
+    卯: '申',
+    辰: '壬',
+    巳: '辛',
+    午: '亥',
+    未: '甲',
+    申: '癸',
+    酉: '寅',
+    戌: '丙',
+    亥: '乙',
+    子: '巳',
+    丑: '庚',
+  };
+  const tianDe = tianDeMap[monthBranch];
+  if (tianDe) items.push(`天德在${tianDe}`);
+
+  // 月德（月支取）：寅午戌在丙、申子辰在壬、亥卯未在甲、巳酉丑在庚
+  const yueDeMap: Record<string, string> = {
+    寅: '丙',
+    午: '丙',
+    戌: '丙',
+    申: '壬',
+    子: '壬',
+    辰: '壬',
+    亥: '甲',
+    卯: '甲',
+    未: '甲',
+    巳: '庚',
+    酉: '庚',
+    丑: '庚',
+  };
+  const yueDe = yueDeMap[monthBranch];
+  if (yueDe) items.push(`月德在${yueDe}`);
+
+  return items;
+}
+
 function getMonthLeaderByZhongqi(timeInfo: ReturnType<typeof getDivinationTime>['timeInfo']) {
   const currentTime = SolarTime.fromYmdHms(
     timeInfo.solar.year,
@@ -147,6 +270,12 @@ export function generateLiuren(customDate?: Date): LiurenData {
   const transmissionSummary = `三传${transmissionPattern}，主线依次为${threeTransmissions
     .map((item) => `${item.stage}${item.branch}`)
     .join(' → ')}。`;
+  const shenShaSummary = buildShenShaSummary(
+    ganzhi.year.charAt(1),
+    ganzhi.month.charAt(1),
+    ganzhi.day.charAt(1),
+    ganzhi.day.charAt(0),
+  );
 
   return {
     ganzhi,
@@ -170,5 +299,6 @@ export function generateLiuren(customDate?: Date): LiurenData {
     classicalRules,
     lessonSummary: `${lessonSummary} 当前节气为${timeInfo.jieQi}。`,
     transmissionSummary,
+    shenShaSummary,
   };
 }

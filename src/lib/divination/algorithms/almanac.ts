@@ -309,10 +309,21 @@ function scoreDay(params: {
 
   // 传统吉凶神煞评分（tyme4ts God 已含天德/月德/天赦/天愿/岁德等大吉神与四废/劫煞/灾煞等大凶神）。
   // 按《协纪辨方书》口径：大吉神临值宜趋吉，大凶神临值宜避忌。
+  // 天赦：百无禁忌，+15；天德/月德为众神之首，+12；天恩天愿等次之+6。
   const bigAuspicious = SHENSHA_AUSPICIOUS.filter((name) => params.gods.includes(name));
   const bigInauspicious = SHENSHA_INAUSPICIOUS.filter((name) => params.gods.includes(name));
-  if (bigAuspicious.length > 0) {
-    score += bigAuspicious.length * 6;
+  for (const name of bigAuspicious) {
+    if (name === '天赦') {
+      score += 15;
+      highlights.push(`天赦日：百无禁忌，诸事可为`);
+    } else if (name === '天德' || name === '月德') {
+      score += 12;
+      highlights.push(`${name}临值：众神之首`);
+    } else {
+      score += 6;
+    }
+  }
+  if (bigAuspicious.length > 1) {
     highlights.push(`吉神临值：${bigAuspicious.join('、')}`);
   }
   if (bigInauspicious.length > 0) {

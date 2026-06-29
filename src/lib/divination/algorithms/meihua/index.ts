@@ -17,6 +17,7 @@ import type { MeihuaData, MeihuaSettings } from '../../../../types/divination';
 import { trigramsByIndex } from '../../../../utils/hexagram-data';
 import { MeihuaHelpers } from '../../../../utils/divination-helpers';
 import { getDivinationTime } from '../../../../utils/timeManager';
+import { getSeasonState } from '../_shared';
 import { findHexagramByTrigrams, resolveTiYongByMovingYao } from './helpers/hexagram';
 import {
   resolveExternalMethod,
@@ -135,12 +136,14 @@ export function generateMeihua(customDate?: Date, settings?: MeihuaSettings): Me
       | '用',
   }));
 
-  // 四时旺衰优先以节气划分；若节气异常缺失，再回退到农历月粗分四季。
+  // 四时旺衰：按《梅花易数》以月建地支定旺相休囚死，比季节粗分更精确。
+  // 复用六爻的 getSeasonState（同令→旺，令生→相，生令→休，令克→囚，克令→死）。
+  const monthBranch = ganzhi.month.slice(-1);
+  const tiSeasonState = getSeasonState(tiGua.element, monthBranch);
+  const yongSeasonState = getSeasonState(yongGua.element, monthBranch);
   const seasonByJieQi = MeihuaHelpers.getSeasonByJieQi(timeInfo.jieQi);
-  const season =
-    seasonByJieQi !== '未知' ? seasonByJieQi : MeihuaHelpers.getSeasonByMonth(lunar.monthNumber);
-  const tiSeasonState = MeihuaHelpers.getElementSeasonState(tiGua.element, season);
-  const yongSeasonState = MeihuaHelpers.getElementSeasonState(yongGua.element, season);
+  const season: '春' | '夏' | '秋' | '冬' =
+    seasonByJieQi !== '未知' ? (seasonByJieQi as '春' | '夏' | '秋' | '冬') : '春';
 
   return {
     originalName: mainHexagram.name,
@@ -213,11 +216,22 @@ export function generateMeihua(customDate?: Date, settings?: MeihuaSettings): Me
       tiSeasonState,
       yongSeasonState,
       // 2. 互卦与体卦关系：代表事情发展的过程。互卦有二，需分别论之。
-      // 口径说明：取互下、互上两经卦各自对原体卦论生克（两互各论克体），作辅助参考；
-      // 正统梅花互卦另有体用定法（互卦以原动爻位定互体互用），此处为简化口径。
-      inter1Relation: interLowerResult
-        ? MeihuaHelpers.getElementRelation(interLowerResult.trigram.element, tiGua.element)
-        : '无',
+      // 传统梅花互卦体用定法（《梅花易数》原旨）：
+      // 原动爻在下卦（1/2/3爻）→互卦的下卦为互体、上卦为互用；
+      // 原动爻在上卦（4/5/6爻）→互卦的上卦为互体、下卦为互用。
+      // 以互用对互体论生克，反映事态发展过程中的关键关系。
+      inter1Relation:
+        interLowerResult && interUpperResult
+          ? MeihuaHelpers.getElementRelation(
+              movingYaoIndex <= 3
+                ? interUpperResult.trigram.element
+                : interLowerResult.trigram.element,
+              movingYaoIndex <= 3
+                ? interLowerResult.trigram.element
+                : interUpperResult.trigram.element,
+            )
+          : '无',
+      // 另一互卦经卦对原体卦的辅助关系（非正统，仅作参考）
       inter2Relation: interUpperResult
         ? MeihuaHelpers.getElementRelation(interUpperResult.trigram.element, tiGua.element)
         : '无',

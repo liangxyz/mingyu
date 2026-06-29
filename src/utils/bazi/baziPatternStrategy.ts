@@ -186,14 +186,16 @@ function resolveExposedStemPriority(
   }
 
   candidates.sort((left, right) => {
-    if (left.bestPositionRank !== right.bestPositionRank) {
-      return left.bestPositionRank - right.bestPositionRank;
+    // 本气/中气/余气层次优先（《子平真诠》本气透干优先取格）
+    if (left.stemIndex !== right.stemIndex) {
+      return left.stemIndex - right.stemIndex;
     }
+    // 层次相同时透干次数多者优先
     if (left.exposureCount !== right.exposureCount) {
       return right.exposureCount - left.exposureCount;
     }
-
-    return left.stemIndex - right.stemIndex;
+    // 再按透干柱位（月干 > 时干 > 年干）
+    return left.bestPositionRank - right.bestPositionRank;
   });
 
   return candidates[0].stem;
@@ -401,5 +403,7 @@ export function determinePattern(
     pattern: patternName || '杂气格',
     isSpecial: false,
     basis,
+    // 魁罡日（庚辰/壬辰/戊戌/庚戌）为重要外格，日柱判定后即标出，供 AI 参照《三命通会》
+    isKuiGang: ['庚辰', '壬辰', '戊戌', '庚戌'].includes(pillars.day.gan + pillars.day.zhi),
   };
 }

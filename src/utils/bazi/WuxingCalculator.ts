@@ -9,11 +9,20 @@ export class WuxingCalculator {
   /**
    * 计算五行分布（高级版）
    * @param pillars - 四柱
+   * @param monthCommander - 月令司权天干（可选），当前司令之干额外加权
    * @returns 包含分数、百分比和缺失项的详细对象
    */
-  public calculateWuxingStrength(pillars: Pillars): WuxingStrengthDetails {
+  public calculateWuxingStrength(pillars: Pillars, monthCommander?: string): WuxingStrengthDetails {
     const rawStrength = this._calculateRawStrength(pillars);
     const weightedStrength = this._applyMonthWeights(rawStrength, pillars.month.zhi);
+
+    // 月令司权之神额外加权：当前司令之干的五行 +20%（《三命通会》月令司权最旺）
+    if (monthCommander) {
+      const commanderWuxing = getWuxingUtil(monthCommander);
+      if (commanderWuxing !== '未知' && weightedStrength[commanderWuxing] !== undefined) {
+        weightedStrength[commanderWuxing] = Math.round(weightedStrength[commanderWuxing] * 1.2);
+      }
+    }
 
     const totalStrength = Object.values(weightedStrength).reduce((sum, val) => sum + val, 0);
     const percentages = this._calculatePercentages(weightedStrength, totalStrength);
@@ -75,20 +84,22 @@ export class WuxingCalculator {
       return percentages;
     }
 
-    const wuxingKeys = Object.keys(weightedStrength);
-    let accumulatedPercentage = 0;
+    // 按比例计算并保留一位小数，避免 Math.round 取整后将误差集中到末项
+    let accumulated = 0;
+    const keys = Object.keys(weightedStrength);
+    const rawPcts: Array<{ key: string; pct: number }> = keys.map((key) => ({
+      key,
+      pct: Math.round(((weightedStrength[key] || 0) / totalStrength) * 1000) / 10,
+    }));
+    // 按原始比例降序，末项补差时偏小项承受误差更不明显
+    rawPcts.sort((a, b) => b.pct - a.pct);
 
-    // Calculate and round for the first N-1 elements
-    for (let i = 0; i < wuxingKeys.length - 1; i++) {
-      const wuxing = wuxingKeys[i];
-      const percentage = Math.round((weightedStrength[wuxing] / totalStrength) * 100);
-      percentages[wuxing] = percentage;
-      accumulatedPercentage += percentage;
+    for (let i = 0; i < rawPcts.length - 1; i++) {
+      const pct = Math.round(rawPcts[i].pct);
+      percentages[rawPcts[i].key] = pct;
+      accumulated += pct;
     }
-
-    // Assign the remainder to the last element to ensure the total is 100
-    const lastWuxing = wuxingKeys[wuxingKeys.length - 1];
-    percentages[lastWuxing] = 100 - accumulatedPercentage;
+    percentages[rawPcts[rawPcts.length - 1].key] = Math.max(0, 100 - accumulated);
 
     return percentages;
   }

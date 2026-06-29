@@ -24,6 +24,7 @@ import {
 } from '../../../config/divination-data.ts';
 import { generateYaosByTime, getDivinationTime } from '../../../utils/timeManager.ts';
 import { isSheng, isKe } from './_shared/wuxing.ts';
+import { getSeasonState } from './_shared';
 
 // 六冲关系
 const LIU_CHONG: Record<string, string> = {
@@ -59,43 +60,6 @@ const BRANCH_WUXING: Record<string, string> = {
 
 // 地支顺序（用于判断进神退神）
 const BRANCH_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-
-// 月令当令五行（按月建地支本气定当令之神）：同令为旺，令生为相，生令为休，
-// 令克为囚，克令为死。六爻旺衰以月令为提纲，按月支而非季节粗分。
-const MONTH_LING_WUXING: Record<string, string> = {
-  子: '水',
-  丑: '土',
-  寅: '木',
-  卯: '木',
-  辰: '土',
-  巳: '火',
-  午: '火',
-  未: '土',
-  申: '金',
-  酉: '金',
-  戌: '土',
-  亥: '水',
-};
-
-/**
- * 月令旺衰：按月建地支定爻之五行的旺相休囚死。
- * 旺=同令，相=令生，休=生令，囚=令克，死=克令。
- */
-function getSeasonState(
-  yaoWuxing: string,
-  monthBranch: string,
-): '旺' | '相' | '休' | '囚' | '死' | '平' {
-  const lingWuxing = MONTH_LING_WUXING[monthBranch];
-  if (!lingWuxing || !yaoWuxing) {
-    return '平';
-  }
-  if (lingWuxing === yaoWuxing) return '旺';
-  if (isSheng(lingWuxing, yaoWuxing)) return '相';
-  if (isSheng(yaoWuxing, lingWuxing)) return '休';
-  if (isKe(lingWuxing, yaoWuxing)) return '囚';
-  if (isKe(yaoWuxing, lingWuxing)) return '死';
-  return '平';
-}
 
 /**
  * 回头生克冲：动爻变出之爻对动爻本身的关系。

@@ -83,9 +83,9 @@ test('勾绞煞应取年支前三辰后三辰，不应错算成四辰', () => {
   assert.ok(result.hour.includes('勾绞煞'));
 });
 
-test('金神按经典口径只取时柱，不应把日柱也算进去', () => {
-  const calculator = new ShenShaCalculator();
-  const dayResult = calculator.calculateAllShenSha(
+test('金神按经典口径取日柱或时柱，不应只取时柱', () => {
+  const calculator1 = new ShenShaCalculator();
+  const result1 = calculator1.calculateAllShenSha(
     [
       ['甲', '子'],
       ['丙', '寅'],
@@ -94,7 +94,11 @@ test('金神按经典口径只取时柱，不应把日柱也算进去', () => {
     ],
     'male',
   );
-  const hourResult = calculator.calculateAllShenSha(
+  // 日柱乙丑 = 金神，应在日支检出
+  assert.ok(result1.day.includes('金神'));
+
+  // 日柱非金神、时柱是金神时，应检出
+  const result2 = calculator1.calculateAllShenSha(
     [
       ['甲', '子'],
       ['丙', '寅'],
@@ -103,9 +107,7 @@ test('金神按经典口径只取时柱，不应把日柱也算进去', () => {
     ],
     'male',
   );
-
-  assert.ok(!dayResult.day.includes('金神'));
-  assert.ok(hourResult.hour.includes('金神'));
+  assert.ok(result2.hour.includes('金神'));
 });
 
 test('德秀贵人不能只见德不见秀就成立', () => {

@@ -283,6 +283,21 @@ function createLiuyaoUsefulGodScoreEvidenceItems(
 ): PromptEvidenceItem[] {
   const monthBranch = getGanzhiBranch(data.ganzhi.month);
   const dayBranch = getGanzhiBranch(data.ganzhi.day);
+  // 六合关系（《增删卜易》：用神爻与月建或日辰六合为暗助）
+  const LIU_HE: Record<string, string> = {
+    子: '丑',
+    丑: '子',
+    寅: '亥',
+    亥: '寅',
+    卯: '戌',
+    戌: '卯',
+    辰: '酉',
+    酉: '辰',
+    巳: '申',
+    申: '巳',
+    午: '未',
+    未: '午',
+  };
   const candidates = createLiuyaoUsefulGodCandidates(question, data, supplementaryInfo).slice(0, 3);
   const movingYaos = data.yaosDetail.filter((item) => item.isChanging).map(formatLiuyaoYaoBrief);
   const worldYao = data.yaosDetail.find((item) => item.isWorld);
@@ -310,6 +325,12 @@ function createLiuyaoUsefulGodScoreEvidenceItems(
       primary.seasonState === '相' ? '月令相地有力' : '',
       primary.najiaDizhi === monthBranch ? '得月建同支触发' : '',
       primary.najiaDizhi === dayBranch ? '得日辰同支触发' : '',
+      LIU_HE && primary.najiaDizhi && LIU_HE[primary.najiaDizhi] === monthBranch
+        ? '得月建六合暗助'
+        : '',
+      LIU_HE && primary.najiaDizhi && LIU_HE[primary.najiaDizhi] === dayBranch
+        ? '得日辰六合暗助'
+        : '',
       primary.changeRelation === '回头生' ? '变爻回头生，愈动愈有力' : '',
       primary.changedYao ? `变出${primary.changedYao.liuqin}${primary.changedYao.dizhi}` : '',
     ].filter(Boolean);
@@ -329,13 +350,47 @@ function createLiuyaoUsefulGodScoreEvidenceItems(
         : '',
     ].filter(Boolean);
 
-    const level: PromptEvidenceItem['level'] = limits.length > support.length ? '限制' : '主证';
+    // 六爻用神评分权重体系（按《增删卜易》《卜筮正宗》用神有力七法）
+    // 世应：临世最强、临应次之
+    // 动变：发动为变化主证，暗动为暗中发动，化进强于化退
+    // 月令：旺相有力，休囚死无力；日辰同支为触发
+    // 回头生克：回头生→吉兆增强，回头克→大凶减分，回头冲→不稳
+    // 空亡：本爻空→悬而不实，变爻空→变不落实
+    let weight = 50;
+    if (primary.isWorld) weight += 20;
+    if (primary.isResponse) weight += 15;
+    if (primary.isChanging) weight += 25;
+    if (primary.isHiddenMove) weight += 15;
+    if (primary.seasonState === '旺') weight += 15;
+    if (primary.seasonState === '相') weight += 10;
+    if (
+      primary.seasonState === '休' ||
+      primary.seasonState === '囚' ||
+      primary.seasonState === '死'
+    )
+      weight -= 15;
+    if (primary.changeRelation === '回头生') weight += 20;
+    if (primary.changeRelation === '回头克') weight -= 20;
+    if (primary.changeRelation === '回头冲') weight -= 15;
+    if (primary.changeRelation === '化空') weight -= 10;
+    if (primary.changeDirection === '化进神') weight += 10;
+    if (primary.changeDirection === '化退神') weight -= 10;
+    if (primary.isVoid) weight -= 20;
+    if (primary.changedYao?.isVoid) weight -= 10;
+    if (primary.najiaDizhi === monthBranch) weight += 10;
+    if (primary.najiaDizhi === dayBranch) weight += 10;
+    if (LIU_HE[primary.najiaDizhi] === monthBranch) weight += 8;
+    if (LIU_HE[primary.najiaDizhi] === dayBranch) weight += 8;
+    weight -= index * 5;
+
+    const level: PromptEvidenceItem['level'] =
+      weight >= 55 ? '主证' : weight >= 30 ? '辅证' : '限制';
     return {
       level,
       title: candidate.label,
-      detail: `${formatLiuyaoYaoBrief(primary)}为主候选；主证${support.join('、') || '待世应、动变、月日继续确认'}；反证/限制${limits.join('、') || '未见明显空亡或脱节'}`,
+      detail: `${formatLiuyaoYaoBrief(primary)}为主候选（第${index + 1}顺位，权重${weight}）；主证${support.join('、') || '待世应、动变、月日继续确认'}；反证/限制${limits.join('、') || '未见明显空亡或脱节'}`,
       source: '六爻用神评分',
-      weight: (support.length + 1) * 10 - limits.length * 2 - index,
+      weight,
       tags: [candidate.relative],
     };
   });
@@ -490,7 +545,7 @@ function createMeihuaStageEvidence(data: MeihuaData) {
 
   return [
     `起因看主卦${data.originalName}与体用${data.analysis.tiYongRelation}`,
-    `过程看互卦${processHexagram}，互下${data.analysis.inter1Relation}、互上${data.analysis.inter2Relation}`,
+    `过程看互卦${processHexagram}，互卦体用${data.analysis.inter1Relation}、互上辅助${data.analysis.inter2Relation}`,
     `结果看变卦${resultHexagram}与${data.analysis.changedRelation}`,
     '起因、过程、结果必须分层说明，不能只按卦名泛讲',
   ].join('；');
@@ -1279,7 +1334,7 @@ function formatMeihuaInfo(data: MeihuaData) {
     '断卦抓手：先定体用，再看互卦过程、变卦结果与四时旺衰',
     `主轴证据：体卦${data.tiGua.name}（${data.tiGua.element}）；用卦${data.yongGua.name}（${data.yongGua.element}）；动爻第${data.movingYao.position}爻；体用关系${data.analysis.tiYongRelation}`,
     `体用评分：${scoringEvidence}`,
-    `过程证据：互卦${processHexagram}；互下${data.analysis.inter1Relation}；互上${data.analysis.inter2Relation}`,
+    `过程证据：互卦${processHexagram}；互卦体用${data.analysis.inter1Relation}；互上辅助${data.analysis.inter2Relation}`,
     `结果证据：变卦${resultHexagram}${changedTiYongText}；结果关系${data.analysis.changedRelation}`,
     `互变阶段：${stageEvidence}`,
     `辅助证据：四时${data.analysis.season}季，体卦${data.analysis.tiSeasonState}，用卦${data.analysis.yongSeasonState}；起卦法${methodLabel}${typeof calculation?.number === 'number' ? `；起卦数字${calculation.number}` : ''}`,
@@ -1293,7 +1348,7 @@ function formatMeihuaInfo(data: MeihuaData) {
     '结构明细：',
     `- 四时旺衰：${data.analysis.season}季，体卦${data.analysis.tiSeasonState}，用卦${data.analysis.yongSeasonState}`,
     `- 体用关系：${data.analysis.tiYongRelation}`,
-    `- 过程关系：互下${data.analysis.inter1Relation}，互上${data.analysis.inter2Relation}`,
+    `- 过程关系：互卦体用${data.analysis.inter1Relation}，互上辅助${data.analysis.inter2Relation}`,
     `- 结果关系：${data.analysis.changedRelation}`,
     data.changedTiGua && data.changedYongGua
       ? `- 变后体用：体卦${data.changedTiGua.name}（${data.changedTiGua.element}），用卦${data.changedYongGua.name}（${data.changedYongGua.element}），关系${data.analysis.changedTiYongRelation}`

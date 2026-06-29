@@ -389,9 +389,12 @@ export class BaziCalculator {
     ];
 
     const hiddenStems = calculateHiddenStems(pillars);
-    const wuxingStrengthDetails = this.wuxingCalculator.calculateWuxingStrength(pillars);
     const seasonInfo = calculateSeasonInfo(solarTime);
     const monthCommander = getMonthCommander(solarTime, pillars.month.zhi);
+    const wuxingStrengthDetails = this.wuxingCalculator.calculateWuxingStrength(
+      pillars,
+      monthCommander,
+    );
 
     // Calculate basic data first
     const tenGods = calculateTenGods(pillars, dayMasterGan);

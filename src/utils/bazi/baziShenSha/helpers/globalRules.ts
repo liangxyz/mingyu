@@ -19,21 +19,19 @@ export function analyzeGlobalShenSha(shenShaList: string[]): string[] {
 export function calculateGlobalShenSha(baziArray: BaziArray): string[] {
   const globalShenSha: string[] = [];
   const gans = baziArray.map(([gan]) => gan);
-  // 三奇贵人：天上三奇甲戊庚、地下三奇乙丙丁、人中三奇辛壬癸
-  // 天干需按序出现，但允许间隔（不要求连续三柱）
+  // 三奇贵人：《协纪辨方书》天上三奇甲戊庚、地下三奇乙丙丁、人中三奇辛壬癸。
+  // 传统需天干按序在年/月/日/时中连续三柱顺布（如甲-戊-庚），原允许间隔为简化口径。
   const sequences: string[][] = [
     ['甲', '戊', '庚'], // 天上三奇
     ['乙', '丙', '丁'], // 地下三奇
     ['辛', '壬', '癸'], // 人中三奇
   ];
-
+  const checks = [
+    [gans[0], gans[1], gans[2]], // 年-月-日
+    [gans[1], gans[2], gans[3]], // 月-日-时
+  ];
   for (const seq of sequences) {
-    let matchIdx = 0;
-    for (const g of gans) {
-      if (g === seq[matchIdx]) matchIdx++;
-      if (matchIdx === seq.length) break;
-    }
-    if (matchIdx === seq.length) {
+    if (checks.some(([a, b, c]) => a === seq[0] && b === seq[1] && c === seq[2])) {
       globalShenSha.push('三奇贵人');
       break;
     }

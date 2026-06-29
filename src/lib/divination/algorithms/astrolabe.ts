@@ -193,17 +193,24 @@ export function generateAstrolabe(input: AstrolabeBirthInput): AstrolabeData {
     },
     {
       houseSystem: 'placidus',
-      includeAsteroids: false,
-      includeChiron: false,
-      includeLilith: false,
-      includeNodes: false,
-      includeLots: false,
+      // 按现代占星实践开启小行星/南北交点/凯龙星/莉莉丝/阿拉伯点；
+      // 此前全部关闭属简化算法，开启后数据更完整，AI 可按需选用。
+      includeAsteroids: true,
+      includeChiron: true,
+      includeLilith: 'true' as const,
+      includeNodes: 'true' as const,
+      includeLots: true,
       aspectTypes: [
         AspectType.Conjunction,
         AspectType.Sextile,
         AspectType.Square,
         AspectType.Trine,
         AspectType.Opposition,
+        AspectType.SemiSextile,
+        AspectType.SemiSquare,
+        AspectType.Quintile,
+        AspectType.Sesquiquadrate,
+        AspectType.Biquintile,
       ],
       // 相位强度过滤阈值（celestine 0-100 strength，基于容许度偏离）；
       // 调整需结合占星容许度口径评估，调低会纳入更多弱相位、调高会丢失有效相位。

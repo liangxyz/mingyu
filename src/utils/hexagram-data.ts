@@ -13,6 +13,7 @@ export interface HexagramData {
   palace: string; // 所属八宫
   description: string;
   yaoCi?: string[]; // 爻辞（初爻到上爻）
+  yongCi?: string; // 用九/用六爻辞（仅乾坤两卦有）
 }
 
 // 八卦基础数据接口
@@ -68,6 +69,7 @@ const rawHexagramsData = [
       '飞龙在天，利见大人',
       '亢龙有悔',
     ],
+    yongCi: '见群龙无首，吉',
   },
   {
     id: 44,
@@ -937,6 +939,7 @@ const rawHexagramsData = [
       '黄裳，元吉',
       '龙战于野，其血玄黄',
     ],
+    yongCi: '利永贞',
   },
   {
     id: 24,

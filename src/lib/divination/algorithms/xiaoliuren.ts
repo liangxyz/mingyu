@@ -151,6 +151,39 @@ export function generateXiaoliuren(params?: {
   const process = getPalaceByValue(processSeed - 1);
   const result = getPalaceByValue(resultSeed - 1);
 
+  // 宫间五行生克分析（《小六壬金口诀》核心精要）：
+  // 起因宫克过程宫→先难后易；起因生过程→顺遂；比和→平稳；
+  // 过程宫生结果宫→渐入佳境；过程克结果→先易后难；比和→势头保持。
+  const elementRelations: Record<string, Record<string, string>> = {
+    木: { 木: '比和', 金: '被克', 水: '得生', 火: '所生', 土: '所克' },
+    金: { 金: '比和', 火: '被克', 土: '得生', 水: '所生', 木: '所克' },
+    火: { 火: '比和', 水: '被克', 木: '得生', 土: '所生', 金: '所克' },
+    水: { 水: '比和', 土: '被克', 金: '得生', 木: '所生', 火: '所克' },
+    土: { 土: '比和', 木: '被克', 火: '得生', 金: '所生', 水: '所克' },
+  };
+  const startToProcess = elementRelations[start.element]?.[process.element] || '无关系';
+  const processToResult = elementRelations[process.element]?.[result.element] || '无关系';
+  const wuXingDesc = [
+    startToProcess === '比和' ? '起因与过程平稳衔接' : '',
+    startToProcess === '得生' ? '起因生过程，事态自然推进' : '',
+    startToProcess === '所生' ? '起因被过程泄气，事态发展消耗初衷' : '',
+    startToProcess === '被克' ? '起因被过程克制，起步受阻需耐心' : '',
+    startToProcess === '所克' ? '起因克过程，主导推进但消耗精力' : '',
+    processToResult === '比和' ? '过程与结果保持同势' : '',
+    processToResult === '得生' ? '过程生结果，越做越顺' : '',
+    processToResult === '所生' ? '过程被结果泄气，事态越做越弱' : '',
+    processToResult === '被克' ? '过程被结果克制，先易后难需谨慎' : '',
+    processToResult === '所克' ? '过程克结果，强力推进可见成效' : '',
+  ]
+    .filter(Boolean)
+    .join('；');
+
+  const wuxingRelations = {
+    startToProcess,
+    processToResult,
+    description: wuXingDesc || '三宫五行无特殊生克态势',
+  };
+
   return {
     method,
     methodLabel: XIAOLIUREN_METHOD_LABEL_MAP[method],
@@ -164,6 +197,7 @@ export function generateXiaoliuren(params?: {
       process,
       result,
     },
+    wuxingRelations,
     primary: result,
     tendency: result.tendency,
     questionHint: buildQuestionHint(result),

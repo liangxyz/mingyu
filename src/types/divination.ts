@@ -100,6 +100,11 @@ export interface XiaoliurenData {
     process: XiaoliurenPalaceDetail;
     result: XiaoliurenPalaceDetail;
   };
+  wuxingRelations: {
+    startToProcess: string;
+    processToResult: string;
+    description: string;
+  };
   primary: XiaoliurenPalaceDetail;
   tendency: XiaoliurenPalaceDetail['tendency'];
   questionHint: string;

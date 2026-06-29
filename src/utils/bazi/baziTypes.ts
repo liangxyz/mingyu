@@ -197,6 +197,8 @@ export interface PatternAnalysis {
   pattern: string;
   isSpecial: boolean;
   basis?: string;
+  /** 魁罡日（日柱庚辰/壬辰/戊戌/庚戌为外格，《三命通会》） */
+  isKuiGang?: boolean;
 }
 
 export interface UsefulGodAnalysis {

@@ -82,6 +82,7 @@ const SANXING_MAP: Record<string, string> = {
 };
 const MENG_BRANCHES = new Set(['寅', '巳', '申', '亥']);
 const ZHONG_BRANCHES = new Set(['子', '卯', '午', '酉']);
+const JI_BRANCHES = new Set(['辰', '戌', '丑', '未']);
 const STEMS_BY_RESIDENCE: Record<string, string[]> = Object.entries(STEM_RESIDENCE_MAP).reduce<
   Record<string, string[]>
 >((acc, [stem, branch]) => {
@@ -269,6 +270,11 @@ function pickByHarmDepth(candidates: KeCandidate[], context: ResolveTransmission
   const zhong = tied.find((item) => ZHONG_BRANCHES.has(item.under));
   if (zhong) {
     return zhong.candidate;
+  }
+
+  const ji = tied.find((item) => JI_BRANCHES.has(item.under));
+  if (ji) {
+    return ji.candidate;
   }
 
   const preferredUpper = YANG_STEMS.has(context.dayStem)

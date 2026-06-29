@@ -136,6 +136,7 @@ export function buildLuRules(ctx: RuleContext): ShenShaRuleMap {
       };
       return map[riGan] === zhi || map[nianGan] === zhi;
     },
-    金神: () => ['乙丑', '己巳', '癸酉'].includes(pillarGZ) && pillarIndex === 3,
+    金神: () =>
+      ['乙丑', '己巳', '癸酉'].includes(pillarGZ) && (pillarIndex === 2 || pillarIndex === 3),
   };
 }

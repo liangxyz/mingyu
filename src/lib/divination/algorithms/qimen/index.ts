@@ -22,11 +22,7 @@
  */
 
 import type { QimenData, QimenJiuGongGe } from '../../../../types/divination';
-import type {
-  ClassicPattern,
-  PatternContext,
-  StemRelation,
-} from './helpers/classic-patterns';
+import type { ClassicPattern, PatternContext, StemRelation } from './helpers/classic-patterns';
 import type { QimenMethod } from './helpers/layout';
 import { getDivinationTime } from '../../../../utils/timeManager';
 import { getVoidBranches } from '../../../../utils/lunar';
@@ -198,10 +194,7 @@ function mapStemRelations(
  * // }
  * ```
  */
-export function generateQimen(
-  customDate?: Date,
-  method: QimenMethod = 'zhuanpan',
-): QimenData {
+export function generateQimen(customDate?: Date, method: QimenMethod = 'zhuanpan'): QimenData {
   // ──────────────────────────────────────────────────────────────────────────
   // 步骤 1：获取统一占卜时间信息
   // ──────────────────────────────────────────────────────────────────────────

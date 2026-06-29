@@ -46,7 +46,6 @@ export async function buildAstrolabeFromInput(input: ChartInput): Promise<Functi
     gender: normalized.gender,
     isLeapMonth: normalized.isLeapMonth,
     fixLeap: normalized.fixLeap,
-    astroType: normalized.astroType,
     language: 'zh-CN',
     config: buildIztroConfig(normalized),
   }) as FunctionalAstrolabe;

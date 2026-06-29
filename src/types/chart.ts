@@ -6,7 +6,6 @@ export type ChartInput = {
   gender: '男' | '女';
   isLeapMonth?: boolean;
   fixLeap?: boolean;
-  astroType?: 'heaven' | 'earth' | 'human';
   algorithm?: 'default' | 'zhongzhou';
   yearDivide?: 'normal' | 'exact';
   horoscopeDivide?: 'normal' | 'exact';

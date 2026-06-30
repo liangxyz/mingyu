@@ -97,7 +97,7 @@ const REQUIRED_SAMPLE_FIELDS: RequiredSampleFields[] = [
   },
   {
     sampleName: '小六壬',
-    requiredFields: ['问题映射', '短期观察信号', '行动建议等级', '复盘窗口'],
+    requiredFields: ['问题映射', '行动建议等级', '复盘窗口'],
   },
   {
     sampleName: '塔罗牌',

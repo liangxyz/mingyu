@@ -223,7 +223,6 @@ const voidBranches = getVoidBranches('甲子');      // ['戌','亥'] 旬空
 各模块的详细参数、返回值字段、数据结构说明，请参阅：
 
 - 📖 **[API 参考文档](docs/API.md)** — 所有函数签名与主要类型字段
-- 📖 **[算法审查记录](docs/AUDIT.md)** — 发布前审查发现并修正的问题
 
 ---
 
@@ -246,18 +245,6 @@ pnpm --filter mingyu-core test
 ```
 
 项目以 pnpm workspace 形式维护，`packages/core/` 为本包源码，`src/` 为应用层。
-
----
-
-## 算法审查
-
-本包在发布前经过逐文件地毯式审查，对照传统古籍核对算法正确性。审查发现并修正的问题记录在 [docs/AUDIT.md](docs/AUDIT.md)，包括：
-
-- 天干相冲缺戊己的数据 Bug
-- 命卦公式的错误重写
-- 小运算法的错误移植
-- 十神评分口径与 vibebazi 对齐
-- 约 40 处重复数据统一到共享层
 
 ---
 

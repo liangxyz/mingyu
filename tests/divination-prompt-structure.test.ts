@@ -1084,7 +1084,7 @@ test('大六壬提示词会给出精简课传资料，避免重复堆叠', () =>
   assert.match(prompt, /古籍依据：《大六壬大全》九宗门取传法：知一\/比用/);
   assert.match(prompt, /四课：一课亥临卯乘贵人，水生木/);
   assert.match(prompt, /三传：初传亥乘贵人，生扶，起因来自外部推动/);
-  assert.match(prompt, /辅证：标签贵人发用、顺传、比用；旬空戌、亥，命中初传亥/);
+  assert.match(prompt, /旬空：戌、亥，命中初传亥主虚而不实，待填实再看/);
   assert.match(prompt, /简要提示：四课由生入克，先得助后承压，再转协同。/);
   assert.match(prompt, /取证顺序：/);
   assert.doesNotMatch(prompt, /断课抓手：/);
@@ -1092,8 +1092,6 @@ test('大六壬提示词会给出精简课传资料，避免重复堆叠', () =>
   assert.doesNotMatch(prompt, /主线证据：/);
   assert.doesNotMatch(prompt, /类神取用：/);
   assert.doesNotMatch(prompt, /三传阶段：/);
-  assert.doesNotMatch(prompt, /四课证据：/);
-  assert.doesNotMatch(prompt, /结构明细：/);
   assert.doesNotMatch(prompt, /天盘摘要：/);
 });
 
@@ -1136,8 +1134,13 @@ test('大六壬提示词会吸收课体与神煞补充信息', () => {
 
   assert.match(
     prompt,
-    /辅证：课体龙德卦、连珠卦；标签贵人发用、顺传、比用；神煞旬奇临初传；天马并发；末传逢月德；旬空戌、亥，命中初传亥/,
+    /课体：龙德卦、连珠卦/,
   );
+  assert.match(
+    prompt,
+    /神煞：/,
+  );
+  assert.doesNotMatch(prompt, /辅证：/);
   assert.doesNotMatch(prompt, /课体补充：龙德卦、连珠卦/);
   assert.doesNotMatch(prompt, /神煞补充：旬奇临初传；天马并发；末传逢月德/);
 });

@@ -15,7 +15,8 @@ async function runZiweiMainThread(
   onError: (message: string) => void,
 ): Promise<void> {
   try {
-    const runtime = await calculateFullZiweiChart(input);
+    // skipAnalysis=true：不在主线程计算证据池和格局检测，仅生成展示所需的基础数据
+    const runtime = await calculateFullZiweiChart(input, true);
     onSuccess(runtime);
   } catch (error) {
     onError(error instanceof Error ? error.message : '紫微排盘失败。');
@@ -200,6 +201,7 @@ export function useZiweiCalculations(
     }
 
     let cancelled = false;
+    let cleanupBackgroundWorker: (() => void) | undefined;
 
     void runZiweiMainThread(
       primaryZiweiInput,
@@ -210,6 +212,21 @@ export function useZiweiCalculations(
           primaryRuntimeKeyRef.current = primaryZiweiInputKey;
           primaryPayloadKeyRef.current = primaryZiweiInputKey;
           setZiweiError('');
+
+          // 异步后台 worker 计算完整版（含证据池和格局检测），不阻塞主线程
+          cleanupBackgroundWorker = createPayloadWorker(
+            primaryZiweiInput,
+            `${Date.now()}-bg-primary`,
+            (fullPayloadByScope) => {
+              if (!cancelled) {
+                setZiweiPayloadByScope(fullPayloadByScope);
+              }
+            },
+            () => {
+              /* 主线程已有轻量版，后台失败不影响展示 */
+            },
+            '紫微排盘增强计算失败。',
+          );
         }
       },
       (message) => {
@@ -221,6 +238,7 @@ export function useZiweiCalculations(
     );
     return () => {
       cancelled = true;
+      cleanupBackgroundWorker?.();
     };
   }, [primaryZiweiInput, primaryZiweiInputKey, shouldWarmZiweiRuntime, ziweiRuntime]);
 
@@ -236,6 +254,7 @@ export function useZiweiCalculations(
     }
 
     let cancelled = false;
+    let cleanupBackgroundWorker: (() => void) | undefined;
 
     void runZiweiMainThread(
       partnerZiweiInput,
@@ -246,6 +265,20 @@ export function useZiweiCalculations(
           partnerRuntimeKeyRef.current = partnerZiweiInputKey;
           partnerPayloadKeyRef.current = partnerZiweiInputKey;
           setZiweiError('');
+
+          cleanupBackgroundWorker = createPayloadWorker(
+            partnerZiweiInput,
+            `${Date.now()}-bg-partner`,
+            (fullPayloadByScope) => {
+              if (!cancelled) {
+                setPartnerZiweiPayloadByScope(fullPayloadByScope);
+              }
+            },
+            () => {
+              /* 主线程已有轻量版，后台失败不影响展示 */
+            },
+            '第二人紫微排盘增强计算失败。',
+          );
         }
       },
       (message) => {
@@ -257,6 +290,7 @@ export function useZiweiCalculations(
     );
     return () => {
       cancelled = true;
+      cleanupBackgroundWorker?.();
     };
   }, [partnerZiweiInput, partnerZiweiInputKey, partnerZiweiRuntime, shouldWarmPartnerZiweiRuntime]);
 

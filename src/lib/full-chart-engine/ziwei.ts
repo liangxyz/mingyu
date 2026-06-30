@@ -86,6 +86,7 @@ export function buildZiweiPayloadByScope(params: {
   astrolabe: IztroAstrolabe;
   horoscope: IztroHoroscope;
   scopes?: ScopeType[];
+  skipAnalysis?: boolean;
 }) {
   const requestedScopes = params.scopes?.length
     ? params.scopes
@@ -99,18 +100,23 @@ export function buildZiweiPayloadByScope(params: {
         astrolabe: params.astrolabe,
         horoscope: params.horoscope,
         currentScope: scope,
+        skipAnalysis: params.skipAnalysis,
       }),
     ]),
   ) as Record<ScopeType, AnalysisPayloadV1>;
 }
 
-export async function calculateFullZiweiChart(input: ChartInput): Promise<ZiweiRuntime> {
-  return calculateZiweiChartForScopes(input);
+export async function calculateFullZiweiChart(
+  input: ChartInput,
+  skipAnalysis?: boolean,
+): Promise<ZiweiRuntime> {
+  return calculateZiweiChartForScopes(input, undefined, skipAnalysis);
 }
 
 export async function calculateZiweiChartForScopes(
   input: ChartInput,
   scopes?: ScopeType[],
+  skipAnalysis?: boolean,
 ): Promise<ZiweiRuntime> {
   const astrolabe = await buildAstrolabeFromInput(input);
   const { dateStr, hourIndex } = getDefaultHoroscopeContext();
@@ -119,6 +125,7 @@ export async function calculateZiweiChartForScopes(
     astrolabe,
     horoscope,
     scopes,
+    skipAnalysis,
   });
 
   return {

@@ -9,8 +9,9 @@ export function buildAnalysisPayloadV1(params: {
   astrolabe: IztroAstrolabe;
   horoscope: IztroHoroscope;
   currentScope: ScopeType;
+  skipAnalysis?: boolean;
 }): AnalysisPayloadV1 {
-  const { astrolabe, horoscope, currentScope } = params;
+  const { astrolabe, horoscope, currentScope, skipAnalysis } = params;
 
   const currentScopeItem = getCurrentScopeItem(horoscope, currentScope);
   const basic_info = buildBasicInfo(astrolabe);
@@ -29,14 +30,16 @@ export function buildAnalysisPayloadV1(params: {
     hiddenPalaces: basic_info.hidden_palaces,
   });
 
-  const evidence_pool = buildEvidencePool({
-    astrolabe,
-    horoscope,
-    currentScope,
-    palaces,
-  });
+  const evidence_pool = skipAnalysis
+    ? []
+    : buildEvidencePool({
+        astrolabe,
+        horoscope,
+        currentScope,
+        palaces,
+      });
 
-  const patterns = detectPatterns({ palaces });
+  const patterns = skipAnalysis ? [] : detectPatterns({ palaces });
 
   return {
     payload_version: 'analysis_payload_v1',

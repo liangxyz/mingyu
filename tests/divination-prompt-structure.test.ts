@@ -970,12 +970,10 @@ test('小六壬提示词会给出三段过程、主判断和现实建议抓手',
   assert.match(prompt, /结果小吉：偏渐进有助力，适合小步推进并复盘/);
   assert.match(prompt, /主判断小吉：有助力，只适合短期复盘，不作长期命运定论/);
   assert.match(prompt, /复盘信号：先核实起因留连对应的拖延、牵扯、反复是否已出现/);
-  assert.match(prompt, /短期观察信号：先核实起因留连对应的拖延、牵扯、反复是否已出现/);
   assert.match(prompt, /行动建议等级：稳步推进：有助力但不宜贪快，先拿小结果/);
   assert.match(prompt, /复盘窗口：先观察起因留连是否已出现/);
   assert.match(prompt, /过程若出现赤口对应的争执、误会、情绪，说明卡点已显化/);
   assert.match(prompt, /结果以小吉对应的助力、可成、渐进作为短期复盘指标/);
-  assert.match(prompt, /现实映射：当前整体偏可成，适合稳步推进，慢慢拿结果。/);
   assert.match(prompt, /- 起课方式：数字起课/);
   assert.match(
     prompt,

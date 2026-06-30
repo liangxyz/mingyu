@@ -1372,23 +1372,28 @@ function formatXiaoliurenInfo(data: XiaoliurenData) {
     '占法：小六壬',
     `时间干支：以【当前时间】为准；农历${data.lunarMonth}月${data.lunarDay}日，${data.hourLabel}`,
     `核心结构：起因${sequence.start.name}；过程${sequence.process.name}；结果${sequence.result.name}`,
-    `关键提示：起课方式${data.methodLabel}；主判断${data.primary.name}；倾向${data.tendency}`,
+    `关键提示：起课方式${data.methodLabel}；主判断${data.primary.name}；倾向${data.tendency}${data.fortune ? `；${data.fortune}` : ''}`,
     '断课抓手：先看结果宫位定主判断，再看起因与过程宫位解释事情为何如此、会如何推进。',
     `主轴证据：起因${sequence.start.name}（${sequence.start.keywords.join('、')}）；过程${sequence.process.name}（${sequence.process.keywords.join('、')}）；结果${sequence.result.name}（${sequence.result.keywords.join('、')}）`,
     `辅助证据：起因提示${sequence.start.meaning}；过程提示${sequence.process.meaning}；结果提示${sequence.result.meaning}`,
+    data.seasonStates
+      ? `月令旺衰：起因${data.seasonStates.start}，过程${data.seasonStates.process}，结果${data.seasonStates.result}`
+      : '',
+    data.direction ? `方位参考：${data.direction}` : '',
+    data.shenSha ? `神煞参考：${data.shenSha}` : '',
     `问题映射：${data.questionHint}`,
-    `应期候选：${timingEvidence}`,
+    data.yingQi ? `应期参考：${data.yingQi}` : `应期候选：${timingEvidence}`,
     `复盘信号：${reviewEvidence}`,
-    `短期观察信号：${reviewEvidence}`,
     `行动建议等级：${actionLevelEvidence}`,
     `复盘窗口：${reviewWindowEvidence}`,
-    `现实映射：${data.questionHint}`,
     '结构明细：',
     `- 起课方式：${data.methodLabel}`,
     `- 起因：${sequence.start.name}，关键词：${sequence.start.keywords.join('、')}；建议：${sequence.start.advice}`,
     `- 过程：${sequence.process.name}，关键词：${sequence.process.keywords.join('、')}；建议：${sequence.process.advice}`,
     `- 结果：${sequence.result.name}，关键词：${sequence.result.keywords.join('、')}；建议：${sequence.result.advice}`,
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: SupplementaryInfo) {
@@ -1414,6 +1419,37 @@ function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: 
     .join('\n');
   const patternSummary =
     data.patternDetails?.map((item) => `${item.tag}：${item.summary}`).join('；') || '';
+  // 经典格局（九遁、三奇得使等）—— 比一般格局标签更优先的判断依据
+  const classicPatternSummary = data.classicPatterns?.length
+    ? data.classicPatterns
+        .slice(0, 4)
+        .map(
+          (item) =>
+            `${item.name}（${item.type === 'good' ? '吉' : item.type === 'bad' ? '凶' : '平'}，评分${item.score}）：${item.summary}`,
+        )
+        .join('；')
+    : '';
+  // 天地盘干关系（八十一格精选）—— 取最有代表性的格式
+  const stemRelationSummary = data.stemRelations?.length
+    ? data.stemRelations
+        .filter(
+          (item) =>
+            item.pattern &&
+            /青龙返首|飞鸟跌穴|白虎干格|朱雀投江|腾蛇夭矫|九地九天|伏干飞干|伏宫飞宫/.test(
+              item.pattern,
+            ),
+        )
+        .slice(0, 4)
+        .map((item) => `${item.heavenStem}${item.earthStem}落${item.gong}宫：${item.relation}，${item.pattern}`)
+        .join('；')
+    : '';
+  // 方向吉凶建议——由算法按用神落宫评分的结构化方位数据
+  const directionSummary = data.directions?.goodDirections?.length
+    ? `吉方${data.directions.goodDirections
+        .slice(0, 3)
+        .map((d) => `${d.direction}（${d.name}：${d.use}）`)
+        .join('、')}${data.directions.avoidDirections?.length ? `；避${data.directions.avoidDirections.slice(0, 2).map((d) => d.direction).join('、')}` : ''}`
+    : '';
   const palaceSummary =
     data.palaceInsights?.map((item) => `${item.name}${item.level}，${item.summary}`).join('；') ||
     '';
@@ -1515,10 +1551,12 @@ function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: 
         .join('；')
     : '方位未由问题明确触发，只能按值符值使、时干落宫和现实可行方向取舍';
   const timeWindowText = [
-    data.voidPalaces?.length
-      ? `逢空${data.voidPalaces.map((item) => item.name).join('、')}先待填实`
-      : '',
-    data.horseStar ? `马星落${data.horseStar.name}，有移动、变动或外部推动时再加速` : '',
+    data.yingQi
+      ? `应期范围${data.yingQi.minDays}-${data.yingQi.maxDays}日，节奏${data.yingQi.rhythm}（依据：${data.yingQi.sources.join('、')}）`
+      : data.voidPalaces?.length
+        ? `逢空${data.voidPalaces.map((item) => item.name).join('、')}先待填实`
+        : '',
+    data.horseStar ? `马星落${data.horseStar.name}，主移动、变动或外部推动` : '',
     specialConditionsText ? `特殊时辰${specialConditionsText}` : '',
     '未给目标期限时，只能给宜动、宜守、宜等和触发条件，不换算绝对日期',
   ]
@@ -1563,6 +1601,9 @@ function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: 
     specialConditionsText ? `特殊时辰：${specialConditionsText}` : '',
     questionHintText ? `问事参考：${questionHintText}` : '',
     patternSummary ? `判断依据：${patternSummary}` : '',
+    classicPatternSummary ? `经典格局：${classicPatternSummary}` : '',
+    stemRelationSummary ? `天地盘干：${stemRelationSummary}` : '',
+    directionSummary ? `方位吉凶：${directionSummary}` : '',
     dedupedPalaceSummary ? `补充提示：${dedupedPalaceSummary}` : '',
     '结构明细：',
     palaceLines,

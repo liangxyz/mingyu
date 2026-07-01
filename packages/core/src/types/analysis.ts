@@ -183,6 +183,27 @@ export interface RelationStructureItem {
 export interface RelationStructureProfile {
   items: RelationStructureItem[]; summary: string;
 }
+export type HarmonyTransformLevel = '完全合化' | '大部分化' | '半化半绊' | '合而不化' | '纯粹牵绊';
+export type HarmonyTransformType = '天干五合' | '地支六合';
+export type HarmonyTransformDirection = '向化' | '合绊' | '合去';
+export interface HarmonyTransformProfile {
+  type: HarmonyTransformType;
+  participants: string[];
+  transformElement: string;
+  transformStem?: string;
+  score: number;
+  level: HarmonyTransformLevel;
+  direction: HarmonyTransformDirection;
+  monthSupport: number;
+  stemScore: number;
+  rootScore: number;
+  clashPenalty: number;
+  purityScore: number;
+  competitionPenalty: number;
+  evidence: string[];
+  isTransformed: boolean;
+  consequences: string[];
+}
 export interface UsefulGodPlacementItem {
   pillar: string; branch?: string; stem: string; tenGod: string;
   status: '喜神得力' | '喜神受制' | '忌神受制' | '忌神猖獗' | '中性'; evidence: string;

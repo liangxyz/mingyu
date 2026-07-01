@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { drawLenormandSpread } from '../../../src/lib/divination/algorithms/lenormand.js';
-import type { LenormandSpreadType } from '../../../src/types/divination.js';
+import { drawLenormandSpread } from 'mingyu-core/divination/lenormand';
+import type { LenormandSpreadType } from 'mingyu-core/types';
 import { resultOutputSchema } from '../schemas.js';
 import {
   createErrorToolResult,
@@ -12,9 +12,20 @@ import { buildCommonDivinationPrompt, extendPromptSchema } from './divination-co
 
 const lenormandSchema = z.object({
   spreadType: z
-    .enum(['single', 'three', 'five', 'relationship', 'decision', 'nine', 'element', 'grandTableau'])
+    .enum([
+      'single',
+      'three',
+      'five',
+      'relationship',
+      'decision',
+      'nine',
+      'element',
+      'grandTableau',
+    ])
     .optional()
-    .describe('牌阵类型：single=单牌, three=三牌, five=五牌十字, relationship=关系, decision=选择, nine=九宫, element=元素, grandTableau=大桌'),
+    .describe(
+      '牌阵类型：single=单牌, three=三牌, five=五牌十字, relationship=关系, decision=选择, nine=九宫, element=元素, grandTableau=大桌',
+    ),
 });
 
 const lenormandPromptSchema = extendPromptSchema(
@@ -30,7 +41,8 @@ export function registerLenormandTool(server: McpServer) {
   server.registerTool(
     'divine_lenormand',
     {
-      description: '雷诺曼抽牌：偏现实事件判断，支持单牌、三牌、五牌十字、关系、选择、九宫、元素牌阵和大桌牌阵',
+      description:
+        '雷诺曼抽牌：偏现实事件判断，支持单牌、三牌、五牌十字、关系、选择、九宫、元素牌阵和大桌牌阵',
       inputSchema: lenormandSchema.shape,
       outputSchema: resultOutputSchema,
     },

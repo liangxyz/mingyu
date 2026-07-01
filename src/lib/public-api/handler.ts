@@ -395,7 +395,7 @@ export function getPublicApiOpenApiDocument() {
         post: {
           summary: '奇门遁甲排盘',
           requestBody: openApiJsonRequestBody('#/components/schemas/DivinationRequest', false),
-          responses: { '200': { description: '奇门盘' } },
+          responses: { '200': { description: '奇门盘，含节令背景与复合格局' } },
         },
       },
       '/divination/liuren': {

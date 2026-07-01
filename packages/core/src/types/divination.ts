@@ -1,4 +1,4 @@
-export type SixGod = '青龙' | '朱雀' | '勾陈' | '腾蛇' | '白虎' | '玄武';
+export type SixGod = '青龙' | '朱雀' | '勾陈' | '螣蛇' | '白虎' | '玄武';
 
 export type DivinationType =
   | 'liuyao'
@@ -80,7 +80,7 @@ export interface MeihuaSettings {
 export interface XiaoliurenPalaceDetail {
   name: '大安' | '留连' | '速喜' | '赤口' | '小吉' | '空亡';
   index: number;
-  element: '木' | '火' | '金' | '水';
+  element: '木' | '火' | '土' | '金' | '水';
   meaning: string;
   keywords: string[];
   tendency: '宜推进' | '宜等待' | '易反复' | '易争执' | '有助力' | '易落空';
@@ -405,6 +405,43 @@ export interface QimenBranchPalace {
   name: string;
 }
 
+export interface QimenGanzhiInteraction {
+  type: '六合' | '三合' | '半合' | '六冲' | '相刑' | '相害' | '天干五合' | '天干相冲';
+  pillars: string[];
+  values: string[];
+  description: string;
+}
+
+export interface QimenSeasonalityInfo {
+  currentJieQi: string;
+  seasonalElement: string;
+  jieQiPhase: {
+    jieQi: string;
+    phase: '上元' | '中元' | '下元';
+    phaseIndex: number;
+  };
+  dayStem: string;
+  dayElement: string;
+  seasonRelation: '得时' | '受生' | '受克' | '被耗' | 'neutral';
+  seasonRelationDescription: string;
+  lunarPhase: '新月' | '上弦' | '满月' | '下弦';
+  lunarPhaseDetail: string;
+  dayOfficer: string;
+  dayOfficerFortuneLabel: '吉' | '凶' | '平';
+  dayOfficerAdvice: string;
+  ganzhiInteractions: QimenGanzhiInteraction[];
+}
+
+export interface QimenPatternCombo {
+  key: string;
+  name: string;
+  tone: 'super-good' | 'super-bad' | 'mixed';
+  score: number;
+  summary: string;
+  palace?: number;
+  sources: string[];
+}
+
 /**
  * 奇门遁甲排盘级别
  * - hour: 时家奇门（精确到时辰，默认）
@@ -455,6 +492,8 @@ export interface QimenData {
   timeInfo: QimenTimeInfo;
   /** 特殊时辰检查（六甲时、六癸时、时干入墓、五不遇时） */
   specialConditions?: QimenSpecialConditions;
+  /** 节令背景（月相、建除、节气三元、四柱互动等） */
+  seasonality?: QimenSeasonalityInfo;
   /** 经典格局（九遁、三奇得使、天乙等） */
   classicPatterns?: Array<{
     name: string;
@@ -471,6 +510,8 @@ export interface QimenData {
     relation: string;
     pattern?: string;
   }>;
+  /** 复合格局（同宫叠加、吉凶混杂、吉格逢空等） */
+  patternCombos?: QimenPatternCombo[];
   /** 方位吉凶建议 */
   directions?: {
     goodDirections: Array<{

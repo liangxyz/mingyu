@@ -112,6 +112,26 @@ function formatQimenSpecialTimeSummary(data: DivinationData) {
   return `时辰：${data.specialConditions.description}`;
 }
 
+function formatQimenSeasonalitySummary(data: DivinationData) {
+  if (!('seasonality' in data) || !data.seasonality) {
+    return '';
+  }
+
+  const seasonality = data.seasonality;
+  return `节令背景：${seasonality.currentJieQi}${seasonality.jieQiPhase.phase}，节气五行${seasonality.seasonalElement || '未知'}，日干${seasonality.dayStem}${seasonality.seasonRelation}，月相${seasonality.lunarPhaseDetail || seasonality.lunarPhase}，建除${seasonality.dayOfficer}${seasonality.dayOfficerFortuneLabel}`;
+}
+
+function formatQimenPatternComboSummary(data: DivinationData) {
+  if (!('patternCombos' in data) || !data.patternCombos?.length) {
+    return '';
+  }
+
+  return `复合格局：${data.patternCombos
+    .slice(0, 3)
+    .map((item) => `${item.name}（${item.score}）`)
+    .join('、')}`;
+}
+
 function formatMeihuaSeasonSummary(data: MeihuaData) {
   return `四时：${data.analysis.season}季，体卦${data.analysis.tiSeasonState}，用卦${data.analysis.yongSeasonState}`;
 }
@@ -309,7 +329,9 @@ export function getDivinationSummaryBlocks(
         lines: [
           wrapMainEvidence(formatQimenFocusSummary(data)),
           `节气：${'timeInfo' in data ? data.timeInfo.solarTerm : '未知'}`,
+          formatQimenSeasonalitySummary(data),
           `格局标签：${'patternTags' in data && data.patternTags?.length ? data.patternTags.join('、') : '无明显标签'}`,
+          formatQimenPatternComboSummary(data),
           formatQimenVoidSummary(data),
           formatQimenHorseSummary(data),
           formatQimenSpecialTimeSummary(data),

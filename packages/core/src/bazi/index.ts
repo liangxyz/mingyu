@@ -87,4 +87,11 @@ export { calculateXiaoYunProfile, buildLuckDirectionProfile } from './luckDetail
 export { analyzeMatterFocusProfile } from './matterFocus';
 export { analyzeNayinProfile } from './nayinAnalysis';
 export { analyzeMonthQiProfile } from './monthCommand';
+export {
+  assessAllHarmonyTransforms,
+  assessBranchHarmonyTransform,
+  assessStemHarmonyTransform,
+  formatHarmonyTransformProfile,
+} from './harmonyTransform';
+export type { HarmonyPillarInput } from './harmonyTransform';
 export { getLifeStage } from './baziValues';

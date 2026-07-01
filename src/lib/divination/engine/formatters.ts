@@ -1164,7 +1164,7 @@ function createLiuyaoSpecialFocusHints(question: string) {
     )
   ) {
     hints.push(
-      '鬼神怪异：重点看官鬼是否旺动贴世，子孙能否制鬼，并结合玄武、腾蛇、白虎、勾陈、空破入墓判断更偏情绪、环境还是民俗冲犯。',
+      '鬼神怪异：重点看官鬼是否旺动贴世，子孙能否制鬼，并结合玄武、螣蛇、白虎、勾陈、空破入墓判断更偏情绪、环境还是民俗冲犯。',
     );
   }
 
@@ -1503,6 +1503,31 @@ function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: 
           : ''
       }`
     : '';
+  const seasonalitySummary = data.seasonality
+    ? [
+        `${data.seasonality.currentJieQi}${data.seasonality.jieQiPhase.phase}`,
+        `节气五行${data.seasonality.seasonalElement || '未知'}`,
+        `日干${data.seasonality.dayStem}${data.seasonality.seasonRelation}`,
+        `月相${data.seasonality.lunarPhaseDetail || data.seasonality.lunarPhase}`,
+        `建除${data.seasonality.dayOfficer}${data.seasonality.dayOfficerFortuneLabel}`,
+      ].join('；')
+    : '';
+  const ganzhiInteractionSummary = data.seasonality?.ganzhiInteractions?.length
+    ? data.seasonality.ganzhiInteractions
+        .slice(0, 5)
+        .map((item) => `${item.type}${item.values.join('、')}`)
+        .join('；')
+    : '';
+  const patternComboSummary = data.patternCombos?.length
+    ? data.patternCombos
+        .slice(0, 4)
+        .map((item) => {
+          const tone =
+            item.tone === 'super-good' ? '强吉' : item.tone === 'super-bad' ? '强凶' : '混杂';
+          return `${item.name}（${tone}，${item.score}）：${item.summary}`;
+        })
+        .join('；')
+    : '';
   const palaceSummary =
     data.palaceInsights?.map((item) => `${item.name}${item.level}，${item.summary}`).join('；') ||
     '';
@@ -1640,6 +1665,8 @@ function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: 
     `时间干支：${formatGanzhi(data.ganzhi).replace('干支：', '')}`,
     `核心结构：${data.isYangDun ? '阳遁' : '阴遁'}${data.juShu}局；值符${data.zhiFu}；值使${data.zhiShi}`,
     `关键提示：节令${`${data.timeInfo?.solarTerm || '未知'} ${data.timeInfo?.epoch || ''}`.trim()}；格局标签${data.patternTags?.join('、') || '无'}`,
+    seasonalitySummary ? `节令背景：${seasonalitySummary}` : '',
+    ganzhiInteractionSummary ? `四柱互动：${ganzhiInteractionSummary}` : '',
     `起局抓手：${focusParts.join('；')}`,
     `主轴证据：值符${data.zhiFu}${zhiFuPalace ? `落${zhiFuPalace.name}` : '落宫未定位'}；值使${data.zhiShi}${zhiShiPalace ? `落${zhiShiPalace.name}` : '落宫未定位'}；时干${hourStem}${hourStemPalaces.length ? `见于${hourStemPalaces.map((item) => item.name).join('、')}` : '落宫未定位'}`,
     `用神宫候选：${priorityPalaceText || '未根据问题识别出优先宫，先以值符值使、时干和值事宫为主'}`,
@@ -1655,6 +1682,7 @@ function formatQimenInfo(question: string, data: QimenData, supplementaryInfo?: 
     questionHintText ? `问事参考：${questionHintText}` : '',
     patternSummary ? `判断依据：${patternSummary}` : '',
     classicPatternSummary ? `经典格局：${classicPatternSummary}` : '',
+    patternComboSummary ? `复合格局：${patternComboSummary}` : '',
     stemRelationSummary ? `天地盘干：${stemRelationSummary}` : '',
     directionSummary ? `方位吉凶：${directionSummary}` : '',
     dedupedPalaceSummary ? `补充提示：${dedupedPalaceSummary}` : '',

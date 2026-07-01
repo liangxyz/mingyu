@@ -4,8 +4,8 @@ import {
   buildCombinedZiweiCompatibilityPrompt,
   buildZiweiChartInput,
   calculateFullZiweiChart,
-} from '../src/lib/full-chart-engine/ziwei';
-import { buildSerializableZiweiResult } from '../src/lib/public-api/prompt-builders';
+} from '../../src/lib/full-chart-engine/ziwei';
+import { buildSerializableZiweiResult } from '../../src/lib/public-api/prompt-builders';
 
 test('紫微 MCP 返回结果应为可 JSON 序列化的纯数据', async () => {
   const input = buildZiweiChartInput({

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { generateMeihua } from '../../../src/lib/divination/algorithms/meihua/index.js';
-import type { MeihuaExternalOmens, MeihuaSettings } from '../../../src/types/divination.js';
+import { generateMeihua } from 'mingyu-core/divination/meihua';
 import {
   meihuaAnimalOptions,
   meihuaColorOptions,
@@ -9,7 +8,8 @@ import {
   meihuaObjectOptions,
   meihuaPersonOptions,
   meihuaSoundOptions,
-} from '../../../src/config/meihua-omens.js';
+} from 'mingyu-core/divination/meihua-omens';
+import type { MeihuaExternalOmens, MeihuaSettings } from 'mingyu-core/types';
 import { resultOutputSchema } from '../schemas.js';
 import {
   createErrorToolResult,
@@ -28,7 +28,9 @@ const meihuaSchema = z.object({
   method: z
     .enum(['time', 'number', 'random', 'external', 'timeTrigram'])
     .optional()
-    .describe('起卦方式：time=时间起卦, number=数字起卦, random=随机起卦, external=外应起卦, timeTrigram=时辰纳卦法（依时辰方位定卦）'),
+    .describe(
+      '起卦方式：time=时间起卦, number=数字起卦, random=随机起卦, external=外应起卦, timeTrigram=时辰纳卦法（依时辰方位定卦）',
+    ),
   number: z.number().optional().describe('数字起卦时使用的正整数'),
   externalOmens: z
     .object({

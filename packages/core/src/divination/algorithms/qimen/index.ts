@@ -35,6 +35,8 @@ import { getQimenPatternTags, buildPatternDetails, buildPalaceInsights } from '.
 import { getStemRelations, getClassicPatterns } from './helpers/classic-patterns';
 import { buildDirectionAdvice } from './helpers/directions';
 import { estimateYingQi } from './helpers/ying-qi';
+import { buildSeasonality } from './helpers/seasonality';
+import { detectQimenPatternCombos } from './helpers/pattern-combos';
 
 // ============================================================================
 // 内部工具函数
@@ -289,7 +291,19 @@ export function generateQimen(
   const stemRelations = mapStemRelations(stemRelationsRaw);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 10：宫位洞察
+  // 步骤 10：节令背景
+  // ──────────────────────────────────────────────────────────────────────────
+  const seasonalityDate = new Date(
+    timeInfo.solar.year,
+    timeInfo.solar.month - 1,
+    timeInfo.solar.day,
+    timeInfo.solar.hour ?? 0,
+    timeInfo.solar.minute ?? 0,
+  );
+  const seasonality = buildSeasonality(ganzhi, jushuResult.jieQi || jieQi, seasonalityDate);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 步骤 11：宫位洞察
   // ──────────────────────────────────────────────────────────────────────────
   const palaceInsights = buildPalaceInsights({
     jiuGongGe,
@@ -299,12 +313,12 @@ export function generateQimen(
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 11：方位建议
+  // 步骤 12：方位建议
   // ──────────────────────────────────────────────────────────────────────────
   const directions = buildDirectionAdvice(jiuGongGe, voidBranches, classicPatternsRaw);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 12：应期估算
+  // 步骤 13：应期估算
   // ──────────────────────────────────────────────────────────────────────────
   const isFuyin = patternTags.some((t) => t.includes('伏吟'));
   const isFanyin = patternTags.some((t) => t.includes('反吟'));
@@ -323,7 +337,19 @@ export function generateQimen(
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 13：返回完整 QimenData
+  // 步骤 14：复合格局
+  // ──────────────────────────────────────────────────────────────────────────
+  const patternCombos = detectQimenPatternCombos({
+    classicPatterns: classicPatternsRaw,
+    patternTags,
+    voidPalaces,
+    horseStar: horsePalace || undefined,
+    zhiShi,
+    jiuGongGe,
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 步骤 15：返回完整 QimenData
   // ──────────────────────────────────────────────────────────────────────────
   return {
     scope,
@@ -343,9 +369,11 @@ export function generateQimen(
     voidPalaces,
     horseStar: horsePalace ? { ...horsePalace, sourceBranch: activeZhi } : undefined,
     specialConditions,
+    seasonality,
     jiuGongGe,
     classicPatterns,
     stemRelations,
+    patternCombos,
     directions,
     yingQi,
     timestamp,

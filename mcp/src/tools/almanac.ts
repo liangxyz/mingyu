@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { generateAlmanacSelection } from '../../../src/lib/divination/algorithms/almanac.js';
-import type { AlmanacParticipantInput, AlmanacTopic } from '../../../src/types/divination.js';
+import { generateAlmanacSelection } from 'mingyu-core/divination/almanac';
+import type { AlmanacParticipantInput, AlmanacTopic } from 'mingyu-core/types';
 import { resultOutputSchema } from '../schemas.js';
 import {
   createErrorToolResult,
@@ -32,7 +32,18 @@ const almanacParticipantSchema = z.object({
 
 const almanacSchema = z.object({
   topic: z
-    .enum(['marriage', 'move', 'opening', 'contract', 'travel', 'medical', 'study', 'burial', 'renovation', 'custom'])
+    .enum([
+      'marriage',
+      'move',
+      'opening',
+      'contract',
+      'travel',
+      'medical',
+      'study',
+      'burial',
+      'renovation',
+      'custom',
+    ])
     .describe('择日事项'),
   startDate: z.string().describe('开始日期，格式为 YYYY-MM-DD'),
   endDate: z.string().describe('结束日期，格式为 YYYY-MM-DD；最多比较 31 天'),

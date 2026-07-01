@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { generateAstrolabe } from 'mingyu-core/divination/astrolabe';
+import type { AstrolabeBirthInput } from 'mingyu-core/types';
 import { ASTROLABE_PROMPT_TOPICS } from '../../../src/lib/astrolabe-prompts.js';
-import { generateAstrolabe } from '../../../src/lib/divination/algorithms/astrolabe.js';
-import type { AstrolabeBirthInput } from '../../../src/types/divination.js';
 import { resultOutputSchema } from '../schemas.js';
 import {
   createErrorToolResult,

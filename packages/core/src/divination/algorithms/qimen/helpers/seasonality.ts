@@ -398,7 +398,7 @@ export interface SeasonalityInfo {
   /** 十二建除（建/除/满/平/定/执/破/危/成/收/开/闭） */
   dayOfficer: string;
   /** 建除十二神吉凶倾向 */
-  dayOfficerFortuneLabel: string;
+  dayOfficerFortuneLabel: '吉' | '凶' | '平';
   /** 建除十二神宜忌简述 */
   dayOfficerAdvice: string;
 

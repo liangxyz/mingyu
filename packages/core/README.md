@@ -57,7 +57,7 @@ yarn add mingyu-core
 | **八字 Bazi** | `mingyu-core/bazi` | 四柱排盘、神煞、调候用神、格局、大运、五行强度，含透干根气、十神结构、合化评估、命卦、小运等增强分析 |
 | **六爻 Liuyao** | `mingyu-core/divination/liuyao` | 京房八宫法、纳甲、世应、六亲六神、月破日破、化进退神 |
 | **梅花易数 Meihua** | `mingyu-core/divination/meihua` | 时间/数字/随机/外应/时辰纳卦五种起卦法、体用生克 |
-| **奇门遁甲 Qimen** | `mingyu-core/divination/qimen` | 转盘法、拆补定局、九九八十一格、经典格局、方位应期 |
+| **奇门遁甲 Qimen** | `mingyu-core/divination/qimen` | 转盘法、拆补定局、经典格局、节令背景、复合格局、方位应期 |
 | **大六壬 Liuren** | `mingyu-core/divination/liuren` | 月将、贵人、九宗门取传、三传、天将、神煞 |
 | **小六壬 Xiaoliuren** | `mingyu-core/divination/xiaoliuren` | 六宫掌诀、五行生克、月令旺衰 |
 | **择日 Almanac** | `mingyu-core/divination/almanac` | 黄历择日、神煞评分、二十八宿、彭祖百忌 |
@@ -161,6 +161,9 @@ const meihua = generateMeihua({ method: 'number', number: 123 });
 import { generateQimen } from 'mingyu-core/divination/qimen';
 const qimen = generateQimen();                     // 当前时间，默认转盘法
 const qimenFeipan = generateQimen(undefined, 'feipan');  // 可选飞盘法
+const qimenYear = generateQimen(new Date('2026-07-02T08:00:00+08:00'), 'zhuanpan', 'year');  // 年家奇门
+console.log(qimen.seasonality);                    // 节令背景、月相、建除、四柱互动
+console.log(qimen.patternCombos);                  // 复合格局，如吉格逢空、伏吟叠驿马
 
 // 大六壬
 import { generateLiuren } from 'mingyu-core/divination/liuren';
@@ -178,12 +181,14 @@ import {
   analyzeTenGodStructure,    // 十神结构分布
   analyzeStemRootProfile,    // 透干通根
   analyzeRelationStructure, // 地支关系（三合/三会/六合/六冲/六害/三刑/相破）
+  assessAllHarmonyTransforms, // 天干五合、地支六合的合化程度评分
   calculateMingGua,          // 命卦（东四命/西四命）
   buildLuckDirectionProfile, // 大运顺逆方向
 } from 'mingyu-core/bazi';
 
 const pillars = [/* 四柱 */];
 const tenGod = analyzeTenGodStructure(pillars, '乙', getTenGod);
+const harmony = assessAllHarmonyTransforms(pillars);
 const mingGua = calculateMingGua(1990, 'male');  // { number:1, gua:'坎', eastWest:'东四命' }
 const luckDir = buildLuckDirectionProfile('male', '庚');  // { direction:'顺行' }
 ```
@@ -211,6 +216,9 @@ const voidBranches = getVoidBranches('甲子');      // ['戌','亥'] 旬空
 | `analyzeStemRootProfile` | 函数 | 透干通根分析 |
 | `analyzeExposedStemProfile` | 函数 | 透干综合画像 |
 | `analyzeRelationStructure` | 函数 | 地支关系完整评估 |
+| `assessAllHarmonyTransforms` | 函数 | 自动扫描天干五合、地支六合并评估合化程度 |
+| `assessStemHarmonyTransform` | 函数 | 评估单组天干五合的成化程度 |
+| `assessBranchHarmonyTransform` | 函数 | 评估单组地支六合的成化程度 |
 | `analyzeKongWangProfile` | 函数 | 空亡全分析 |
 | `analyzeTombStorage` | 函数 | 辰戌丑未墓库分析 |
 | `analyzeLifeStageProfile` | 函数 | 十二长生分布 |
@@ -229,7 +237,7 @@ const voidBranches = getVoidBranches('甲子');      // ['戌','亥'] 旬空
 |------|------|
 | `generateLiuyao(date?)` | 六爻起卦 |
 | `generateMeihua(settings?)` | 梅花易数起卦 |
-| `generateQimen(date?, method?)` | 奇门遁甲排盘 |
+| `generateQimen(date?, method?, scope?)` | 奇门遁甲排盘，返回节令背景、经典格局、复合格局、方位和应期 |
 | `generateLiuren(date?)` | 大六壬排盘 |
 | `generateXiaoliuren(params?)` | 小六壬起课 |
 | `generateAlmanacSelection(params)` | 黄历择日 |
@@ -262,7 +270,7 @@ pnpm install
 # 构建 core 包
 pnpm --filter mingyu-core build
 
-# 运行测试（692 个测试）
+# 运行测试
 pnpm test
 
 # 仅运行 core 包测试

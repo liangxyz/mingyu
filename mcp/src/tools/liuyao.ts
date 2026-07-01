@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { generateLiuyao } from '../../../src/lib/divination/algorithms/liuyao.js';
+import { generateLiuyao } from 'mingyu-core/divination/liuyao';
 import { resultOutputSchema } from '../schemas.js';
 import {
   createErrorToolResult,

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.8 (2026-07-02)
+
+### 🚀 新增功能
+
+- **八字合化程度评分** — 新增 `assessAllHarmonyTransforms`、`assessStemHarmonyTransform`、`assessBranchHarmonyTransform`，按月令、透干、根气、冲破、清杂、争合评估天干五合与地支六合的成化程度。
+- **奇门节令背景** — `generateQimen()` 新增 `seasonality`，输出当前节气、节气三元、节气五行、日干与节令关系、月相、建除十二神和四柱干支互动。
+- **奇门复合格局** — `generateQimen()` 新增 `patternCombos`，识别同宫吉凶叠加、吉格逢空、三奇齐升/齐困、伏吟反吟叠驿马等结构化组合。
+
+### 📚 文档改进
+
+- README、API 文档、公开 API/skill/MCP 文档同步补充八字合化评分与奇门新增字段说明。
+
 ## 0.1.6 (2026-07-01)
 
 ### 🎯 优化

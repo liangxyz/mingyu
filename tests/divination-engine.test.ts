@@ -167,6 +167,28 @@ test('奇门算法会补出时旬空亡与马星落宫', () => {
   assert.ok(data.horseStar?.sourceBranch);
 });
 
+test('奇门算法会输出节令背景与复合格局结构', () => {
+  const data = generateQimen(new Date('2025-01-01T08:00:00+08:00'));
+
+  assert.ok(data.seasonality);
+  assert.equal(typeof data.seasonality.currentJieQi, 'string');
+  assert.equal(typeof data.seasonality.seasonalElement, 'string');
+  assert.equal(typeof data.seasonality.dayOfficer, 'string');
+  assert.ok(Array.isArray(data.seasonality.ganzhiInteractions));
+
+  assert.ok(Array.isArray(data.patternCombos));
+  assert.ok(
+    data.patternCombos.every(
+      (combo) =>
+        combo.key &&
+        combo.name &&
+        ['super-good', 'super-bad', 'mixed'].includes(combo.tone) &&
+        typeof combo.score === 'number' &&
+        Array.isArray(combo.sources),
+    ),
+  );
+});
+
 test('奇门默认使用转盘法，飞盘法九星完整且可区分', () => {
   const date = new Date('2025-01-01T08:00:00+08:00');
   const defaultData = generateQimen(date);

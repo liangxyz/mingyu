@@ -87,17 +87,25 @@ function aiProxyDevPlugin(): Plugin {
 }
 
 // ── AI 功能开关 ──────────────────────────────────────
-// 不再因为配置了 AI_API_KEY 自动开启前端 AI。
-// AI_DEFAULT_ENABLED=true 且配置了 AI_API_KEY 时，页面默认打开 AI，并允许使用服务端 AI。
+// AI_BUILTIN_ENABLED=true 且配置了 AI_API_KEY 时，页面显示内置 AI 选项。
+// AI_DEFAULT_ENABLED=true 只表示默认打开 AI 解读；默认关闭时仍保留提示词模式。
 const devAiVars = parseDevVars(path.resolve(__dirname, '.dev.vars'));
-const isAiDefaultEnabled =
-  (process.env.AI_DEFAULT_ENABLED ?? devAiVars.AI_DEFAULT_ENABLED) === 'true' &&
-  !!(devAiVars.AI_API_KEY || process.env.AI_API_KEY);
-const aiProviderName = process.env.AI_PROVIDER_NAME ?? devAiVars.AI_PROVIDER_NAME ?? '';
+function readAiEnv(name: string) {
+  return process.env[name] ?? devAiVars[name];
+}
+
+const hasAiApiKey = Boolean(readAiEnv('AI_API_KEY'));
+const aiBuiltinFlag = readAiEnv('AI_BUILTIN_ENABLED') ?? readAiEnv('AI_DEFAULT_ENABLED');
+const isAiBuiltinEnabled = aiBuiltinFlag === 'true' && hasAiApiKey;
+const isAiDefaultEnabled = isAiBuiltinEnabled && readAiEnv('AI_DEFAULT_ENABLED') === 'true';
+const aiProviderName = readAiEnv('AI_PROVIDER_NAME') ?? '';
 
 export default defineConfig({
   define: {
     'import.meta.env.VITE_AI_ENABLED': JSON.stringify(isAiDefaultEnabled ? 'true' : 'false'),
+    'import.meta.env.VITE_AI_BUILTIN_ENABLED': JSON.stringify(
+      isAiBuiltinEnabled ? 'true' : 'false',
+    ),
     'import.meta.env.VITE_AI_DEFAULT_ENABLED': JSON.stringify(
       isAiDefaultEnabled ? 'true' : 'false',
     ),

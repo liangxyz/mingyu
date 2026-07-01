@@ -26,6 +26,7 @@ export const AI_SETTINGS_STORAGE_KEY = 'mingyu:ai-settings:v1';
 export const AI_SETTINGS_EVENT = 'mingyu-ai-settings-change';
 
 type RuntimeAiConfig = {
+  aiBuiltinEnabled?: boolean;
   aiDefaultEnabled?: boolean;
   aiProviderName?: string;
 };
@@ -72,8 +73,15 @@ export function isServerBuiltinAiEnabled(): boolean {
   const runtimeConfig = (
     globalThis as typeof globalThis & { __MINGYU_RUNTIME_CONFIG__?: RuntimeAiConfig }
   ).__MINGYU_RUNTIME_CONFIG__;
+  if (typeof runtimeConfig?.aiBuiltinEnabled === 'boolean') {
+    return runtimeConfig.aiBuiltinEnabled;
+  }
   if (typeof runtimeConfig?.aiDefaultEnabled === 'boolean') {
+    // 兼容旧版本：原先 AI_DEFAULT_ENABLED 同时表示显示内置 AI 和默认启用。
     return runtimeConfig.aiDefaultEnabled;
+  }
+  if (import.meta.env.VITE_AI_BUILTIN_ENABLED) {
+    return import.meta.env.VITE_AI_BUILTIN_ENABLED === 'true';
   }
   return import.meta.env.VITE_AI_DEFAULT_ENABLED === 'true';
 }
@@ -89,7 +97,15 @@ export function getServerBuiltinAiLabel(): string {
 }
 
 export function isServerDefaultAiEnabled(): boolean {
-  return isServerBuiltinAiEnabled();
+  const runtimeConfig = (
+    globalThis as typeof globalThis & { __MINGYU_RUNTIME_CONFIG__?: RuntimeAiConfig }
+  ).__MINGYU_RUNTIME_CONFIG__;
+  const defaultEnabled =
+    typeof runtimeConfig?.aiDefaultEnabled === 'boolean'
+      ? runtimeConfig.aiDefaultEnabled
+      : import.meta.env.VITE_AI_DEFAULT_ENABLED === 'true';
+
+  return isServerBuiltinAiEnabled() && defaultEnabled;
 }
 
 export function getDefaultAiSettings(): AiSettings {

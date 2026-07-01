@@ -379,7 +379,8 @@ docker run --rm -p 3000:3000 \
   -e AI_BASE_URL=https://api.deepseek.com/v1 \
   -e AI_MODEL=deepseek-chat \
   -e AI_PROVIDER_NAME=DeepSeek \
-  -e AI_DEFAULT_ENABLED=true \
+  -e AI_BUILTIN_ENABLED=true \
+  -e AI_DEFAULT_ENABLED=false \
   mingyu
 ```
 
@@ -396,7 +397,8 @@ AI_API_KEY=sk-xxx
 AI_BASE_URL=https://api.deepseek.com/v1
 AI_MODEL=deepseek-chat
 AI_PROVIDER_NAME=DeepSeek
-AI_DEFAULT_ENABLED=true
+AI_BUILTIN_ENABLED=true
+AI_DEFAULT_ENABLED=false
 ```
 
 默认端口是 `3000`。如需修改容器内端口，可设置 `PORT`；如需修改宿主机端口，调整 compose 或 `docker run` 的 `-p` 左侧端口。
@@ -419,9 +421,10 @@ AI_DEFAULT_ENABLED=true
 | `AI_BASE_URL` | OpenAI 兼容接口地址，例如 `https://api.deepseek.com/v1` |
 | `AI_MODEL` | 默认模型名称 |
 | `AI_PROVIDER_NAME` | 前端显示的服务商名称，可自行命名 |
-| `AI_DEFAULT_ENABLED` | 设为 `true` 时，才默认显示并启用服务端 AI |
+| `AI_BUILTIN_ENABLED` | 设为 `true` 时，前端显示并允许使用服务端 AI |
+| `AI_DEFAULT_ENABLED` | 设为 `true` 时，页面默认进入 AI 解读；设为 `false` 时默认仍是提示词模式 |
 
-只配置 `AI_API_KEY` 不会自动打开服务端 AI；必须同时设置 `AI_DEFAULT_ENABLED=true`。如果不启用，前端不会提示服务端 AI，用户仍可通过齿轮自行填写自己的接口。
+只配置 `AI_API_KEY` 不会自动显示服务端 AI；必须同时设置 `AI_BUILTIN_ENABLED=true`。如果想提供公益内置 AI，但默认仍让用户复制提示词，可设置 `AI_BUILTIN_ENABLED=true`、`AI_DEFAULT_ENABLED=false`。用户仍可通过齿轮自行填写自己的接口。
 
 `.dev.vars.example` 提供了本地和 Cloudflare 可参考的变量模板。公开站点启用服务端 AI 会产生调用成本，也可能受上游模型稳定性影响，建议先确认额度、限流和可用性。
 

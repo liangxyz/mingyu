@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleAiModels } from '../src/lib/ai/proxy';
+import { handleAiAnalyze, handleAiModels } from '../src/lib/ai/proxy';
 import {
   getDefaultAiSettings,
   getServerBuiltinAiLabel,
@@ -92,4 +92,164 @@ test('未开启内置 AI 时拒绝服务端 AI 调用', async () => {
   const body = await response.json();
   assert.equal(response.status, 403);
   assert.equal(body.error.code, 'AI_SERVER_NOT_ENABLED');
+});
+
+test('AI 解析遇到上游临时错误时会自动重试', async (t) => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = (async () => {
+    calls += 1;
+    if (calls < 3) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            message: 'server error',
+            code: 'bad_response_status_code',
+          },
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Retry-After': '0',
+          },
+        },
+      );
+    }
+
+    return new Response('data: {"choices":[{"delta":{"content":"ok"}}]}\n\ndata: [DONE]\n\n', {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream; charset=utf-8' },
+    });
+  }) as typeof fetch;
+
+  const response = await handleAiAnalyze(
+    new Request('https://example.com/api/v1/ai/analyze', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: '测试' }],
+        aiConfig: { mode: 'builtin' },
+      }),
+    }),
+    {
+      AI_API_KEY: 'test-key',
+      AI_BASE_URL: 'https://example.com/v1',
+      AI_MODEL: 'free/cc',
+      AI_BUILTIN_ENABLED: 'true',
+      AI_DEFAULT_ENABLED: 'false',
+    },
+  );
+
+  const text = await response.text();
+  assert.equal(calls, 3);
+  assert.equal(response.status, 200);
+  assert.match(text, /"content":"ok"/);
+});
+
+test('AI 解析连续遇到上游错误时返回明确错误码', async (t) => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = (async () => {
+    calls += 1;
+    return new Response(
+      JSON.stringify({
+        error: {
+          message: 'server error',
+          code: 'bad_response_status_code',
+        },
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Retry-After': '0',
+        },
+      },
+    );
+  }) as typeof fetch;
+
+  const response = await handleAiAnalyze(
+    new Request('https://example.com/api/v1/ai/analyze', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: '测试' }],
+        aiConfig: { mode: 'builtin' },
+      }),
+    }),
+    {
+      AI_API_KEY: 'test-key',
+      AI_BASE_URL: 'https://example.com/v1',
+      AI_MODEL: 'free/cc',
+      AI_BUILTIN_ENABLED: 'true',
+      AI_DEFAULT_ENABLED: 'false',
+    },
+  );
+
+  const body = await response.json();
+  assert.equal(calls, 3);
+  assert.equal(response.status, 500);
+  assert.equal(body.error.code, 'AI_UPSTREAM_UNSTABLE');
+  assert.equal(body.error.upstreamCode, 'bad_response_status_code');
+  assert.equal(body.error.attempts, 3);
+  assert.match(body.error.message, /已自动重试 2 次仍未成功/);
+});
+
+test('AI 流式响应中断时返回明确错误码', async (t) => {
+  const originalFetch = globalThis.fetch;
+  const encoder = new TextEncoder();
+  let pulls = 0;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = (async () =>
+    new Response(
+      new ReadableStream({
+        pull(controller) {
+          pulls += 1;
+          if (pulls === 1) {
+            controller.enqueue(
+              encoder.encode('data: {"choices":[{"delta":{"content":"开头"}}]}\n\n'),
+            );
+            return;
+          }
+          throw new Error('upstream stream aborted');
+        },
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream; charset=utf-8' },
+      },
+    )) as typeof fetch;
+
+  const response = await handleAiAnalyze(
+    new Request('https://example.com/api/v1/ai/analyze', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: '测试' }],
+        aiConfig: { mode: 'builtin' },
+      }),
+    }),
+    {
+      AI_API_KEY: 'test-key',
+      AI_BASE_URL: 'https://example.com/v1',
+      AI_MODEL: 'free/cc',
+      AI_BUILTIN_ENABLED: 'true',
+      AI_DEFAULT_ENABLED: 'false',
+    },
+  );
+
+  const text = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(text, /"content":"开头"/);
+  assert.match(text, /"code":"AI_UPSTREAM_STREAM_ERROR"/);
+  assert.match(text, /"detail":"upstream stream aborted"/);
 });

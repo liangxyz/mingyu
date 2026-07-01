@@ -21,6 +21,10 @@ export interface StreamOptions extends StreamCallbacks {
 
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
+type AiErrorPayload = {
+  error?: string | { code?: unknown; message?: unknown };
+};
+
 /**
  * 发送多轮对话消息到 AI 解析端点，流式接收回复。
  *
@@ -59,9 +63,7 @@ export async function fetchAiModels(aiConfig: AiRequestConfig): Promise<string[]
     let message = `获取模型失败（${response.status}）`;
     try {
       const data = await response.json();
-      if (data?.error?.message) {
-        message = data.error.message;
-      }
+      message = formatAiErrorMessage(data, message);
     } catch {
       // 忽略 JSON 解析失败
     }
@@ -83,9 +85,7 @@ async function consumeSseStream(response: Response, { onChunk, onDone, onError }
     let message = `请求失败（${response.status}）`;
     try {
       const data = await response.json();
-      if (data?.error?.message) {
-        message = data.error.message;
-      }
+      message = formatAiErrorMessage(data, message);
     } catch {
       // 忽略 JSON 解析失败
     }
@@ -126,7 +126,7 @@ async function consumeSseStream(response: Response, { onChunk, onDone, onError }
       try {
         const parsed = JSON.parse(data);
         if (parsed.error) {
-          onError(parsed.error);
+          onError(formatAiErrorMessage(parsed, 'AI 返回错误。'));
           return;
         }
         if (typeof parsed.content === 'string' && parsed.content) {
@@ -139,4 +139,16 @@ async function consumeSseStream(response: Response, { onChunk, onDone, onError }
   }
 
   onDone();
+}
+
+function formatAiErrorMessage(data: unknown, fallback: string): string {
+  if (!data || typeof data !== 'object') return fallback;
+  const payload = data as AiErrorPayload;
+  const error = payload.error;
+  if (typeof error === 'string') return error || fallback;
+  if (!error || typeof error !== 'object') return fallback;
+
+  const message = typeof error.message === 'string' && error.message ? error.message : fallback;
+  const code = typeof error.code === 'string' && error.code ? error.code : '';
+  return code ? `${message}（错误码：${code}）` : message;
 }

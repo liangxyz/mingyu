@@ -10,6 +10,7 @@ const DEFAULT_BASE_URL = 'https://api.deepseek.com/v1';
 const DEFAULT_MODEL = 'deepseek-chat';
 const MAX_PROMPT_LENGTH = 50_000;
 const MAX_MESSAGES = 30;
+const UPSTREAM_RETRY_DELAYS_MS = [500, 1500];
 
 const SSE_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -35,6 +36,8 @@ type AiProviderConfig = {
   baseUrl?: unknown;
   model?: unknown;
 };
+type UpstreamFetchResult =
+  { ok: true; response: Response; attempts: number } | { ok: false; error: Response };
 
 const SYSTEM_PROMPT_SINGLE =
   '你是一位精通中国传统命理学、占卜术数的分析师。' +
@@ -115,7 +118,7 @@ export async function handleAiAnalyze(request: Request, env?: AiEnv): Promise<Re
   const systemPrompt = isMultiTurn ? SYSTEM_PROMPT_CHAT : SYSTEM_PROMPT_SINGLE;
 
   const endpoint = `${provider.baseUrl}/chat/completions`;
-  const upstream = await fetch(endpoint, {
+  const upstreamResult = await fetchUpstreamWithRetry(endpoint, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${provider.apiKey}`,
@@ -135,14 +138,21 @@ export async function handleAiAnalyze(request: Request, env?: AiEnv): Promise<Re
       ],
     }),
   });
+  if (!upstreamResult.ok) {
+    return upstreamResult.error;
+  }
 
-  if (!upstream.ok || !upstream.body) {
+  const { response: upstream, attempts } = upstreamResult;
+  if (!upstream.ok) {
     const errText = await upstream.text().catch(() => '');
-    return aiJsonError(
-      upstream.status,
-      'AI_UPSTREAM_ERROR',
-      `AI 服务返回错误（${upstream.status}）。${errText.slice(0, 200)}`,
-    );
+    return buildUpstreamErrorResponse(upstream.status, errText, attempts);
+  }
+
+  if (!upstream.body) {
+    return aiJsonError(502, 'AI_UPSTREAM_EMPTY_RESPONSE', 'AI 服务没有返回可读取的内容。', {
+      attempts,
+      retryable: true,
+    });
   }
 
   // 将 upstream SSE 流转换为前端可读的 SSE 流
@@ -188,8 +198,15 @@ export async function handleAiAnalyze(request: Request, env?: AiEnv): Promise<Re
         }
       }
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : '流式读取异常';
-      const payload = JSON.stringify({ error: errMsg });
+      const payload = JSON.stringify({
+        error: {
+          code: 'AI_UPSTREAM_STREAM_ERROR',
+          message: 'AI 服务响应中断，请稍后重试，或在设置里改用自己的接口。',
+          attempts,
+          retryable: true,
+          detail: err instanceof Error ? err.message : undefined,
+        },
+      });
       await writer.write(encoder.encode(`data: ${payload}\n\n`));
     } finally {
       await writer.close();
@@ -215,21 +232,21 @@ export async function handleAiModels(request: Request, env?: AiEnv): Promise<Res
     return provider.error;
   }
 
-  const upstream = await fetch(`${provider.baseUrl}/models`, {
+  const upstreamResult = await fetchUpstreamWithRetry(`${provider.baseUrl}/models`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${provider.apiKey}`,
       'Content-Type': 'application/json',
     },
   });
+  if (!upstreamResult.ok) {
+    return upstreamResult.error;
+  }
 
+  const { response: upstream, attempts } = upstreamResult;
   if (!upstream.ok) {
     const errText = await upstream.text().catch(() => '');
-    return aiJsonError(
-      upstream.status,
-      'AI_UPSTREAM_ERROR',
-      `获取模型失败（${upstream.status}）。${errText.slice(0, 200)}`,
-    );
+    return buildUpstreamErrorResponse(upstream.status, errText, attempts, '获取模型失败：');
   }
 
   const data = await upstream.json().catch(() => null);
@@ -316,11 +333,203 @@ function isBuiltinAiEnabled(env?: AiEnv): boolean {
   return enabled === 'true';
 }
 
-function aiJsonError(status: number, code: string, message: string): Response {
+async function fetchUpstreamWithRetry(
+  url: string,
+  init: RequestInit,
+): Promise<UpstreamFetchResult> {
+  const maxAttempts = UPSTREAM_RETRY_DELAYS_MS.length + 1;
+
+  for (let attemptIndex = 0; attemptIndex < maxAttempts; attemptIndex += 1) {
+    try {
+      const response = await fetch(url, init);
+      if (isRetryableUpstreamStatus(response.status) && attemptIndex < maxAttempts - 1) {
+        await response.text().catch(() => '');
+        await sleep(getRetryDelayMs(response, attemptIndex));
+        continue;
+      }
+
+      return { ok: true, response, attempts: attemptIndex + 1 };
+    } catch (error) {
+      if (attemptIndex < maxAttempts - 1) {
+        await sleep(UPSTREAM_RETRY_DELAYS_MS[attemptIndex]);
+        continue;
+      }
+
+      const attempts = attemptIndex + 1;
+      return {
+        ok: false,
+        error: aiJsonError(
+          502,
+          'AI_UPSTREAM_NETWORK_ERROR',
+          `无法连接 AI 服务${formatRetrySummary(attempts)}。请稍后再试，或在设置里改用自己的接口。`,
+          {
+            attempts,
+            retryable: true,
+            detail: error instanceof Error ? error.message : undefined,
+          },
+        ),
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    error: aiJsonError(502, 'AI_UPSTREAM_NETWORK_ERROR', '无法连接 AI 服务。', {
+      attempts: maxAttempts,
+      retryable: true,
+    }),
+  };
+}
+
+function isRetryableUpstreamStatus(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function getRetryDelayMs(response: Response, attemptIndex: number): number {
+  const retryAfter = parseRetryAfterMs(response.headers.get('Retry-After'));
+  return retryAfter ?? UPSTREAM_RETRY_DELAYS_MS[attemptIndex];
+}
+
+function parseRetryAfterMs(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(seconds * 1000, 3000);
+  }
+
+  const retryAt = Date.parse(value);
+  if (Number.isFinite(retryAt)) {
+    return Math.min(Math.max(retryAt - Date.now(), 0), 3000);
+  }
+
+  return undefined;
+}
+
+function sleep(delayMs: number): Promise<void> {
+  if (delayMs <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+function buildUpstreamErrorResponse(
+  status: number,
+  rawBody: string,
+  attempts: number,
+  prefix = '',
+): Response {
+  const upstreamError = parseUpstreamError(rawBody);
+  const retrySummary = formatRetrySummary(attempts);
+  const retryable = isRetryableUpstreamStatus(status);
+  const detail = upstreamError.message
+    ? `上游提示：${upstreamError.message}${upstreamError.code ? `（${upstreamError.code}）` : ''}`
+    : undefined;
+  const commonDetails = {
+    upstreamStatus: status,
+    upstreamCode: upstreamError.code,
+    attempts,
+    retryable,
+    detail,
+  };
+
+  if (status === 401 || status === 403) {
+    return aiJsonError(
+      status,
+      'AI_UPSTREAM_AUTH_ERROR',
+      `${prefix}AI 服务鉴权失败，请检查 API Key 是否有效、额度是否正常。`,
+      commonDetails,
+    );
+  }
+
+  if (status === 400 || status === 404) {
+    return aiJsonError(
+      status,
+      'AI_UPSTREAM_CONFIG_ERROR',
+      `${prefix}AI 服务配置可能有误，请检查接口地址和模型名称是否支持当前请求。`,
+      commonDetails,
+    );
+  }
+
+  if (status === 408) {
+    return aiJsonError(
+      status,
+      'AI_UPSTREAM_TIMEOUT',
+      `${prefix}AI 服务响应超时${retrySummary}。请稍后再试。`,
+      commonDetails,
+    );
+  }
+
+  if (status === 429) {
+    return aiJsonError(
+      status,
+      'AI_UPSTREAM_RATE_LIMIT',
+      `${prefix}AI 服务请求过多或额度受限${retrySummary}。请稍后再试，或改用自己的接口。`,
+      commonDetails,
+    );
+  }
+
+  if (status >= 500) {
+    return aiJsonError(
+      status,
+      'AI_UPSTREAM_UNSTABLE',
+      `${prefix}AI 服务暂时不稳定${retrySummary}。请稍后再试，或在设置里改用自己的接口。`,
+      commonDetails,
+    );
+  }
+
+  return aiJsonError(
+    status,
+    'AI_UPSTREAM_ERROR',
+    `${prefix}AI 服务返回异常（上游状态 ${status}）。`,
+    commonDetails,
+  );
+}
+
+function formatRetrySummary(attempts: number): string {
+  return attempts > 1 ? `，已自动重试 ${attempts - 1} 次仍未成功` : '';
+}
+
+function parseUpstreamError(rawBody: string): { message?: string; code?: string } {
+  const trimmed = rawBody.trim();
+  if (!trimmed) return {};
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    const error = parsed?.error;
+    const message =
+      typeof error?.message === 'string'
+        ? error.message
+        : typeof parsed?.message === 'string'
+          ? parsed.message
+          : '';
+    const code =
+      typeof error?.code === 'string'
+        ? error.code
+        : typeof parsed?.code === 'string'
+          ? parsed.code
+          : '';
+    return {
+      message: sanitizeUpstreamText(message),
+      code: sanitizeUpstreamText(code),
+    };
+  } catch {
+    return { message: sanitizeUpstreamText(trimmed) };
+  }
+}
+
+function sanitizeUpstreamText(value: string): string | undefined {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  return normalized ? normalized.slice(0, 180) : undefined;
+}
+
+function aiJsonError(
+  status: number,
+  code: string,
+  message: string,
+  details: Record<string, unknown> = {},
+): Response {
   return new Response(
     JSON.stringify({
       ok: false,
-      error: { code, message },
+      error: { code, message, ...details },
     }),
     {
       status,

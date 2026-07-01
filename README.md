@@ -426,6 +426,19 @@ AI_DEFAULT_ENABLED=false
 
 只配置 `AI_API_KEY` 不会自动显示服务端 AI；必须同时设置 `AI_BUILTIN_ENABLED=true`。如果想提供公益内置 AI，但默认仍让用户复制提示词，可设置 `AI_BUILTIN_ENABLED=true`、`AI_DEFAULT_ENABLED=false`。用户仍可通过齿轮自行填写自己的接口。
 
+AI 代理会对上游临时错误自动重试 2 次。只重试网络异常、408、429 和 5xx；鉴权失败、模型名错误等确定性问题不会重试。常见错误码：
+
+| 错误码 | 含义 |
+| --- | --- |
+| `AI_UPSTREAM_UNSTABLE`       | 上游 AI 服务返回 5xx，通常是服务临时不稳定 |
+| `AI_UPSTREAM_RATE_LIMIT`     | 上游限流或额度受限                         |
+| `AI_UPSTREAM_TIMEOUT`        | 上游响应超时                               |
+| `AI_UPSTREAM_AUTH_ERROR`     | API Key 无效、过期或额度账号异常           |
+| `AI_UPSTREAM_CONFIG_ERROR`   | 接口地址或模型名称可能不被上游支持         |
+| `AI_UPSTREAM_NETWORK_ERROR`  | 服务器无法连接上游 AI 服务                 |
+| `AI_UPSTREAM_EMPTY_RESPONSE` | 上游返回成功状态但没有可读取内容           |
+| `AI_UPSTREAM_STREAM_ERROR`   | 上游流式响应中途断开                       |
+
 `.dev.vars.example` 提供了本地和 Cloudflare 可参考的变量模板。公开站点启用服务端 AI 会产生调用成本，也可能受上游模型稳定性影响，建议先确认额度、限流和可用性。
 
 </details>

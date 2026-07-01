@@ -45,9 +45,13 @@ function sendText(
 }
 
 function getRuntimeConfigScript() {
-  const aiDefaultEnabled = process.env.AI_DEFAULT_ENABLED === 'true' && Boolean(process.env.AI_API_KEY);
+  const hasAiApiKey = Boolean(process.env.AI_API_KEY);
+  const aiBuiltinFlag = process.env.AI_BUILTIN_ENABLED ?? process.env.AI_DEFAULT_ENABLED;
+  const aiBuiltinEnabled = aiBuiltinFlag === 'true' && hasAiApiKey;
+  const aiDefaultEnabled = aiBuiltinEnabled && process.env.AI_DEFAULT_ENABLED === 'true';
   const aiProviderName = process.env.AI_PROVIDER_NAME || '';
   const payload = JSON.stringify({
+    aiBuiltinEnabled,
     aiDefaultEnabled,
     aiProviderName,
   });
@@ -65,7 +69,9 @@ async function readRequestBody(request: IncomingMessage) {
 
 async function handleApiRequest(request: IncomingMessage, response: ServerResponse, url: URL) {
   const body =
-    request.method === 'GET' || request.method === 'HEAD' ? undefined : await readRequestBody(request);
+    request.method === 'GET' || request.method === 'HEAD'
+      ? undefined
+      : await readRequestBody(request);
   const headers = new Headers();
 
   for (const [key, value] of Object.entries(request.headers)) {

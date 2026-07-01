@@ -2,8 +2,9 @@
 # 复制此文件为 .dev.vars 后填入真实值
 # Cloudflare Pages 部署时在 Dashboard → Settings → Environment variables 中配置同样的变量
 #
-# 注意：仅配置 AI_API_KEY 不会自动打开前端 AI。
-# 需要显式设置 AI_DEFAULT_ENABLED=true，才默认显示并启用服务端 AI。
+# 注意：仅配置 AI_API_KEY 不会自动显示前端内置 AI。
+# 需要显式设置 AI_BUILTIN_ENABLED=true，才显示并允许使用服务端 AI。
+# AI_DEFAULT_ENABLED 只控制页面是否默认进入 AI 解读；公益服务不稳定时建议保持 false。
 
 # API Key（填写你的 AI 服务商密钥）
 # 支持任何 OpenAI 兼容接口，如 DeepSeek、千问、豆包、Groq、OpenAI 等
@@ -18,5 +19,8 @@ AI_MODEL=deepseek-chat
 # 前端显示的服务端 AI 名称（可选）
 # AI_PROVIDER_NAME=DeepSeek
 
-# 页面是否默认打开 AI 开关，并允许使用服务端 AI（可选，默认 false）
-# AI_DEFAULT_ENABLED=true
+# 是否显示并允许使用内置 AI（可选，默认 false）
+# AI_BUILTIN_ENABLED=true
+
+# 页面是否默认打开 AI 解读（可选，默认 false）
+# AI_DEFAULT_ENABLED=false

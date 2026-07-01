@@ -24,6 +24,7 @@ export type AiEnv = {
   AI_API_KEY?: string;
   AI_BASE_URL?: string;
   AI_MODEL?: string;
+  AI_BUILTIN_ENABLED?: string;
   AI_DEFAULT_ENABLED?: string;
 };
 
@@ -287,7 +288,7 @@ function resolveAiProvider(
     return { apiKey, baseUrl, model };
   }
 
-  if (env?.AI_DEFAULT_ENABLED !== 'true') {
+  if (!isBuiltinAiEnabled(env)) {
     return {
       error: aiJsonError(
         403,
@@ -308,6 +309,11 @@ function resolveAiProvider(
   }
 
   return { apiKey, baseUrl, model };
+}
+
+function isBuiltinAiEnabled(env?: AiEnv): boolean {
+  const enabled = env?.AI_BUILTIN_ENABLED ?? env?.AI_DEFAULT_ENABLED;
+  return enabled === 'true';
 }
 
 function aiJsonError(status: number, code: string, message: string): Response {

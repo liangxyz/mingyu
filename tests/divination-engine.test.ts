@@ -5,6 +5,7 @@ import { buildTimeInfoText } from '../src/lib/divination/engine/formatters';
 import type { QimenJiuGongGe } from '../packages/core/src/types/divination';
 import { STEM_TOMB_MAP } from '../packages/core/src/divination/algorithms/qimen/helpers/_constants';
 import { getStemRelations } from '../packages/core/src/divination/algorithms/qimen/helpers/classic-patterns';
+import { getStemPairPattern } from '../packages/core/src/divination/algorithms/qimen/helpers/stem-pair-patterns';
 import {
   checkSpecialHourConditions,
   getZhiFuZhiShi,
@@ -278,6 +279,11 @@ test('奇门天地盘干入墓关系与统一天干入墓表一致', () => {
       `${stem}应在${tomb.palace}宫/${tomb.branch}支入墓`,
     );
   }
+});
+
+test('奇门小格应按庚临壬判定，不应误判壬己', () => {
+  assert.equal(getStemPairPattern('庚', '壬')?.name, '小格');
+  assert.notEqual(getStemPairPattern('壬', '己')?.name, '小格');
 });
 
 test('时间型占卜算法应拒绝无效自定义时间对象', () => {

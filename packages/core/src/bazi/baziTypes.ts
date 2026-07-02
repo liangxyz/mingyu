@@ -4,6 +4,7 @@
  */
 
 import type { ShenShaVariantConfig } from './baziShenSha/variants';
+import type { MingGuaProfile } from '../types/analysis';
 
 export const WUXING = ['木', '火', '土', '金', '水'] as const;
 export type Wuxing = (typeof WUXING)[number];
@@ -282,6 +283,8 @@ export interface BaziChartResult {
   zodiac: string;
   /** 星座（公历月日对应的西方星座） */
   constellation: string;
+  /** 命卦（八宅，按立春年界计算） */
+  mingGua: MingGuaProfile;
   /** 十神映射（各天干对应的十神） */
   tenGods: Record<string, string>;
   /** 藏干（地支中暗藏的天干） */

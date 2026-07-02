@@ -135,7 +135,7 @@ export function generateMeihua(customDate?: Date, settings?: MeihuaSettings): Me
   const methodResult: MeihuaMethodResult = (() => {
     switch (method) {
       case 'number':
-        return resolveNumberMethod(settings?.number || 0);
+        return resolveNumberMethod(settings?.number || 0, ganzhi.hour.slice(-1));
       case 'random':
         return resolveRandomMethod();
       case 'external':

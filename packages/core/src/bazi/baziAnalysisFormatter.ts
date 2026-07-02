@@ -163,6 +163,9 @@ function buildBaziText(baziResult: BaziChartResult, options: FormatBaziOptions):
   if (wuxingSeasonStatus) result += `月令旺相: ${wuxingSeasonStatus}\n`;
 
   const specialPillars = [
+    baziResult.mingGua
+      ? `命卦:${baziResult.mingGua.gua}${baziResult.mingGua.number}(${baziResult.mingGua.eastWest})`
+      : '',
     baziResult.mingGong ? `命宫:${baziResult.mingGong}` : '',
     baziResult.shenGong ? `身宫:${baziResult.shenGong}` : '',
     baziResult.taiYuan ? `胎元:${baziResult.taiYuan}` : '',

@@ -130,14 +130,19 @@ export function resolveTimeTrigramMethod(timeBranch: string): MeihuaMethodResult
   };
 }
 
-export function resolveNumberMethod(number: number): MeihuaMethodResult {
+export function resolveNumberMethod(number: number, timeBranch: string): MeihuaMethodResult {
   if (!Number.isInteger(number) || number <= 0) {
     throw new Error('数字起卦必须提供正整数');
   }
+  const timeZhiIndex = dizhi.indexOf(timeBranch) + 1;
+  if (timeZhiIndex <= 0) {
+    throw new Error('数字起卦无法识别起卦时辰');
+  }
 
   const upperTrigramIndex = number % 8 || 8;
-  const lowerTrigramIndex = Math.floor(number / 8) % 8 || 8;
-  const movingYaoIndex = number % 6 || 6;
+  const totalWithTime = number + timeZhiIndex;
+  const lowerTrigramIndex = totalWithTime % 8 || 8;
+  const movingYaoIndex = totalWithTime % 6 || 6;
 
   return {
     upperTrigramIndex,
@@ -147,6 +152,9 @@ export function resolveNumberMethod(number: number): MeihuaMethodResult {
       method: '数字起卦法',
       methodKey: 'number',
       number,
+      timeZhi: timeBranch,
+      timeZhiIndex,
+      totalWithTime,
       upperTrigramIndex,
       lowerTrigramIndex,
       movingYaoIndex,

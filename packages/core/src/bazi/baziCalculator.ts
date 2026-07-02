@@ -43,9 +43,23 @@ import {
 } from './baziTypes';
 import { getTimeIndexFromClock } from '../calendar/dateUtils';
 import { getBirthDateValidationMessage } from '../calendar/date-validation';
+import { calculateMingGua } from './mingGua';
 
 type SolarTimeInstance = ReturnType<typeof SolarTime.fromYmdHms>;
 type LunarHourInstance = ReturnType<SolarTimeInstance['getLunarHour']>;
+
+function getMidYearPillarName(year: number): string {
+  return SolarTime.fromYmdHms(year, 6, 1, 12, 0, 0)
+    .getLunarHour()
+    .getEightChar()
+    .getYear()
+    .getName();
+}
+
+function resolveMingGuaYear(solarTime: SolarTimeInstance, baziYearPillarName: string): number {
+  const solarYear = solarTime.getSolarDay().getYear();
+  return getMidYearPillarName(solarYear) === baziYearPillarName ? solarYear : solarYear - 1;
+}
 
 /**
  * 八字计算工具类
@@ -230,6 +244,7 @@ export class BaziCalculator {
         ganZhi: hourColumn.getName(),
       },
     };
+    const mingGuaYear = resolveMingGuaYear(solarTime, pillars.year.ganZhi);
     const finalTimeInfo = timing
       ? this.getTimeInfoFromClock(timing.correctedTime.hour, timing.correctedTime.minute)
       : selectedTimeInfo!;
@@ -270,6 +285,7 @@ export class BaziCalculator {
         .getZodiac()
         .getName(),
       constellation: solarTime.getSolarDay().getConstellation().getName(),
+      mingGua: calculateMingGua(mingGuaYear, gender),
       luckInfo,
       liunian,
       timing,

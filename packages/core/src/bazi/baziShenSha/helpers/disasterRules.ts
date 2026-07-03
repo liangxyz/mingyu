@@ -61,6 +61,21 @@ const SAN_GONG_SHA_BY_YEAR_BRANCH: Record<string, string> = {
   未: '辛酉',
 };
 
+const ZHEN_WANG_SHA_BY_YEAR_BRANCH: Record<string, string[]> = {
+  寅: ['癸巳', '癸亥'],
+  午: ['癸巳', '癸亥'],
+  戌: ['癸巳', '癸亥'],
+  巳: ['丙申', '丙寅'],
+  酉: ['丙申', '丙寅'],
+  丑: ['丙申', '丙寅'],
+  申: ['丁亥', '丁巳'],
+  子: ['丁亥', '丁巳'],
+  辰: ['丁亥', '丁巳'],
+  亥: ['壬寅', '壬申'],
+  卯: ['壬寅', '壬申'],
+  未: ['壬寅', '壬申'],
+};
+
 const TIAN_SHA_BY_BRANCH: Record<string, string> = {
   申: '未',
   子: '未',
@@ -308,6 +323,7 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
     斧劈星: () => anJinShaHits,
     破军: () => PO_JUN_BY_YEAR_BRANCH[nianZhi] === zhi,
     三公煞: () => SAN_GONG_SHA_BY_YEAR_BRANCH[nianZhi] === pillarGZ,
+    真亡杀: () => ZHEN_WANG_SHA_BY_YEAR_BRANCH[nianZhi]?.includes(pillarGZ),
     三丘: () => sanQiuWuMu?.sanQiu === zhi,
     五墓: () => sanQiuWuMu?.wuMu === zhi,
     天刑: () => pillarIndex === 3 && TIAN_XING_HOUR_STEM_BY_YEAR_BRANCH[nianZhi] === gan,

@@ -1160,6 +1160,32 @@ test('自缢煞应按三命通会五行反系处取年支互见', () => {
   }
 });
 
+test('真亡杀应按五行精纪年支三合组取固定干支', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['丙', '辰'],
+        ['戊', '子'],
+        ['癸', '亥'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['丙', '辰'],
+        ['戊', '子'],
+        ['癸', '酉'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.hour.includes('真亡杀'));
+    assert.ok(!missResult.hour.includes('真亡杀'));
+  }
+});
+
 test('天火煞应按三命通会取寅午戌全且天干不见水', () => {
   for (const calculator of createCalculators()) {
     const hitResult = calculator.calculateAllShenSha(

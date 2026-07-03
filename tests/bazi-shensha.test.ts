@@ -1134,6 +1134,32 @@ test('破煞应按三命通会只取子酉丑辰卯午未戌四组', () => {
   }
 });
 
+test('自缢煞应按三命通会五行反系处取年支互见', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['丙', '寅'],
+        ['戊', '辰'],
+        ['辛', '酉'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['丙', '寅'],
+        ['戊', '辰'],
+        ['辛', '申'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.hour.includes('自缢煞'));
+    assert.ok(!missResult.hour.includes('自缢煞'));
+  }
+});
+
 test('天火煞应按三命通会取寅午戌全且天干不见水', () => {
   for (const calculator of createCalculators()) {
     const hitResult = calculator.calculateAllShenSha(

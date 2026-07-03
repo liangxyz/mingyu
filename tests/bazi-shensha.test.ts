@@ -1385,3 +1385,32 @@ test('戟锋煞应按五行精纪逐月旺干取日时两重', () => {
     assert.ok(!missResult.hour.includes('戟锋煞'));
   }
 });
+
+test('天罡杀阴杀阳杀应按五行精纪以年支取目标地支', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['戊', '辰'],
+        ['甲', '戌'],
+        ['丙', '寅'],
+        ['庚', '午'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['戊', '辰'],
+        ['甲', '子'],
+        ['丙', '卯'],
+        ['庚', '午'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.month.includes('天罡杀'));
+    assert.ok(hitResult.month.includes('阴杀'));
+    assert.ok(hitResult.day.includes('阳杀'));
+    const missNames = Object.values(missResult).flat();
+    assert.ok(!missNames.some((name) => ['天罡杀', '阴杀', '阳杀'].includes(name)));
+  }
+});

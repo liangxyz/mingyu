@@ -173,6 +173,51 @@ const GUI_MEN_BRANCH_BY_YEAR_BRANCH: Record<string, string> = {
   戌: '巳',
 };
 
+const TIAN_GANG_SHA_BY_YEAR_BRANCH: Record<string, string> = {
+  子: '午',
+  丑: '未',
+  寅: '申',
+  卯: '酉',
+  辰: '戌',
+  巳: '亥',
+  午: '子',
+  未: '丑',
+  申: '寅',
+  酉: '卯',
+  戌: '辰',
+  亥: '巳',
+};
+
+const YIN_SHA_BY_YEAR_BRANCH: Record<string, string> = {
+  子: '午',
+  午: '午',
+  丑: '辰',
+  未: '辰',
+  寅: '寅',
+  申: '寅',
+  卯: '子',
+  酉: '子',
+  辰: '戌',
+  戌: '戌',
+  巳: '申',
+  亥: '申',
+};
+
+const YANG_SHA_BY_YEAR_BRANCH: Record<string, string> = {
+  寅: '戌',
+  申: '戌',
+  卯: '子',
+  酉: '子',
+  辰: '寅',
+  戌: '寅',
+  巳: '辰',
+  亥: '辰',
+  子: '午',
+  午: '午',
+  丑: '申',
+  未: '申',
+};
+
 export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
   const {
     gan,
@@ -363,6 +408,9 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
     破煞: () => hasPoSha,
     自缢煞: () => GUI_MEN_BRANCH_BY_YEAR_BRANCH[nianZhi] === zhi,
     鬼门: () => GUI_MEN_BRANCH_BY_YEAR_BRANCH[nianZhi] === zhi,
+    天罡杀: () => TIAN_GANG_SHA_BY_YEAR_BRANCH[nianZhi] === zhi,
+    阴杀: () => YIN_SHA_BY_YEAR_BRANCH[nianZhi] === zhi,
+    阳杀: () => YANG_SHA_BY_YEAR_BRANCH[nianZhi] === zhi,
     冲天杀: () =>
       (pillarIndex === 1 && clashes(nianZhi, zhi)) || (pillarIndex === 3 && clashes(riZhi, zhi)),
     丧门: () => annualPalace(2),

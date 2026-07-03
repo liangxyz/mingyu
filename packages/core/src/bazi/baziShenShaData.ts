@@ -58,6 +58,10 @@ const shenShaCategories: StringMap = {
   墓杀: '凶神',
   害气杀: '凶神',
   无成杀: '凶神',
+  破外杀: '凶神',
+  血光杀: '凶神',
+  截命杀: '凶神',
+  推命杀: '凶神',
   六厄: '凶神',
   亡神: '凶神',
   元辰: '凶神',
@@ -164,6 +168,10 @@ export const shenShaTypes: { lucky: string[]; unlucky: string[]; neutral: string
     '墓杀',
     '害气杀',
     '无成杀',
+    '破外杀',
+    '血光杀',
+    '截命杀',
+    '推命杀',
     '六厄',
     '血刃',
     '天罗',
@@ -249,11 +257,6 @@ export const shenShaTypes: { lucky: string[]; unlucky: string[]; neutral: string
   ],
 };
 
-/**
- * 获取神煞类别
- * @param shensha 神煞名称
- * @returns 类别名称
- */
 export const getShenShaCategory = (shensha: string): string => {
   return shenShaCategories[shensha] || '其他';
 };

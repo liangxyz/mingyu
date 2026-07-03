@@ -28,12 +28,45 @@ const TIAN_TU_SHA_HOUR_BRANCH_BY_DAY_BRANCH: Record<string, string> = {
   未: '巳',
 };
 
+const JI_FENG_SHA_STEMS_BY_MONTH_BRANCH: Record<string, string[]> = {
+  寅: ['甲'],
+  卯: ['乙'],
+  辰: ['戊', '甲'],
+  巳: ['丙'],
+  午: ['丁'],
+  未: ['己'],
+  申: ['庚'],
+  酉: ['甲', '辛'],
+  戌: ['戊', '甲'],
+  亥: ['壬'],
+  子: ['癸'],
+  丑: ['己'],
+};
+
 export function buildDayRules(ctx: RuleContext): ShenShaRuleMap {
-  const { zhi, pillarIndex, yueZhi, riGan, riZhi, riGZ, pillarGZ, ctg, zhiIdx, variants } = ctx;
+  const {
+    gan,
+    zhi,
+    pillarIndex,
+    yueZhi,
+    riGan,
+    riZhi,
+    riGZ,
+    pillarGZ,
+    baziArray,
+    ctg,
+    zhiIdx,
+    variants,
+  } = ctx;
+  const [, , , [hourGan]] = baziArray;
+  const jiFengStems = JI_FENG_SHA_STEMS_BY_MONTH_BRANCH[yueZhi] || [];
+  const hasJiFengSha = jiFengStems.includes(riGan) && jiFengStems.includes(hourGan);
 
   return {
     截路空亡: () => pillarIndex === 3 && JIE_LU_KONG_WANG_HOUR_BRANCHES[riGan]?.includes(zhi),
     天屠煞: () => pillarIndex === 3 && TIAN_TU_SHA_HOUR_BRANCH_BY_DAY_BRANCH[riZhi] === zhi,
+    戟锋煞: () =>
+      (pillarIndex === 2 || pillarIndex === 3) && hasJiFengSha && jiFengStems.includes(gan),
     天赦日: () => {
       if (pillarIndex !== 2) return false;
       const season: string = (

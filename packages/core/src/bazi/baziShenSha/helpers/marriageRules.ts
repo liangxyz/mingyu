@@ -1,7 +1,7 @@
 import type { RuleContext, ShenShaRuleMap } from './types';
 
 export function buildMarriageRules(ctx: RuleContext): ShenShaRuleMap {
-  const { zhi, nianZhi, riGan, riZhi, cdz, zhiIdx } = ctx;
+  const { zhi, nianZhi, riGan, riZhi, pillarGZ, isMan, cdz, zhiIdx } = ctx;
 
   return {
     桃花: () => {
@@ -104,6 +104,7 @@ export function buildMarriageRules(ctx: RuleContext): ShenShaRuleMap {
       };
       return map[riGan] === zhi;
     },
+    阴阳煞: () => (isMan ? pillarGZ === '丙子' : pillarGZ === '戊午'),
     勾绞煞: () => {
       const gouIdx = (zhiIdx(nianZhi) + 3) % 12;
       const jiaoIdx = (zhiIdx(nianZhi) - 3 + 12) % 12;

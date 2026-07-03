@@ -1185,3 +1185,31 @@ test('挂剑煞应按三命通会取巳酉丑申四柱纯全', () => {
     assert.ok(!missResult.global?.includes('挂剑煞'));
   }
 });
+
+test('戟锋煞应按五行精纪逐月旺干取日时两重', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '巳'],
+        ['丙', '辰'],
+        ['戊', '子'],
+        ['甲', '申'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '巳'],
+        ['丙', '辰'],
+        ['戊', '子'],
+        ['丁', '申'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.day.includes('戟锋煞'));
+    assert.ok(hitResult.hour.includes('戟锋煞'));
+    assert.ok(!missResult.day.includes('戟锋煞'));
+    assert.ok(!missResult.hour.includes('戟锋煞'));
+  }
+});

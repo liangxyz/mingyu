@@ -1469,3 +1469,42 @@ test('无成杀应按五行精纪以年支三合组取目标地支', () => {
     assert.ok(!missNames.includes('无成杀'));
   }
 });
+
+test('五行精纪年支凶杀应按原文固定地支取用', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['壬', '戌'],
+        ['甲', '亥'],
+        ['乙', '卯'],
+        ['丙', '申'],
+      ],
+      'male',
+    );
+    const pushResult = calculator.calculateAllShenSha(
+      [
+        ['壬', '戌'],
+        ['甲', '酉'],
+        ['乙', '午'],
+        ['丙', '未'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['壬', '戌'],
+        ['甲', '寅'],
+        ['乙', '午'],
+        ['丙', '未'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.month.includes('截命杀'));
+    assert.ok(hitResult.day.includes('破外杀'));
+    assert.ok(hitResult.hour.includes('血光杀'));
+    assert.ok(pushResult.month.includes('推命杀'));
+    const missNames = Object.values(missResult).flat();
+    assert.ok(!missNames.some((name) => ['破外杀', '血光杀', '截命杀', '推命杀'].includes(name)));
+  }
+});

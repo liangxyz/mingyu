@@ -73,6 +73,7 @@ const shenShaCategories: StringMap = {
   孤辰: '姻缘',
   寡宿: '姻缘',
   红艳煞: '姻缘',
+  阴阳煞: '姻缘',
   孤鸾煞: '姻缘',
 
   // 凶煞类
@@ -127,6 +128,7 @@ const shenShaCategories: StringMap = {
   雷霆煞: '凶神',
   破煞: '凶神',
   天火煞: '凶神',
+  挂剑煞: '凶神',
   天屠煞: '凶神',
   鬼门: '凶神',
   冲天杀: '凶神',
@@ -213,6 +215,7 @@ export const shenShaTypes: { lucky: string[]; unlucky: string[]; neutral: string
     '雷霆煞',
     '破煞',
     '天火煞',
+    '挂剑煞',
     '天屠煞',
     '鬼门',
     '冲天杀',
@@ -241,6 +244,7 @@ export const shenShaTypes: { lucky: string[]; unlucky: string[]; neutral: string
     '九丑',
     '阴差阳错',
     '桃花',
+    '阴阳煞',
     '羊刃',
     '飞刃',
     '空亡',

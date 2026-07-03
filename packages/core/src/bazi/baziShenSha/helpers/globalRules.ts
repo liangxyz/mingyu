@@ -38,5 +38,9 @@ export function calculateGlobalShenSha(baziArray: BaziArray): string[] {
     globalShenSha.push('天火煞');
   }
 
+  if (['巳', '酉', '丑', '申'].every((zhi) => zhis.includes(zhi))) {
+    globalShenSha.push('挂剑煞');
+  }
+
   return globalShenSha;
 }

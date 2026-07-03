@@ -834,6 +834,42 @@ test('红艳煞应按三命通会定例取乙午戊子壬巳', () => {
   }
 });
 
+test('阴阳煞应按三命通会男取丙子女取戊午', () => {
+  for (const calculator of createCalculators()) {
+    const maleResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['乙', '卯'],
+        ['丙', '子'],
+        ['丁', '巳'],
+      ],
+      'male',
+    );
+    const femaleResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['乙', '卯'],
+        ['戊', '午'],
+        ['丁', '巳'],
+      ],
+      'female',
+    );
+    const reversedResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['乙', '卯'],
+        ['戊', '午'],
+        ['丁', '巳'],
+      ],
+      'male',
+    );
+
+    assert.ok(maleResult.day.includes('阴阳煞'));
+    assert.ok(femaleResult.day.includes('阴阳煞'));
+    assert.ok(!reversedResult.day.includes('阴阳煞'));
+  }
+});
+
 test('十灵日应包含庚寅日', () => {
   for (const calculator of createCalculators()) {
     const result = calculator.calculateAllShenSha(
@@ -1121,5 +1157,31 @@ test('天火煞应按三命通会取寅午戌全且天干不见水', () => {
 
     assert.ok(hitResult.global?.includes('天火煞'));
     assert.ok(!waterResult.global?.includes('天火煞'));
+  }
+});
+
+test('挂剑煞应按三命通会取巳酉丑申四柱纯全', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '巳'],
+        ['丁', '酉'],
+        ['己', '丑'],
+        ['壬', '申'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '巳'],
+        ['丁', '酉'],
+        ['己', '丑'],
+        ['壬', '辰'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.global?.includes('挂剑煞'));
+    assert.ok(!missResult.global?.includes('挂剑煞'));
   }
 });

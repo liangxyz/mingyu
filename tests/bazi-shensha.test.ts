@@ -1620,6 +1620,33 @@ test('五行精纪青龙杀良会杀应按年支三合组固定干支取用', ()
   }
 });
 
+test('五行精纪天官贵人应按阴官贵十干支表取用', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['乙', '酉'],
+        ['丙', '戌'],
+        ['丁', '子'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '丑'],
+        ['乙', '申'],
+        ['丙', '戌'],
+        ['丁', '戌'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.month.includes('天官贵人'));
+    assert.ok(hitResult.hour.includes('天官贵人'));
+    assert.ok(!Object.values(missResult).flat().includes('天官贵人'));
+  }
+});
+
 test('五行精纪点头杀与无形鬼应按日时固定干支旁证取用', () => {
   for (const calculator of createCalculators()) {
     const dianTouResult = calculator.calculateAllShenSha(

@@ -1576,6 +1576,50 @@ test('五行精纪年支凶杀应按原文固定地支取用', () => {
   }
 });
 
+test('五行精纪青龙杀良会杀应按年支三合组固定干支取用', () => {
+  const cases = [
+    { yearBranch: '寅', qingLong: ['丙', '寅'], liangHui: ['丁', '卯'] },
+    { yearBranch: '巳', qingLong: ['辛', '巳'], liangHui: ['庚', '辰'] },
+    { yearBranch: '申', qingLong: ['壬', '申'], liangHui: ['癸', '酉'] },
+    { yearBranch: '亥', qingLong: ['乙', '亥'], liangHui: ['甲', '子'] },
+  ] as const;
+
+  for (const calculator of createCalculators()) {
+    const hits = cases.map(({ yearBranch, qingLong, liangHui }) => {
+      const result = calculator.calculateAllShenSha(
+        [
+          ['甲', yearBranch],
+          qingLong,
+          liangHui,
+          ['戊', '午'],
+        ],
+        'male',
+      );
+
+      return {
+        qingLong: result.month.includes('青龙杀'),
+        liangHui: result.day.includes('良会杀'),
+      };
+    });
+
+    assert.deepEqual(
+      hits,
+      cases.map(() => ({ qingLong: true, liangHui: true })),
+    );
+
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['丙', '卯'],
+        ['丁', '寅'],
+        ['戊', '午'],
+      ],
+      'male',
+    );
+    assert.ok(!Object.values(missResult).flat().some((name) => ['青龙杀', '良会杀'].includes(name)));
+  }
+});
+
 test('五行精纪点头杀与无形鬼应按日时固定干支旁证取用', () => {
   for (const calculator of createCalculators()) {
     const dianTouResult = calculator.calculateAllShenSha(

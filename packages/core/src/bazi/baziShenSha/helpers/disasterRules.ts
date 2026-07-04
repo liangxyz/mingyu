@@ -497,6 +497,8 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
   const anJinSha = AN_JIN_SHA_BY_YEAR_BRANCH[nianZhi];
   const anJinShaHits = anJinSha?.branch === zhi;
   const sanQiuWuMu = SAN_QIU_WU_MU_BY_MONTH_BRANCH[yueZhi];
+  const shiZhi = baziArray[3]?.[1] || '';
+  const tianShangBranch = shiZhi ? cdz[(zhiIdx(shiZhi) - 2 + 12) % 12] : '';
   const riKongWangBranches = calculateKongWangBranches(riGan, riZhi);
   const nianKongWangBranches =
     variants.kongWangBasis === 'day-and-year' ? calculateKongWangBranches(nianGan, nianZhi) : [];
@@ -696,6 +698,7 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
     三丘: () => sanQiuWuMu?.sanQiu === zhi,
     五墓: () => sanQiuWuMu?.wuMu === zhi,
     天刑: () => pillarIndex === 3 && TIAN_XING_HOUR_STEM_BY_YEAR_BRANCH[nianZhi] === gan,
+    天伤: () => tianShangBranch === zhi,
     雷霆煞: () => LEI_TING_SHA_BRANCH_BY_MONTH_BRANCH[yueZhi] === zhi,
     破煞: () => hasPoSha,
     自缢煞: () => GUI_MEN_BRANCH_BY_YEAR_BRANCH[nianZhi] === zhi,

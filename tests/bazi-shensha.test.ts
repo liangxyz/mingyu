@@ -2278,3 +2278,31 @@ test('五行精纪离乡杀、天屠别名与颠倒杀应按原文字表取用',
     assert.ok(!dianDaoMissResult.hour.includes('颠倒杀'));
   }
 });
+
+test('五行精纪天瞽杀应按月令起申逆行十二支取用', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['丙', '寅'],
+        ['戊', '申'],
+        ['庚', '午'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['丙', '寅'],
+        ['戊', '未'],
+        ['庚', '午'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.day.includes('天瞽杀'));
+    assert.ok(hitResult.day.includes('飞廉杀'));
+    assert.ok(!Object.values(missResult).flat().includes('天瞽杀'));
+    assert.ok(!Object.values(missResult).flat().includes('飞廉杀'));
+  }
+});

@@ -692,6 +692,61 @@ select {
   font-weight: 600;
 }
 
+.bazi-warning-list {
+  display: grid;
+  gap: 8px;
+}
+
+.bazi-warning-item {
+  display: grid;
+  gap: 4px;
+  padding: 11px 13px;
+  border: 1px solid rgba(214, 142, 55, 0.26);
+  border-radius: 14px;
+  background: rgba(244, 183, 86, 0.12);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.bazi-warning-item strong {
+  color: #a65f18;
+  font-size: 12px;
+}
+
+.bazi-reference-card {
+  display: grid;
+  gap: 12px;
+}
+
+.bazi-reference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.bazi-reference-item {
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-muted);
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.bazi-reference-item span,
+.bazi-reference-item small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.bazi-reference-item strong {
+  color: var(--text-strong);
+  font-size: 15px;
+}
+
 .fortune-focus-card {
   margin-top: 14px;
   padding: 12px 14px;

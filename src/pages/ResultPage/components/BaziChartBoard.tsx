@@ -22,6 +22,24 @@ export const BaziChartBoard = memo(function BaziChartBoard(props: {
 }) {
   const { title, name, result } = props;
   const missingElements = uniqueNonEmptyStrings(result.wuxingStrength.missing);
+  const warnings = uniqueNonEmptyStrings(result.warnings);
+  const referenceItems: Array<{ label: string; value: string; detail: string }> = [];
+
+  if (result.mingGua) {
+    referenceItems.push({
+      label: '命卦',
+      value: `${result.mingGua.gua}${result.mingGua.number}`,
+      detail: `${result.mingGua.eastWest} · ${result.mingGua.element}`,
+    });
+  }
+
+  if (result.mingGong) {
+    referenceItems.push({ label: '命宫', value: result.mingGong, detail: '本命根基' });
+  }
+
+  if (result.shenGong) {
+    referenceItems.push({ label: '身宫', value: result.shenGong, detail: '后天着力' });
+  }
   const pillarRows = [
     {
       label: '天干',
@@ -106,6 +124,17 @@ export const BaziChartBoard = memo(function BaziChartBoard(props: {
         </div>
       </div>
 
+      {warnings.length > 0 ? (
+        <div className="bazi-warning-list" role="note" aria-label="排盘预警">
+          {warnings.map((warning) => (
+            <div className="bazi-warning-item" key={warning}>
+              <strong>排盘预警</strong>
+              <span>{warning}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <div className="result-summary-grid result-summary-grid-bazi">
         <div className="result-stat-card result-stat-card-accent">
           <span>日主</span>
@@ -188,6 +217,23 @@ export const BaziChartBoard = memo(function BaziChartBoard(props: {
               ))}
             </div>
           </div>
+
+          {referenceItems.length > 0 ? (
+            <div className="result-side-card bazi-reference-card">
+              <div className="result-side-head">
+                <h3>基础参考</h3>
+              </div>
+              <div className="bazi-reference-grid">
+                {referenceItems.map((item) => (
+                  <div className="bazi-reference-item" key={item.label}>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                    <small>{item.detail}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <Suspense fallback={<BaziFortuneLoadingCard />}>
             <LazyBaziFortuneSelector result={result} />

@@ -53,5 +53,25 @@ export function calculateGlobalShenSha(baziArray: BaziArray): string[] {
     globalShenSha.push('悬针杀');
   }
 
+  if (countCharacters(['甲', '癸', '未', '申', '酉']) >= 3) {
+    globalShenSha.push('破字');
+  }
+
+  if (countCharacters(['戊', '庚', '戌']) >= 3) {
+    globalShenSha.push('杖刑');
+  }
+
+  if (countCharacters(['乙', '己', '丑', '巳']) >= 3) {
+    globalShenSha.push('阙字');
+  }
+
+  if (['乙', '己', '巳'].every((character) => allCharacters.includes(character))) {
+    globalShenSha.push('曲脚杀');
+  }
+
+  if (countCharacters(['丙', '壬', '寅', '酉']) >= 3) {
+    globalShenSha.push('聋哑字');
+  }
+
   return globalShenSha;
 }

@@ -1319,7 +1319,7 @@ test('挂剑煞应按三命通会取巳酉丑申四柱纯全', () => {
   }
 });
 
-test('平头杀与悬针杀应按古籍字表三字以上作为全局旁证', () => {
+test('五行精纪杂犯字表应按古籍字表作为全局旁证', () => {
   for (const calculator of createCalculators()) {
     const pingTouResult = calculator.calculateAllShenSha(
       [
@@ -1339,6 +1339,42 @@ test('平头杀与悬针杀应按古籍字表三字以上作为全局旁证', ()
       ],
       'male',
     );
+    const poZiResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '申'],
+        ['癸', '酉'],
+        ['乙', '丑'],
+        ['庚', '辰'],
+      ],
+      'male',
+    );
+    const zhangXingResult = calculator.calculateAllShenSha(
+      [
+        ['戊', '戌'],
+        ['庚', '寅'],
+        ['乙', '丑'],
+        ['辛', '未'],
+      ],
+      'male',
+    );
+    const queZiResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '巳'],
+        ['己', '丑'],
+        ['庚', '辰'],
+        ['辛', '未'],
+      ],
+      'male',
+    );
+    const longYaResult = calculator.calculateAllShenSha(
+      [
+        ['丙', '寅'],
+        ['壬', '酉'],
+        ['乙', '丑'],
+        ['庚', '辰'],
+      ],
+      'male',
+    );
     const missResult = calculator.calculateAllShenSha(
       [
         ['甲', '子'],
@@ -1353,8 +1389,14 @@ test('平头杀与悬针杀应按古籍字表三字以上作为全局旁证', ()
     assert.ok(!pingTouResult.global?.includes('悬针杀'));
     assert.ok(xuanZhenResult.global?.includes('悬针杀'));
     assert.ok(!xuanZhenResult.global?.includes('平头杀'));
+    assert.ok(poZiResult.global?.includes('破字'));
+    assert.ok(zhangXingResult.global?.includes('杖刑'));
+    assert.ok(queZiResult.global?.includes('阙字'));
+    assert.ok(queZiResult.global?.includes('曲脚杀'));
+    assert.ok(longYaResult.global?.includes('聋哑字'));
     assert.ok(!missResult.global?.includes('平头杀'));
     assert.ok(!missResult.global?.includes('悬针杀'));
+    assert.ok(!missResult.global?.includes('破字'));
   }
 });
 

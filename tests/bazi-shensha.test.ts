@@ -1550,3 +1550,50 @@ test('五行精纪年支凶杀应按原文固定地支取用', () => {
     assert.ok(!missNames.some((name) => ['破外杀', '血光杀', '截命杀', '推命杀'].includes(name)));
   }
 });
+
+test('五行精纪点头杀与无形鬼应按日时固定干支旁证取用', () => {
+  for (const calculator of createCalculators()) {
+    const dianTouResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['乙', '丑'],
+        ['戊', '寅'],
+        ['癸', '巳'],
+      ],
+      'male',
+    );
+    const dianTouMissResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['乙', '丑'],
+        ['戊', '寅'],
+        ['庚', '申'],
+      ],
+      'male',
+    );
+    const wuXingGuiResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '丑'],
+        ['甲', '午'],
+        ['甲', '午'],
+        ['丙', '子'],
+      ],
+      'male',
+    );
+    const wuXingGuiMissResult = calculator.calculateAllShenSha(
+      [
+        ['乙', '丑'],
+        ['甲', '午'],
+        ['乙', '未'],
+        ['丙', '子'],
+      ],
+      'male',
+    );
+
+    assert.ok(dianTouResult.day.includes('点头杀'));
+    assert.ok(!dianTouMissResult.day.includes('点头杀'));
+    assert.ok(wuXingGuiResult.month.includes('无形鬼'));
+    assert.ok(wuXingGuiResult.day.includes('无形鬼'));
+    assert.ok(!Object.values(wuXingGuiMissResult).flat().includes('无形鬼'));
+  }
+});

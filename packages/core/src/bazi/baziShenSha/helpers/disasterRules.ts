@@ -195,6 +195,10 @@ const XUE_GUANG_SHA_BY_YEAR_BRANCH: Record<string, string[]> = {
   亥: ['酉'],
 };
 
+const DIAN_TOU_SHA_PILLARS = ['戊寅', '戊申', '庚寅', '庚申', '辛巳', '辛亥'];
+
+const WU_XING_GUI_PILLARS = ['甲午', '丁酉', '己巳', '庚子', '辛亥', '壬申', '壬寅', '癸卯'];
+
 const TIAN_XING_HOUR_STEM_BY_YEAR_BRANCH: Record<string, string> = {
   子: '乙',
   丑: '乙',
@@ -326,6 +330,17 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
       (zhi === right && baziArray.some((pillar) => pillar[1] === left)),
   );
   const annualPalace = (offset: number) => cdz[(zhiIdx(nianZhi) + offset + 12) % 12] === zhi;
+  const nianGanIsYang = ctg.indexOf(nianGan) % 2 === 0;
+  const yuanChenOffset = (nianGanIsYang && isMan) || (!nianGanIsYang && !isMan) ? 5 : 7;
+  const yuanChenBranch = cdz[(zhiIdx(nianZhi) + yuanChenOffset + 12) % 12];
+  const hasYuanChen = baziArray.some((pillar) => pillar[1] === yuanChenBranch);
+  const hasRepeatedWuXingGui = baziArray.some(
+    (pillar, index) =>
+      index >= 1 &&
+      index !== pillarIndex &&
+      WU_XING_GUI_PILLARS.includes(pillar.join('')) &&
+      pillar.join('') === pillarGZ,
+  );
   const clashes = (source: string, target: string) => {
     const index = zhiIdx(source);
     return index >= 0 && cdz[(index + 6) % 12] === target;
@@ -411,10 +426,7 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
       return map[nianZhi] === zhi || map[riZhi] === zhi;
     },
     元辰: () => {
-      const nianGanIsYang = ctg.indexOf(nianGan) % 2 === 0;
-      const offset = (nianGanIsYang && isMan) || (!nianGanIsYang && !isMan) ? 5 : 7;
-      const targetIdx = (zhiIdx(nianZhi) + offset + 12) % 12;
-      return cdz[targetIdx] === zhi;
+      return yuanChenBranch === zhi;
     },
     血刃: () => {
       const map: Record<string, string> = {
@@ -482,6 +494,8 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
     真亡杀: () => ZHEN_WANG_SHA_BY_YEAR_BRANCH[nianZhi]?.includes(pillarGZ),
     月煞: () => YUE_SHA_BY_MONTH_BRANCH[yueZhi] === zhi,
     头戴杀: () => pillarIndex >= 2 && TOU_DAI_SHA_BY_YEAR_BRANCH[nianZhi] === zhi,
+    点头杀: () => pillarIndex >= 2 && hasYuanChen && DIAN_TOU_SHA_PILLARS.includes(pillarGZ),
+    无形鬼: () => pillarIndex >= 1 && WU_XING_GUI_PILLARS.includes(pillarGZ) && hasRepeatedWuXingGui,
     三丘: () => sanQiuWuMu?.sanQiu === zhi,
     五墓: () => sanQiuWuMu?.wuMu === zhi,
     天刑: () => pillarIndex === 3 && TIAN_XING_HOUR_STEM_BY_YEAR_BRANCH[nianZhi] === gan,

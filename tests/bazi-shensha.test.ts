@@ -576,6 +576,33 @@ test('天刑应按年支配时干判断并只在时柱标记', () => {
   }
 });
 
+test('五行精纪天伤应按时支后二辰取用', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['乙', '戌'],
+        ['庚', '午'],
+        ['丙', '子'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['乙', '戌'],
+        ['庚', '午'],
+        ['丙', '亥'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.month.includes('天伤'));
+    assert.ok(!hitResult.hour.includes('天伤'));
+    assert.ok(!Object.values(missResult).flat().includes('天伤'));
+  }
+});
+
 test('鬼门应按年支十二支互见判断', () => {
   for (const calculator of createCalculators()) {
     const ziYearResult = calculator.calculateAllShenSha(

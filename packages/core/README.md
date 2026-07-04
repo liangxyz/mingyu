@@ -104,6 +104,8 @@ console.log(result.dayMaster);     // { gan:'乙', element:'木', yinYang:'阴' 
 console.log(result.shensha);       // 各柱神煞
 console.log(result.analysis);      // 强度、格局、用神
 console.log(result.luckInfo);      // 大运
+console.log(result.mingGua);       // 命卦（八宅，按立春年界计算）
+console.log(result.warnings);      // 排盘预警；无预警时为空数组
 ```
 
 神煞争议口径默认采用主流算法：空亡按日柱旬空、羊刃只取阳干帝旺、童子煞只查日柱和时柱。需要兼容其他系统时，可显式传入 `shenShaVariants`：
@@ -142,6 +144,19 @@ const result2 = baziCalculator.calculateBazi({
   useTrueSolarTime: true,
   birthHour: 0, birthMinute: 30,
   birthLongitude: 116.4,  // 北京经度
+});
+```
+
+1986-1991 年中国夏令时期间，真太阳时模式会默认把钟表时间自动回拨 60 分钟，并在 `warnings` 中提示校正依据。若你的出生记录已经折算为北京标准时间，可关闭自动校正：
+
+```typescript
+const result = baziCalculator.calculateBazi({
+  year: 1988, month: 7, day: 15,
+  gender: 'male',
+  useTrueSolarTime: true,
+  birthHour: 12, birthMinute: 0,
+  birthLongitude: 116.4,
+  applyChinaDst: false,
 });
 ```
 

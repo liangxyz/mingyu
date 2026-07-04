@@ -46,6 +46,7 @@
 | `birthHour` | `number` | * | 真太阳时模式下的小时（0-23） |
 | `birthMinute` | `number` | * | 真太阳时模式下的分钟（0-59） |
 | `birthLongitude` | `number` | * | 出生地经度（-180~180） |
+| `applyChinaDst` | `boolean` | | 是否自动校正中国夏令时（1986-1991），默认开启；若出生记录已折算为标准时间，可设为 `false` |
 | `shenShaVariants` | `Partial<ShenShaVariantConfig>` | | 神煞争议口径配置；不传时使用默认主流口径 |
 
 \* `timeIndex` 与真太阳时三参数二选一。
@@ -72,6 +73,7 @@
 | `nayin` | `Nayin` | 各柱纳音 |
 | `kongWang` | `KongWangResult` | 各柱空亡 |
 | `luckInfo` | `LuckInfo` | 大运信息（起运/交运/各步大运+流年） |
+| `mingGua` | `MingGuaProfile` | 命卦（八宅，按立春年界计算） |
 | `mingGong` | `string` | 命宫 |
 | `shenGong` | `string` | 身宫 |
 | `taiYuan` | `string` | 胎元 |
@@ -86,6 +88,7 @@
 | `solarDate` | `{ year, month, day }` | 公历日期 |
 | `lunarDate` | `{ year, month, day, monthName, dayName }` | 农历日期 |
 | `timing` | `TimingInfo?` | 真太阳时校正明细（启用时） |
+| `warnings` | `string[]` | 排盘预警；出生时刻贴近节气交接、时辰边界、23:00 换日线或落于中国夏令时期间等可能翻柱时输出 |
 
 **`analysis`（`BaziAnalysisResult`）：**
 

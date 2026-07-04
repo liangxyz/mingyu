@@ -196,6 +196,21 @@ const JING_YUE_HOUR_BRANCH_BY_YEAR_BRANCH: Record<string, string> = {
   未: '亥',
 };
 
+const JING_YUE_PILLAR_BY_YEAR_MEETING_BRANCH: Record<string, string> = {
+  寅: '癸酉',
+  卯: '癸酉',
+  辰: '癸酉',
+  巳: '癸卯',
+  午: '癸卯',
+  未: '癸卯',
+  申: '戊子',
+  酉: '戊子',
+  戌: '戊子',
+  亥: '戊午',
+  子: '戊午',
+  丑: '戊午',
+};
+
 const ZHEN_WANG_SHA_BY_YEAR_BRANCH: Record<string, string[]> = {
   寅: ['癸巳', '癸亥'],
   午: ['癸巳', '癸亥'],
@@ -635,7 +650,9 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
     旌德: () =>
       (pillarIndex >= 2 && JING_DE_STEM_BY_MONTH_BRANCH[yueZhi] === gan) ||
       (pillarIndex === 3 && JING_DE_HOUR_STEM_BY_YEAR_BRANCH[nianZhi] === gan),
-    旌钺: () => pillarIndex === 3 && JING_YUE_HOUR_BRANCH_BY_YEAR_BRANCH[nianZhi] === zhi,
+    旌钺: () =>
+      (pillarIndex === 3 && JING_YUE_HOUR_BRANCH_BY_YEAR_BRANCH[nianZhi] === zhi) ||
+      JING_YUE_PILLAR_BY_YEAR_MEETING_BRANCH[nianZhi] === pillarGZ,
     真亡杀: () => ZHEN_WANG_SHA_BY_YEAR_BRANCH[nianZhi]?.includes(pillarGZ),
     月煞: () => YUE_SHA_BY_MONTH_BRANCH[yueZhi] === zhi,
     月厌: () => YUE_YAN_BY_MONTH_BRANCH[yueZhi] === zhi,

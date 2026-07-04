@@ -2085,6 +2085,32 @@ test('五行精纪又旌德应按年支三合组补入时干', () => {
   }
 });
 
+test('三命通会又旌钺应按年支三会组固定干支取用', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['癸', '酉'],
+        ['丙', '辰'],
+        ['庚', '午'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '寅'],
+        ['壬', '酉'],
+        ['丙', '辰'],
+        ['庚', '午'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.month.includes('旌钺'));
+    assert.ok(!missResult.month.includes('旌钺'));
+  }
+});
+
 test('五行精纪点头杀与无形鬼应按日时固定干支旁证取用', () => {
   for (const calculator of createCalculators()) {
     const dianTouResult = calculator.calculateAllShenSha(

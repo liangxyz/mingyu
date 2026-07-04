@@ -151,6 +151,21 @@ const FU_SHENG_DAY_BY_MONTH_BRANCH: Record<string, string> = {
   丑: '申',
 };
 
+const TIAN_XI_SHEN_BRANCH_BY_MONTH_BRANCH: Record<string, string> = {
+  寅: '戌',
+  卯: '戌',
+  辰: '戌',
+  巳: '丑',
+  午: '丑',
+  未: '丑',
+  申: '辰',
+  酉: '辰',
+  戌: '辰',
+  亥: '未',
+  子: '未',
+  丑: '未',
+};
+
 const JING_DE_STEM_BY_MONTH_BRANCH: Record<string, string> = {
   寅: '丙',
   午: '丙',
@@ -647,6 +662,7 @@ export function buildDisasterRules(ctx: RuleContext): ShenShaRuleMap {
     青龙杀: () => QING_LONG_SHA_BY_YEAR_BRANCH[nianZhi] === pillarGZ,
     良会杀: () => LIANG_HUI_SHA_BY_YEAR_BRANCH[nianZhi] === pillarGZ,
     扶生日: () => FU_SHENG_DAY_BY_MONTH_BRANCH[yueZhi] === zhi,
+    天喜神: () => TIAN_XI_SHEN_BRANCH_BY_MONTH_BRANCH[yueZhi] === zhi,
     旌德: () =>
       (pillarIndex >= 2 && JING_DE_STEM_BY_MONTH_BRANCH[yueZhi] === gan) ||
       (pillarIndex === 3 && JING_DE_HOUR_STEM_BY_YEAR_BRANCH[nianZhi] === gan),

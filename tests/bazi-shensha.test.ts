@@ -2085,6 +2085,32 @@ test('五行精纪扶生日旌德旌钺应按月支年支定例取用', () => {
   }
 });
 
+test('三命通会天喜神应按四季地支取用', () => {
+  for (const calculator of createCalculators()) {
+    const hitResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['丙', '寅'],
+        ['丁', '卯'],
+        ['戊', '戌'],
+      ],
+      'male',
+    );
+    const missResult = calculator.calculateAllShenSha(
+      [
+        ['甲', '子'],
+        ['丙', '寅'],
+        ['丁', '卯'],
+        ['己', '酉'],
+      ],
+      'male',
+    );
+
+    assert.ok(hitResult.hour.includes('天喜神'));
+    assert.ok(!Object.values(missResult).flat().includes('天喜神'));
+  }
+});
+
 test('五行精纪又旌德应按年支三合组补入时干', () => {
   for (const calculator of createCalculators()) {
     const hitResult = calculator.calculateAllShenSha(

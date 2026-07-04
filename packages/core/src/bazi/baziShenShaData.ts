@@ -49,6 +49,7 @@ const shenShaCategories: StringMap = {
   太阳: '吉神',
   福星: '吉神',
   扶生日: '吉神',
+  天喜神: '吉神',
   青龙杀: '吉神',
   良会杀: '吉神',
 
@@ -213,6 +214,7 @@ export const shenShaTypes: { lucky: string[]; unlucky: string[]; neutral: string
     '太阳',
     '福星',
     '扶生日',
+    '天喜神',
     '青龙杀',
     '良会杀',
   ],
